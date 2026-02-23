@@ -119,15 +119,3 @@ _FUZZBOX/
     sterne-sound-studies-reader.pdf
 ```
 
-### What the reorg does
-
-- **`app/`** — isolates the three web labs and keeps the root clean. `server.js` stays at root since it serves everything. The server would need its static path and `wavs/` path updated.
-- **`course/`** — the two syllabus documents and the Canvas export, together.
-- **`lectures/`** — the DECKS/ weekly plans flattened out of a nested folder.
-- **`listening/`** — artist study markdown + the LISTEN01 media, with room for future weeks.
-- **`hardware/`** — breadboard photos and schematics grouped.
-- **`field/`** — the wind pickup experiments (and future field work).
-- **`sketches/`** — the Strudel `main.js` and any future code experiments.
-- **`texts/`** — reference PDFs with shorter filenames.
-
-This is a suggestion — the current flat layout works fine for a small project. The reorg mainly pays off if you keep adding weekly materials and more web labs.

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Phase Drift</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  .wrap { max-width: 720px; width: 100%; }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.6rem;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 20px var(--phosphor-glow);
+    line-height: 1;
+  }
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+    margin-top: 4px;
+  }
+  .nav {
+    margin-top: 6px;
+    font-size: 0.7rem;
+  }
+  .nav a {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    margin-right: 10px;
+  }
+  .nav a:hover { color: var(--phosphor); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  .desc {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--panel);
+    color: var(--phosphor);
+    border: 1px solid var(--border);
+    padding: 8px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.08em;
+  }
+  button:hover {
+    border-color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+  button.active {
+    background: var(--phosphor);
+    color: var(--bg);
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 3px;
+    background: #030803;
+  }
+
+  #scope {
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .voices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+
+  .voice-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+  }
+
+  .voice-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0a1a0a;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .voice-dot.on {
+    background: var(--phosphor);
+    border-color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  .voice-notes {
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    min-width: 110px;
+  }
+
+  .voice-period {
+    font-family: 'VT323', monospace;
+    font-size: 0.75rem;
+    color: var(--phosphor-dim);
+  }
+
+  .voice-bar-bg {
+    flex: 1;
+    height: 3px;
+    background: #0a1a0a;
+    border-radius: 1px;
+    overflow: hidden;
+    min-width: 40px;
+  }
+  .voice-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--phosphor-dim);
+    border-radius: 1px;
+    transition: width 0.1s linear;
+  }
+  .voice-bar.on {
+    background: var(--phosphor);
+    box-shadow: 0 0 4px var(--phosphor-glow);
+  }
+
+  .section-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    color: var(--phosphor);
+    margin-bottom: 8px;
+  }
+
+  .elapsed {
+    font-family: 'VT323', monospace;
+    font-size: 0.8rem;
+    color: var(--phosphor-dim);
+    margin-left: auto;
+  }
+
+  .footer {
+    font-size: 0.65rem;
+    color: var(--phosphor-dim);
+    text-align: center;
+    margin-top: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>PHASE DRIFT</h1>
+  <div class="subtitle">GENERATIVE PHASING PIECE — FUZZBOX PHYSICS</div>
+  <div class="nav">
+    <a href="index.html">INDEX</a>
+    <a href="fuzzbox-lab.html">LAB 01</a>
+    <a href="fuzzbox-sculptor.html">LAB 02</a>
+    <a href="fuzzbox-octavia.html">LAB 03</a>
+    <a href="fuzzbox-reverb.html">LAB 04</a>
+  </div>
+
+  <hr>
+
+  <div class="desc">
+    Fourteen sine wave voices cycle at slightly different rates (23–30 seconds each),
+    drifting in and out of phase. Single notes, intervals, triads, and seventh chords
+    from a D major palette. The harmony is always consonant but never repeats.
+    In the tradition of Steve Reich's phasing and Brian Eno's ambient music.
+  </div>
+
+  <div class="controls">
+    <button id="btn-start" onclick="startDrift()">START</button>
+    <button id="btn-stop" onclick="stopDrift()">STOP</button>
+    <div class="elapsed" id="elapsed"></div>
+  </div>
+
+  <canvas id="scope" width="690" height="120"></canvas>
+
+  <div class="panel">
+    <div class="section-label">VOICES</div>
+    <div class="voices-grid" id="voices-grid"></div>
+  </div>
+
+  <div class="footer">Doug Goodwin — CalArts 2026</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  VOICE DEFINITIONS
+// ═══════════════════════════════════════════════════════
+
+function mtof(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+
+// Note name → MIDI
+const N = {
+  D3:50, E3:52, 'F#3':54, G3:55, A3:57, B3:59,
+  'C#4':61, D4:62, E4:64, 'F#4':66, G4:67, A4:69,
+  B4:71, D5:74
+};
+
+const VOICE_DEFS = [
+  // Singles
+  { notes: ['D3'],               period: 23.5 },
+  { notes: ['D4'],               period: 25.5 },
+  { notes: ['B3'],               period: 27.375 },
+  { notes: ['F#4'],              period: 29.0 },
+  // Dyads
+  { notes: ['A3','F#4'],         period: 24.25 },
+  { notes: ['A3','C#4'],         period: 26.5 },
+  { notes: ['C#4','E4'],         period: 28.25 },
+  // Triads
+  { notes: ['E3','G3','B3'],     period: 25.0 },
+  { notes: ['F#3','A3','D4'],    period: 27.0 },
+  { notes: ['G3','D4','A4'],     period: 28.625 },
+  { notes: ['B3','E4','G4'],     period: 29.9375 },
+  // Seventh chords
+  { notes: ['G3','B3','D4','F#4'], period: 26.0 },
+  { notes: ['E4','G4','B4','D5'],  period: 27.75 },
+  { notes: ['D3','A3','F#4','D5'], period: 29.5 },
+];
+
+// ADSR
+const ATTACK = 0.8;
+const DECAY = 0.5;
+const SUSTAIN = 0.6;
+const RELEASE = 2.0;
+const NOTE_DUR = 6.0;
+const GAIN = 0.08; // per-oscillator gain (14 voices × multiple oscs)
+
+// ═══════════════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════════════
+
+let audioCtx, analyser, masterGain, reverbGain, dryGain, convolver;
+let voices = [];
+let running = false;
+let schedulerInterval = null;
+let startTime = 0;
+const LOOKAHEAD = 0.2;
+const SCHEDULE_MS = 80;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Master chain: voices → dry + reverb → analyser → output
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 1.0;
+
+  dryGain = audioCtx.createGain();
+  dryGain.gain.value = 0.5;
+
+  reverbGain = audioCtx.createGain();
+  reverbGain.gain.value = 0.5;
+
+  convolver = audioCtx.createConvolver();
+  convolver.buffer = generateReverbIR(4.0, 0.3);
+
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+
+  masterGain.connect(dryGain);
+  masterGain.connect(convolver);
+  convolver.connect(reverbGain);
+  dryGain.connect(analyser);
+  reverbGain.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  // Build voices
+  voices = VOICE_DEFS.map(def => ({
+    freqs: def.notes.map(n => mtof(N[n])),
+    label: def.notes.join(' + '),
+    period: def.period,
+    nextTime: 0,
+    lastTrigger: -999,
+  }));
+
+  buildVoiceGrid();
+}
+
+function generateReverbIR(decayTime, damping) {
+  const sr = audioCtx.sampleRate;
+  const len = Math.ceil(decayTime * 2 * sr);
+  const ir = new Float32Array(len);
+  const decayRate = -6.908 / (decayTime * sr);
+  let lp = 0;
+  for (let i = 0; i < len; i++) {
+    const t = i / sr;
+    const env = Math.exp(decayRate * i);
+    const noise = (Math.random() * 2 - 1) * env;
+    const cutoff = Math.max(400, 12000 * Math.exp(-damping * t * 3));
+    const rc = 1 / (2 * Math.PI * cutoff);
+    const alpha = (1/sr) / (rc + 1/sr);
+    lp += alpha * (noise - lp);
+    ir[i] = lp;
+  }
+  // Normalize
+  let peak = 0;
+  for (let i = 0; i < len; i++) peak = Math.max(peak, Math.abs(ir[i]));
+  if (peak > 0) for (let i = 0; i < len; i++) ir[i] *= 0.6 / peak;
+
+  const buf = audioCtx.createBuffer(1, len, sr);
+  buf.getChannelData(0).set(ir);
+  return buf;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  SCHEDULING
+// ═══════════════════════════════════════════════════════
+
+function triggerVoice(voice, time) {
+  const sustainEnd = time + NOTE_DUR - RELEASE;
+  voice.lastTrigger = time;
+
+  for (const freq of voice.freqs) {
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+
+    env.gain.setValueAtTime(0, time);
+    env.gain.linearRampToValueAtTime(GAIN, time + ATTACK);
+    env.gain.linearRampToValueAtTime(GAIN * SUSTAIN, time + ATTACK + DECAY);
+    env.gain.setValueAtTime(GAIN * SUSTAIN, sustainEnd);
+    env.gain.linearRampToValueAtTime(0, sustainEnd + RELEASE);
+
+    osc.connect(env);
+    env.connect(masterGain);
+    osc.start(time);
+    osc.stop(sustainEnd + RELEASE + 0.1);
+  }
+}
+
+function scheduleVoices() {
+  const now = audioCtx.currentTime;
+  const horizon = now + LOOKAHEAD;
+  for (const voice of voices) {
+    while (voice.nextTime < horizon) {
+      if (voice.nextTime >= now - 0.01) {
+        triggerVoice(voice, Math.max(voice.nextTime, now));
+      }
+      voice.nextTime += voice.period;
+    }
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  START / STOP
+// ═══════════════════════════════════════════════════════
+
+function startDrift() {
+  initAudio();
+  audioCtx.resume();
+  if (running) return;
+
+  const now = audioCtx.currentTime;
+  startTime = now;
+
+  // Stagger initial triggers: each voice starts at a random offset
+  // within its first period, so they don't all hit at once
+  for (const voice of voices) {
+    voice.nextTime = now + Math.random() * voice.period;
+    voice.lastTrigger = -999;
+  }
+
+  running = true;
+  schedulerInterval = setInterval(scheduleVoices, SCHEDULE_MS);
+  scheduleVoices();
+  drawLoop();
+
+  document.getElementById('btn-start').classList.add('active');
+}
+
+function stopDrift() {
+  running = false;
+  if (schedulerInterval) { clearInterval(schedulerInterval); schedulerInterval = null; }
+  document.getElementById('btn-start').classList.remove('active');
+  document.getElementById('elapsed').textContent = '';
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  VISUALIZATION
+// ═══════════════════════════════════════════════════════
+
+function buildVoiceGrid() {
+  const grid = document.getElementById('voices-grid');
+  grid.innerHTML = '';
+  voices.forEach((v, i) => {
+    const row = document.createElement('div');
+    row.className = 'voice-row';
+    row.innerHTML = `
+      <div class="voice-dot" id="vdot-${i}"></div>
+      <div class="voice-notes">${v.label}</div>
+      <div class="voice-bar-bg"><div class="voice-bar" id="vbar-${i}"></div></div>
+      <div class="voice-period">${v.period}s</div>
+    `;
+    grid.appendChild(row);
+  });
+}
+
+function drawScope() {
+  const canvas = document.getElementById('scope');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  ctx.fillStyle = '#030803';
+  ctx.fillRect(0, 0, W, H);
+
+  // Center line
+  ctx.strokeStyle = '#0a1a0a';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0, H/2);
+  ctx.lineTo(W, H/2);
+  ctx.stroke();
+
+  if (!analyser) return;
+
+  const buf = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+
+  ctx.strokeStyle = 'rgba(57,255,20,0.7)';
+  ctx.shadowColor = '#39ff14';
+  ctx.shadowBlur = 4;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+
+  const step = buf.length / W;
+  for (let px = 0; px < W; px++) {
+    const i = Math.floor(px * step);
+    const y = H/2 - buf[i] * H * 0.45;
+    if (px === 0) ctx.moveTo(px, y);
+    else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function updateVoiceIndicators() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  for (let i = 0; i < voices.length; i++) {
+    const v = voices[i];
+    const elapsed = now - v.lastTrigger;
+    const isOn = elapsed >= 0 && elapsed < NOTE_DUR;
+
+    const dot = document.getElementById('vdot-' + i);
+    const bar = document.getElementById('vbar-' + i);
+    if (!dot || !bar) continue;
+
+    dot.classList.toggle('on', isOn);
+
+    // Progress bar: time within current period
+    const periodElapsed = (now - startTime) % v.period;
+    const pct = (periodElapsed / v.period) * 100;
+    bar.style.width = pct + '%';
+    bar.classList.toggle('on', isOn);
+  }
+}
+
+function updateElapsed() {
+  if (!running || !audioCtx) return;
+  const secs = Math.floor(audioCtx.currentTime - startTime);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  document.getElementById('elapsed').textContent =
+    m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+let animFrame = null;
+function drawLoop() {
+  if (!running) {
+    // One last draw to clear
+    drawScope();
+    return;
+  }
+  drawScope();
+  updateVoiceIndicators();
+  updateElapsed();
+  animFrame = requestAnimationFrame(drawLoop);
+}
+
+</script>
+</body>
+</html>
