@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  .container {
+    max-width: 640px;
+    width: 100%;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor);
+    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.2em;
+    margin-top: 4px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  a.lab-link {
+    display: block;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  a.lab-link::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  a.lab-link:hover {
+    border-color: var(--phosphor);
+    box-shadow: 0 0 12px var(--phosphor-glow);
+  }
+
+  a.lab-link:hover .lab-title {
+    text-shadow: 0 0 10px var(--phosphor-glow);
+  }
+
+  .lab-num {
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 2px;
+  }
+
+  .lab-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: var(--phosphor);
+    line-height: 1.2;
+    transition: text-shadow 0.2s;
+  }
+
+  .lab-desc {
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-top: 6px;
+  }
+
+  .lab-tags {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor-dim);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .footer {
+    font-size: 0.7rem;
+    color: var(--phosphor-dim);
+    margin-top: 20px;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .footer a {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .footer a:hover { color: var(--phosphor); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>FUZZBOX PHYSICS</h1>
+  <div class="subtitle">∿ CSCM 373-01 — CALARTS EXPERIMENTAL ANIMATION — WEB LABS</div>
+
+  <hr class="divider">
+
+  <a class="lab-link" href="fuzzbox-lab.html">
+    <div class="lab-num">LAB 01</div>
+    <div class="lab-title">Waveform Distortion Lab</div>
+    <div class="lab-desc">
+      Seven clipping algorithms with real-time oscilloscopes, spectrum analyzers, and scrolling spectrograms.
+      Feed in an oscillator, microphone, or audio file. Reverb chamber with five impulse responses.
+      See harmonics appear as you increase drive.
+    </div>
+    <div class="lab-tags">
+      <span class="tag">hard clip</span>
+      <span class="tag">soft clip / tanh</span>
+      <span class="tag">asymmetric</span>
+      <span class="tag">foldback</span>
+      <span class="tag">bitcrush</span>
+      <span class="tag">tube</span>
+      <span class="tag">half-wave rectify</span>
+      <span class="tag">reverb</span>
+    </div>
+  </a>
+
+  <a class="lab-link" href="fuzzbox-sculptor.html">
+    <div class="lab-num">LAB 02</div>
+    <div class="lab-title">Spectral Sculptor</div>
+    <div class="lab-desc">
+      Interactive spectrogram editor. A 2-second loop is analyzed with STFT and displayed as a full spectrogram.
+      Click and drag to paint energy into the frequency domain. Audio resynthesizes via inverse FFT on release.
+      Start from silence and build a sound from nothing.
+    </div>
+    <div class="lab-tags">
+      <span class="tag">STFT / ISTFT</span>
+      <span class="tag">frequency painting</span>
+      <span class="tag">radix-2 FFT</span>
+      <span class="tag">mic recording</span>
+    </div>
+    <div style="margin-top:8px; font-family:'VT323',monospace; font-size:0.8rem;">
+      <a href="sculptor-exercise.html" style="color:var(--amber); text-decoration:none;">Exercise: Building Timbre from Nothing</a>
+    </div>
+  </a>
+
+  <a class="lab-link" href="fuzzbox-octavia.html">
+    <div class="lab-num">LAB 03</div>
+    <div class="lab-title">Digital Octavia</div>
+    <div class="lab-desc">
+      Stage-by-stage simulation of the Roger Mayer Octavia octave fuzz (1967).
+      Five visible signal chain stages: input buffer, fuzz, transformer, full-wave rectifier, output filter.
+      Each stage has its own oscilloscope showing before and after. Watch |x| double the frequency.
+    </div>
+    <div class="lab-tags">
+      <span class="tag">germanium / silicon</span>
+      <span class="tag">transformer saturation</span>
+      <span class="tag">full-wave rectify</span>
+      <span class="tag">octave up</span>
+      <span class="tag">diode model</span>
+    </div>
+  </a>
+
+  <a class="lab-link" href="fuzzbox-reverb.html">
+    <div class="lab-num">LAB 04</div>
+    <div class="lab-title">Reverb Matching Lab</div>
+    <div class="lab-desc">
+      Record a clap in a real room, then try to match its reverb with a synthetic engine.
+      Schroeder decay curves show how seven octave bands (125 Hz–8 kHz) die out over time.
+      See how carpet absorbs highs, tile reflects everything, and a cathedral rings for seconds.
+      A/B comparison with match scoring.
+    </div>
+    <div class="lab-tags">
+      <span class="tag">impulse response</span>
+      <span class="tag">Schroeder integration</span>
+      <span class="tag">RT60</span>
+      <span class="tag">frequency-dependent decay</span>
+      <span class="tag">convolution reverb</span>
+      <span class="tag">room acoustics</span>
+    </div>
+  </a>
+
+  <div class="footer">
+    Doug Goodwin — CalArts 2026<br>
+    Drop audio files into <span style="color:var(--amber)">wavs/</span> and they appear in the labs automatically
+  </div>
+</div>
+
+</body>
+</html>

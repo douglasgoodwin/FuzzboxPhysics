@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Digital Octavia</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --red: #ff3030;
+    --blue: #00cfff;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 12px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor);
+    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.2em;
+    margin-top: 2px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  a.nav-link {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    transition: color 0.15s;
+  }
+  a.nav-link:hover { color: var(--phosphor); }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  .panel-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* === STAGES LAYOUT === */
+  .stages-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+    align-items: stretch;
+  }
+
+  .stage-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--phosphor-dim);
+    font-size: 1.2rem;
+    min-width: 20px;
+    padding-top: 20px;
+    flex-shrink: 0;
+  }
+
+  .stage-module {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage-module::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  .stage-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--phosphor);
+    letter-spacing: 0.05em;
+  }
+
+  .stage-name {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stage-scope {
+    width: 100%;
+    height: 130px;
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: #020502;
+  }
+
+  .stage-desc {
+    font-family: 'VT323', monospace;
+    font-size: 0.78rem;
+    color: var(--phosphor-dim);
+    line-height: 1.5;
+    margin: 6px 0;
+    min-height: 2.5em;
+  }
+
+  .stage-desc code {
+    color: var(--amber);
+    font-family: 'VT323', monospace;
+  }
+
+  .stage-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ctrl-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    min-width: 55px;
+    flex-shrink: 0;
+  }
+
+  .ctrl-val {
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    color: var(--phosphor);
+    min-width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    flex: 1;
+    min-width: 40px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--phosphor);
+    box-shadow: 0 0 6px var(--phosphor-glow);
+    cursor: pointer;
+  }
+
+  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 6px rgba(255,149,0,0.4); }
+  input[type=range].red-slider::-webkit-slider-thumb { background: var(--red); box-shadow: 0 0 6px rgba(255,48,48,0.4); }
+  input[type=range].blue::-webkit-slider-thumb { background: var(--blue); box-shadow: 0 0 6px rgba(0,207,255,0.4); }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    background: transparent;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--text);
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 6px var(--phosphor-glow);
+  }
+
+  button.active {
+    background: rgba(57,255,20,0.1);
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  button.amber-btn { border-color: rgba(255,149,0,0.4); color: var(--amber); }
+  button.amber-btn:hover, button.amber-btn.active {
+    background: rgba(255,149,0,0.1);
+    border-color: var(--amber);
+    box-shadow: 0 0 6px rgba(255,149,0,0.3);
+  }
+
+  button.bypass-btn { font-size: 0.55rem; padding: 2px 6px; margin-top: 2px; }
+  button.bypass-btn.bypassed {
+    background: rgba(255,48,48,0.1);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  select {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    background: #020a02;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--phosphor);
+    padding: 4px 6px;
+    border-radius: 2px;
+    cursor: pointer;
+    outline: none;
+  }
+  select option { background: #050a04; }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-line { width: 16px; height: 2px; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .grid-2 canvas {
+    width: 100%;
+    height: 120px;
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: #020502;
+  }
+
+  .file-drop {
+    border: 1px dashed var(--phosphor-dim);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.65rem;
+    color: var(--phosphor-dim);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: rgba(255,149,0,0.05);
+  }
+
+  .src-label {
+    font-size: 0.6rem;
+    color: var(--text);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .stages-row { flex-direction: column; }
+    .stage-arrow { transform: rotate(90deg); min-width: unset; padding: 4px 0; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>DIGITAL OCTAVIA</h1>
+    <div class="subtitle">∿ FUZZBOX PHYSICS — OCTAVE FUZZ SIGNAL CHAIN EXPLORER — AFTER ROGER MAYER, 1967</div>
+  </div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px">
+    <a href="fuzzbox-lab.html" class="nav-link">← DISTORTION LAB</a>
+    <a href="fuzzbox-sculptor.html" class="nav-link">← SPECTRAL SCULPTOR</a>
+  </div>
+</header>
+
+<!-- SOURCE + TRANSPORT -->
+<div class="panel" style="margin-bottom:10px">
+  <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap">
+    <div>
+      <div class="src-label">SIGNAL SOURCE</div>
+      <div class="btn-group" style="margin-bottom:6px">
+        <button onclick="setSource('osc')" id="src-osc" class="active">OSCILLATOR</button>
+        <button onclick="setSource('mic')" id="src-mic" class="amber-btn">🎙 MIC</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+        <select id="osc-type" onchange="updateOsc()">
+          <option value="sine">SINE</option>
+          <option value="sawtooth" selected>SAW</option>
+          <option value="square">SQUARE</option>
+          <option value="triangle">TRI</option>
+        </select>
+        <div class="ctrl-row" style="min-width:120px">
+          <span class="ctrl-label">FREQ</span>
+          <input type="range" id="osc-freq" min="80" max="1200" value="220" step="1"
+            oninput="updateOsc(); document.getElementById('freq-val').textContent=this.value+'Hz'">
+          <span class="ctrl-val" id="freq-val">220Hz</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="src-label">LOAD AUDIO</div>
+      <div class="btn-group" style="margin-bottom:6px" id="wav-btns"></div>
+      <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()">
+        DROP FILE HERE or click to browse
+      </div>
+      <input type="file" id="file-input" accept="audio/*" style="display:none" onchange="loadFileInput(this)">
+    </div>
+    <div style="margin-left:auto; display:flex; gap:12px; align-items:center">
+      <button onclick="togglePlay()" id="btn-play" style="font-size:0.9rem; padding:6px 16px">▶ PLAY</button>
+      <div class="ctrl-row">
+        <span class="ctrl-label">VOLUME</span>
+        <input type="range" id="master-vol" min="0" max="1" value="0.6" step="0.01"
+          oninput="masterGain=parseFloat(this.value); document.getElementById('vol-val').textContent=Math.round(this.value*100)+'%'">
+        <span class="ctrl-val" id="vol-val">60%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNAL CHAIN STAGES -->
+<div class="stages-row">
+  <!-- STAGE 1: INPUT BUFFER -->
+  <div class="stage-module">
+    <div class="stage-name"><span class="stage-num">①</span> INPUT BUFFER</div>
+    <canvas class="stage-scope" id="scope-0"></canvas>
+    <div class="stage-desc">
+      High-pass filter strips sub-bass before the fuzz.
+      <code>HPF: fc = bass cut</code>
+      Clean low end muddies the octave — Mayer cut it here.
+    </div>
+    <div class="stage-controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">BASS CUT</span>
+        <input type="range" id="s1-hpf" min="20" max="400" value="120" step="1"
+          oninput="updateFilters(); document.getElementById('s1-val').textContent=this.value+'Hz'">
+        <span class="ctrl-val" id="s1-val">120Hz</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage-arrow">→</div>
+
+  <!-- STAGE 2: FUZZ -->
+  <div class="stage-module">
+    <div class="stage-name"><span class="stage-num">②</span> FUZZ STAGE</div>
+    <canvas class="stage-scope" id="scope-1"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:rgba(57,255,20,0.25)"></div><span style="color:var(--phosphor-dim)">PRE</span></div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--phosphor)"></div><span style="color:var(--phosphor)">POST</span></div>
+    </div>
+    <div class="stage-desc">
+      Gain + germanium soft clip.
+      <code>f(x) = tanh(drive·x)</code>
+      Asymmetric bias → even harmonics. Germanium knee ≈ 0.3V.
+    </div>
+    <div class="stage-controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">DRIVE</span>
+        <input type="range" class="red-slider" id="s2-drive" min="1" max="50" value="12" step="0.5"
+          oninput="document.getElementById('s2-drv-val').textContent=parseFloat(this.value).toFixed(1)+'x'">
+        <span class="ctrl-val" id="s2-drv-val">12.0x</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">CHARACT</span>
+        <div class="btn-group">
+          <button onclick="setTransistor('ge')" id="btn-ge" class="active" style="font-size:0.55rem;padding:2px 6px">GERMANIUM</button>
+          <button onclick="setTransistor('si')" id="btn-si" style="font-size:0.55rem;padding:2px 6px">SILICON</button>
+        </div>
+      </div>
+      <button class="bypass-btn" onclick="toggleBypass(1)" id="bypass-1">ACTIVE</button>
+    </div>
+  </div>
+
+  <div class="stage-arrow">→</div>
+
+  <!-- STAGE 3: TRANSFORMER -->
+  <div class="stage-module">
+    <div class="stage-name"><span class="stage-num">③</span> TRANSFORMER</div>
+    <canvas class="stage-scope" id="scope-2"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:rgba(57,255,20,0.25)"></div><span style="color:var(--phosphor-dim)">PRE</span></div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--phosphor)"></div><span style="color:var(--phosphor)">POST</span></div>
+    </div>
+    <div class="stage-desc">
+      Bandpass + ferrite core saturation.
+      <code>BPF → tanh(sat·x)</code>
+      Phase-splits for the rectifier. Core adds odd harmonics.
+    </div>
+    <div class="stage-controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">CORE SAT</span>
+        <input type="range" class="amber" id="s3-sat" min="0.5" max="8" value="2.5" step="0.1"
+          oninput="document.getElementById('s3-sat-val').textContent=parseFloat(this.value).toFixed(1)">
+        <span class="ctrl-val" id="s3-sat-val">2.5</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">HF ROLL</span>
+        <input type="range" id="s3-lpf" min="2000" max="16000" value="9000" step="100"
+          oninput="updateFilters(); document.getElementById('s3-lpf-val').textContent=(this.value/1000).toFixed(1)+'k'">
+        <span class="ctrl-val" id="s3-lpf-val">9.0k</span>
+      </div>
+      <button class="bypass-btn" onclick="toggleBypass(2)" id="bypass-2">ACTIVE</button>
+    </div>
+  </div>
+
+  <div class="stage-arrow">→</div>
+
+  <!-- STAGE 4: RECTIFIER -->
+  <div class="stage-module">
+    <div class="stage-name"><span class="stage-num">④</span> RECTIFIER <span style="color:var(--amber)">(OCTAVE)</span></div>
+    <canvas class="stage-scope" id="scope-3"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:rgba(57,255,20,0.25)"></div><span style="color:var(--phosphor-dim)">PRE</span></div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--phosphor)"></div><span style="color:var(--phosphor)">RECT</span></div>
+    </div>
+    <div class="stage-desc">
+      Full-wave rectify: <code>f(x) ≈ |x|</code>
+      Doubles frequency → octave up. Fundamental eliminated.
+      |sin(ωt)| = 2/π − (4/3π)cos(2ωt) − ...
+    </div>
+    <div class="stage-controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">DIODE</span>
+        <div class="btn-group">
+          <button onclick="setDiode('ge')" id="diode-ge" class="active" style="font-size:0.55rem;padding:2px 6px">GERM (soft)</button>
+          <button onclick="setDiode('ideal')" id="diode-ideal" style="font-size:0.55rem;padding:2px 6px">IDEAL</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">OCT MIX</span>
+        <input type="range" class="amber" id="s4-mix" min="0" max="1" value="0.85" step="0.01"
+          oninput="document.getElementById('s4-mix-val').textContent=Math.round(this.value*100)+'%'">
+        <span class="ctrl-val" id="s4-mix-val">85%</span>
+      </div>
+      <button class="bypass-btn" onclick="toggleBypass(3)" id="bypass-3">ACTIVE</button>
+    </div>
+  </div>
+
+  <div class="stage-arrow">→</div>
+
+  <!-- STAGE 5: OUTPUT -->
+  <div class="stage-module">
+    <div class="stage-name"><span class="stage-num">⑤</span> OUTPUT FILTER</div>
+    <canvas class="stage-scope" id="scope-4"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:rgba(255,149,0,0.3)"></div><span style="color:var(--phosphor-dim)">DRY IN</span></div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--phosphor)"></div><span style="color:var(--phosphor)">OUT</span></div>
+    </div>
+    <div class="stage-desc">
+      DC removal + tone shaping.
+      <code>HPF(DC) → LPF(tone)</code>
+      Smooths rectifier hash. Dry/wet blends with clean input.
+    </div>
+    <div class="stage-controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">TONE</span>
+        <input type="range" id="s5-tone" min="1500" max="16000" value="6000" step="100"
+          oninput="updateFilters(); document.getElementById('s5-tone-val').textContent=(this.value/1000).toFixed(1)+'k'">
+        <span class="ctrl-val" id="s5-tone-val">6.0k</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">DRY/WET</span>
+        <input type="range" class="blue" id="s5-mix" min="0" max="1" value="1" step="0.01"
+          oninput="document.getElementById('s5-mix-val').textContent=Math.round(this.value*100)+'%W'">
+        <span class="ctrl-val" id="s5-mix-val">100%W</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPECTRUM COMPARISON -->
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-label">⬡ Spectrum — Input (Clean)</div>
+    <canvas id="fft-in"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-label">⬡ Spectrum — Output (Post-Octavia)</div>
+    <canvas id="fft-out"></canvas>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SIMPLE FIRST-ORDER FILTERS
+// ============================================================
+function makeHPF(fc, fs) {
+  const rc = 1 / (2 * Math.PI * fc);
+  const dt = 1 / fs;
+  return { alpha: rc / (rc + dt), prevX: 0, prevY: 0 };
+}
+function makeHPF2(fc, fs) { return [makeHPF(fc, fs), makeHPF(fc, fs)]; }
+
+function makeLPF(fc, fs) {
+  const rc = 1 / (2 * Math.PI * fc);
+  const dt = 1 / fs;
+  return { alpha: dt / (rc + dt), prevY: 0 };
+}
+function makeLPF2(fc, fs) { return [makeLPF(fc, fs), makeLPF(fc, fs)]; }
+
+function hpf(f, x) {
+  const y = f.alpha * (f.prevY + x - f.prevX);
+  f.prevX = x; f.prevY = y;
+  return y;
+}
+function hpf2(f, x) { return hpf(f[1], hpf(f[0], x)); }
+
+function lpf(f, x) {
+  const y = f.prevY + f.alpha * (x - f.prevY);
+  f.prevY = y;
+  return y;
+}
+function lpf2(f, x) { return lpf(f[1], lpf(f[0], x)); }
+
+function updateCoefHPF(f, fc, fs) {
+  const rc = 1 / (2 * Math.PI * fc); const dt = 1 / fs;
+  f.alpha = rc / (rc + dt);
+}
+function updateCoefLPF(f, fc, fs) {
+  const rc = 1 / (2 * Math.PI * fc); const dt = 1 / fs;
+  f.alpha = dt / (rc + dt);
+}
+
+// ============================================================
+// AUDIO STATE
+// ============================================================
+let audioCtx, scriptNode, oscNode, micStream, micSource, wavSource;
+let analyserIn, analyserOut;
+let isPlaying = false;
+let sourceType = 'osc';
+let masterGain = 0.6;
+let transistorType = 'ge'; // 'ge' or 'si'
+let diodeType = 'ge';      // 'ge' or 'ideal'
+let bypass = [false, false, false, false]; // stages 1-4 (0=fuzz,1=xfmr,2=rect,3=n/a)
+
+// Ring buffers for stage visualization (5 stages + input to stage = 6 taps)
+const RING = 4096;
+const rings = { input: new Float32Array(RING), postFuzz: new Float32Array(RING),
+  preFuzz: new Float32Array(RING), preXfmr: new Float32Array(RING),
+  postXfmr: new Float32Array(RING), preRect: new Float32Array(RING),
+  postRect: new Float32Array(RING), output: new Float32Array(RING),
+  dry: new Float32Array(RING) };
+let ringPos = 0;
+
+// Filters (initialized after audio context)
+let f_inputHPF, f_xfmrHPF, f_xfmrLPF, f_dcBlock, f_toneLPF;
+
+function initFilters(fs) {
+  const hpfFreq = parseFloat(document.getElementById('s1-hpf').value);
+  const lpfFreq = parseFloat(document.getElementById('s3-lpf').value);
+  const toneFreq = parseFloat(document.getElementById('s5-tone').value);
+
+  f_inputHPF = makeHPF2(hpfFreq, fs);
+  f_xfmrHPF = makeHPF2(150, fs);    // transformer core LF rolloff
+  f_xfmrLPF = makeLPF2(lpfFreq, fs);
+  f_dcBlock  = makeHPF(20, fs);       // DC removal after rectifier
+  f_toneLPF  = makeLPF2(toneFreq, fs);
+}
+
+function updateFilters() {
+  if (!audioCtx) return;
+  const fs = audioCtx.sampleRate;
+  const hpfFreq = parseFloat(document.getElementById('s1-hpf').value);
+  const lpfFreq = parseFloat(document.getElementById('s3-lpf').value);
+  const toneFreq = parseFloat(document.getElementById('s5-tone').value);
+  f_inputHPF.forEach(f => updateCoefHPF(f, hpfFreq, fs));
+  f_xfmrLPF.forEach(f => updateCoefLPF(f, lpfFreq, fs));
+  f_toneLPF.forEach(f => updateCoefLPF(f, toneFreq, fs));
+}
+
+// ============================================================
+// OCTAVIA SIGNAL PROCESSING
+// ============================================================
+function processBlock(e) {
+  const inp = e.inputBuffer.getChannelData(0);
+  const out = e.outputBuffer.getChannelData(0);
+
+  const drive = parseFloat(document.getElementById('s2-drive').value);
+  const satLevel = parseFloat(document.getElementById('s3-sat').value);
+  const octMix = parseFloat(document.getElementById('s4-mix').value);
+  const dryWet = parseFloat(document.getElementById('s5-mix').value);
+
+  // Germanium vs silicon softness
+  const softness = transistorType === 'ge' ? 0.7 : 1.8;
+  const bias = transistorType === 'ge' ? 0.12 : 0.03;
+  // Diode softness (delta for soft rectify)
+  const diodeDelta = diodeType === 'ge' ? 0.08 : 0.005;
+
+  for (let i = 0; i < inp.length; i++) {
+    let x = inp[i];
+    const dry = x;
+
+    // === STAGE 1: Input HPF (bass cut) ===
+    x = hpf2(f_inputHPF, x);
+    rings.input[ringPos] = x;
+
+    // Save pre-fuzz for scope overlay
+    rings.preFuzz[ringPos] = x;
+
+    // === STAGE 2: Fuzz (gain + clip) ===
+    if (!bypass[0]) {
+      const gained = x * drive;
+      // Asymmetric germanium/silicon soft clip with bias
+      const biased = gained + bias;
+      let clipped = Math.tanh(biased * softness);
+      clipped -= Math.tanh(bias * softness); // remove DC from bias
+      // Normalize output range
+      clipped /= (1 - Math.tanh(bias * softness) * 0.5);
+      x = clipped;
+    }
+    rings.postFuzz[ringPos] = x;
+
+    // Save pre-transformer for scope overlay
+    rings.preXfmr[ringPos] = x;
+
+    // === STAGE 3: Transformer (BPF + saturation) ===
+    if (!bypass[1]) {
+      // Transformer core HPF (~150Hz)
+      x = hpf2(f_xfmrHPF, x);
+      // Transformer bandwidth LPF
+      x = lpf2(f_xfmrLPF, x);
+      // Core saturation
+      const s = satLevel;
+      x = Math.tanh(x * s) / Math.tanh(s > 0.1 ? s : 0.1);
+    }
+    rings.postXfmr[ringPos] = x;
+
+    // Save pre-rectifier for scope overlay
+    rings.preRect[ringPos] = x;
+
+    // === STAGE 4: Full-wave rectifier (octave) ===
+    if (!bypass[2]) {
+      // Soft full-wave rectification: sqrt(x²+δ²) - δ ≈ |x| for x >> δ
+      const rectified = Math.sqrt(x * x + diodeDelta * diodeDelta) - diodeDelta;
+      // Blend rectified with pre-rect
+      x = rectified * octMix + x * (1 - octMix);
+    }
+    rings.postRect[ringPos] = x;
+
+    // === STAGE 5: Output filter ===
+    // DC block (always on — rectifier creates DC)
+    x = hpf(f_dcBlock, x);
+    // Tone LPF
+    x = lpf2(f_toneLPF, x);
+
+    // Dry/wet blend
+    x = x * dryWet + dry * (1 - dryWet);
+    x *= masterGain;
+
+    rings.output[ringPos] = x;
+    rings.dry[ringPos] = dry;
+
+    out[i] = x;
+    ringPos = (ringPos + 1) % RING;
+  }
+}
+
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+async function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  initFilters(audioCtx.sampleRate);
+
+  analyserIn = audioCtx.createAnalyser();
+  analyserIn.fftSize = 2048;
+  analyserOut = audioCtx.createAnalyser();
+  analyserOut.fftSize = 2048;
+
+  scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
+  scriptNode.onaudioprocess = processBlock;
+
+  // Chain: source → analyserIn → scriptNode → analyserOut → destination
+  analyserIn.connect(scriptNode);
+  scriptNode.connect(analyserOut);
+  analyserOut.connect(audioCtx.destination);
+}
+
+function disconnectSource() {
+  try { if (oscNode) { oscNode.stop(); oscNode.disconnect(); } } catch(e) {}
+  try { if (micSource) { micSource.disconnect(); } } catch(e) {}
+  try { if (micStream) { micStream.getTracks().forEach(t => t.stop()); } } catch(e) {}
+  try { if (wavSource) { wavSource.stop(); wavSource.disconnect(); } } catch(e) {}
+  oscNode = null; micSource = null; micStream = null; wavSource = null;
+}
+
+function startOsc() {
+  disconnectSource();
+  oscNode = audioCtx.createOscillator();
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+  oscNode.connect(analyserIn);
+  oscNode.start();
+  isPlaying = true;
+  updatePlayBtn();
+}
+
+function updateOsc() {
+  if (!oscNode || sourceType !== 'osc') return;
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+}
+
+async function startMic() {
+  disconnectSource();
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micSource = audioCtx.createMediaStreamSource(micStream);
+    micSource.connect(analyserIn);
+    isPlaying = true;
+    updatePlayBtn();
+  } catch(err) {
+    alert('Mic access denied: ' + err.message);
+    setSource('osc');
+  }
+}
+
+function startWav(audioBuffer) {
+  disconnectSource();
+  wavSource = audioCtx.createBufferSource();
+  wavSource.buffer = audioBuffer;
+  wavSource.loop = true;
+  wavSource.connect(analyserIn);
+  wavSource.start();
+  isPlaying = true;
+  sourceType = 'wav';
+  updatePlayBtn();
+  document.querySelectorAll('#src-osc,#src-mic').forEach(b => b.classList.remove('active'));
+}
+
+async function setSource(type) {
+  await initAudio();
+  sourceType = type;
+  document.getElementById('src-osc').classList.toggle('active', type === 'osc');
+  document.getElementById('src-mic').classList.toggle('active', type === 'mic');
+  if (type === 'osc') startOsc();
+  else if (type === 'mic') await startMic();
+}
+
+async function togglePlay() {
+  await initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (!isPlaying) {
+    if (sourceType === 'osc') startOsc();
+    else if (sourceType === 'mic') await startMic();
+  } else {
+    disconnectSource();
+    isPlaying = false;
+  }
+  updatePlayBtn();
+}
+
+function updatePlayBtn() {
+  const btn = document.getElementById('btn-play');
+  btn.textContent = isPlaying ? '■ STOP' : '▶ PLAY';
+  btn.classList.toggle('active', isPlaying);
+}
+
+// ============================================================
+// WAV FILE LOADING
+// ============================================================
+let loadedAudioBuffer = null;
+
+async function decodeAndPlay(arrayBuffer, label) {
+  await initAudio();
+  try {
+    loadedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    startWav(loadedAudioBuffer);
+  } catch(err) {
+    alert('Could not decode audio: ' + err.message);
+  }
+}
+
+async function loadNamedWav(filename) {
+  await initAudio();
+  try {
+    const resp = await fetch('wavs/' + filename);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    await decodeAndPlay(buf, filename);
+  } catch(err) {
+    alert('Could not fetch wavs/' + filename + '.\n\nRun the server first:\n  node server.js\nthen open http://localhost:3000/fuzzbox-octavia.html');
+  }
+}
+
+// Discover WAV files from the server API
+async function loadWavList() {
+  const container = document.getElementById('wav-btns');
+  try {
+    const resp = await fetch('/api/wavs');
+    if (!resp.ok) throw new Error('no api');
+    const data = await resp.json();
+    if (!data.files.length) {
+      container.innerHTML = '<span style="font-size:0.6rem;color:var(--phosphor-dim)">No files in wavs/</span>';
+      return;
+    }
+    container.innerHTML = '';
+    data.files.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'amber-btn';
+      btn.textContent = f.replace(/\.[^.]+$/, '').replace(/_/g, ' ').toUpperCase();
+      btn.onclick = () => loadNamedWav(f);
+      container.appendChild(btn);
+    });
+  } catch(e) {
+    // Not running via server — show hint
+    container.innerHTML = '<span style="font-size:0.6rem;color:var(--phosphor-dim)">Run <code style="color:var(--amber)">node server.js</code> to load wavs/</span>';
+  }
+}
+loadWavList();
+
+async function loadFileInput(input) {
+  if (!input.files.length) return;
+  const buf = await input.files[0].arrayBuffer();
+  await decodeAndPlay(buf, input.files[0].name);
+}
+
+// Drag and drop
+const dropZone = document.getElementById('file-drop');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', async e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    const buf = await e.dataTransfer.files[0].arrayBuffer();
+    await decodeAndPlay(buf, e.dataTransfer.files[0].name);
+  }
+});
+
+// ============================================================
+// UI CONTROLS
+// ============================================================
+function setTransistor(type) {
+  transistorType = type;
+  document.getElementById('btn-ge').classList.toggle('active', type === 'ge');
+  document.getElementById('btn-si').classList.toggle('active', type === 'si');
+}
+
+function setDiode(type) {
+  diodeType = type;
+  document.getElementById('diode-ge').classList.toggle('active', type === 'ge');
+  document.getElementById('diode-ideal').classList.toggle('active', type === 'ideal');
+}
+
+function toggleBypass(stage) {
+  // bypass array is 0-indexed: 0=fuzz, 1=xfmr, 2=rect
+  bypass[stage - 1] = !bypass[stage - 1];
+  const btn = document.getElementById('bypass-' + stage);
+  btn.textContent = bypass[stage - 1] ? 'BYPASSED' : 'ACTIVE';
+  btn.classList.toggle('bypassed', bypass[stage - 1]);
+}
+
+// ============================================================
+// VISUALIZATION
+// ============================================================
+const SCOPE_GREEN = '#39ff14';
+const SCOPE_DIM = 'rgba(57,255,20,0.25)';
+const SCOPE_AMBER = 'rgba(255,149,0,0.3)';
+
+function drawStageScope(canvasId, ringMain, ringGhost, ghostColor) {
+  const c = document.getElementById(canvasId);
+  const g = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  g.fillStyle = '#020502';
+  g.fillRect(0, 0, W, H);
+
+  // Grid
+  g.strokeStyle = 'rgba(57,255,20,0.06)';
+  g.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(W*i/4,0); g.lineTo(W*i/4,H); g.stroke(); }
+  g.strokeStyle = 'rgba(57,255,20,0.12)';
+  g.setLineDash([3,3]);
+  g.beginPath(); g.moveTo(0,H/2); g.lineTo(W,H/2); g.stroke();
+  g.setLineDash([]);
+
+  // Find zero crossing in main ring
+  const read = ringPos; // current write position = oldest readable
+  let start = 0;
+  for (let i = 1; i < RING / 2; i++) {
+    const idx0 = (read + i - 1) % RING;
+    const idx1 = (read + i) % RING;
+    if (ringMain[idx0] < 0 && ringMain[idx1] >= 0) { start = i; break; }
+  }
+
+  const samples = Math.min(W * 2, RING / 2);
+
+  // Draw ghost (previous stage)
+  if (ringGhost) {
+    g.strokeStyle = ghostColor || SCOPE_DIM;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    for (let i = 0; i < W; i++) {
+      const idx = (read + start + Math.floor(i / W * samples)) % RING;
+      const y = ((1 - ringGhost[idx]) / 2) * H;
+      i === 0 ? g.moveTo(i, y) : g.lineTo(i, y);
+    }
+    g.stroke();
+  }
+
+  // Draw main signal
+  g.strokeStyle = SCOPE_GREEN;
+  g.lineWidth = 2;
+  g.shadowBlur = 5;
+  g.shadowColor = 'rgba(57,255,20,0.35)';
+  g.beginPath();
+  for (let i = 0; i < W; i++) {
+    const idx = (read + start + Math.floor(i / W * samples)) % RING;
+    const y = ((1 - ringMain[idx]) / 2) * H;
+    i === 0 ? g.moveTo(i, y) : g.lineTo(i, y);
+  }
+  g.stroke();
+  g.shadowBlur = 0;
+}
+
+function drawSpectrum(canvasId, analyser, color) {
+  const c = document.getElementById(canvasId);
+  const g = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  g.fillStyle = '#020502';
+  g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(57,255,20,0.05)';
+  g.lineWidth = 1;
+  for (let i = 1; i < 8; i++) { g.beginPath(); g.moveTo(W*i/8,0); g.lineTo(W*i/8,H); g.stroke(); }
+
+  if (!analyser) return;
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(buf);
+  const len = buf.length;
+
+  const grad = g.createLinearGradient(0, H, 0, 0);
+  grad.addColorStop(0, color + '99');
+  grad.addColorStop(1, color);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.moveTo(0, H);
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * len);
+    const v = buf[Math.min(logIdx, len - 1)];
+    g.lineTo(i, H - (v / 255) * H);
+  }
+  g.lineTo(W, H);
+  g.closePath();
+  g.fill();
+
+  g.strokeStyle = color;
+  g.lineWidth = 1.5;
+  g.shadowBlur = 4;
+  g.shadowColor = color + '60';
+  g.beginPath();
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * len);
+    const v = buf[Math.min(logIdx, len - 1)];
+    const y = H - (v / 255) * H;
+    i === 0 ? g.moveTo(i, y) : g.lineTo(i, y);
+  }
+  g.stroke();
+  g.shadowBlur = 0;
+}
+
+// Canvas sizing
+function resizeAll() {
+  for (let i = 0; i < 5; i++) {
+    const c = document.getElementById('scope-' + i);
+    const r = c.getBoundingClientRect();
+    c.width = Math.floor(r.width) || 200;
+    c.height = Math.floor(r.height) || 130;
+  }
+  ['fft-in', 'fft-out'].forEach(id => {
+    const c = document.getElementById(id);
+    const r = c.getBoundingClientRect();
+    c.width = Math.floor(r.width) || 400;
+    c.height = Math.floor(r.height) || 120;
+  });
+}
+
+// Main render loop
+function render() {
+  requestAnimationFrame(render);
+
+  // Stage scopes
+  drawStageScope('scope-0', rings.input, null, null);
+  drawStageScope('scope-1', rings.postFuzz, rings.preFuzz, SCOPE_DIM);
+  drawStageScope('scope-2', rings.postXfmr, rings.preXfmr, SCOPE_DIM);
+  drawStageScope('scope-3', rings.postRect, rings.preRect, SCOPE_DIM);
+  drawStageScope('scope-4', rings.output, rings.dry, SCOPE_AMBER);
+
+  // Spectrum
+  drawSpectrum('fft-in', analyserIn, '#ff9500');
+  drawSpectrum('fft-out', analyserOut, '#39ff14');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('resize', resizeAll);
+window.addEventListener('DOMContentLoaded', () => setTimeout(resizeAll, 120));
+document.addEventListener('click', async function handler() {
+  if (!audioCtx) {
+    await initAudio();
+    startOsc();
+  }
+  document.removeEventListener('click', handler);
+}, { once: false });
+
+render();
+</script>
+</body>
+</html>

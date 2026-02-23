@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Spectral Sculptor Exercise</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    padding: 24px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  .wrap { max-width: 700px; margin: 0 auto; }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.1em;
+    color: var(--phosphor);
+    text-shadow: 0 0 15px var(--phosphor-glow);
+  }
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 0.9rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+  }
+  .nav {
+    margin-top: 6px;
+    font-size: 0.7rem;
+  }
+  .nav a {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    margin-right: 10px;
+  }
+  .nav a:hover { color: var(--phosphor); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .part {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .part::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.4;
+  }
+
+  .part-num {
+    font-family: 'VT323', monospace;
+    font-size: 0.8rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 2px;
+  }
+  .part-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.06em;
+    color: var(--phosphor);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-family: 'VT323', monospace;
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--amber);
+    min-width: 22px;
+    text-align: right;
+    padding-top: 2px;
+  }
+  .step-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .listen {
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    color: var(--amber);
+    margin: 6px 0 6px 32px;
+    line-height: 1.6;
+  }
+
+  .hint {
+    font-family: 'VT323', monospace;
+    font-size: 0.9rem;
+    color: var(--phosphor-dim);
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    margin: 10px 0 6px 32px;
+    line-height: 1.6;
+  }
+
+  .freq-table {
+    margin: 10px 0 10px 32px;
+    border-collapse: collapse;
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+  }
+  .freq-table th {
+    color: var(--phosphor-dim);
+    text-align: left;
+    padding: 2px 14px 2px 0;
+    font-weight: normal;
+    letter-spacing: 0.1em;
+  }
+  .freq-table td {
+    color: var(--amber);
+    padding: 2px 14px 2px 0;
+  }
+  .freq-table td.dim { color: var(--phosphor-dim); }
+
+  .deliverable {
+    background: rgba(255, 149, 0, 0.06);
+    border: 1px solid rgba(255, 149, 0, 0.2);
+    border-radius: 3px;
+    padding: 10px 14px;
+    margin-top: 12px;
+  }
+  .deliverable-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--amber);
+    margin-bottom: 4px;
+  }
+  .deliverable p {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+
+  .open-link {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--phosphor);
+    border: 1px solid var(--phosphor-dim);
+    padding: 6px 14px;
+    border-radius: 3px;
+    text-decoration: none;
+    margin: 10px 0;
+    transition: all 0.15s;
+  }
+  .open-link:hover {
+    border-color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  .keyword {
+    color: var(--phosphor);
+  }
+  .freq {
+    color: var(--amber);
+  }
+
+  .intro {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    line-height: 1.8;
+    margin-bottom: 6px;
+  }
+
+  .footer {
+    font-size: 0.65rem;
+    color: var(--phosphor-dim);
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>BUILDING TIMBRE FROM NOTHING</h1>
+  <div class="subtitle">SPECTRAL SCULPTOR EXERCISE — FUZZBOX PHYSICS</div>
+  <div class="nav">
+    <a href="index.html">INDEX</a>
+    <a href="fuzzbox-sculptor.html">OPEN SCULPTOR</a>
+    <a href="fuzzbox-lab.html">LAB 01</a>
+    <a href="fuzzbox-octavia.html">LAB 03</a>
+    <a href="fuzzbox-reverb.html">LAB 04</a>
+  </div>
+
+  <hr>
+
+  <p class="intro">
+    A spectrogram is a complete picture of a sound. Every sound you have ever heard could
+    be drawn as a pattern on this grid — frequency on the vertical axis, time on the horizontal,
+    brightness for loudness. In this exercise you will build sounds from silence by painting
+    directly into the frequency domain, then take apart a real sound to see what it's made of.
+  </p>
+
+  <a class="open-link" href="fuzzbox-sculptor.html" target="_blank">Open the Spectral Sculptor in a new tab</a>
+
+  <hr>
+
+  <!-- ═══════ TOOLS ═══════ -->
+  <div class="part" style="border-color: var(--phosphor-dim);">
+    <div class="part-num">TOOLS REFERENCE</div>
+    <div class="part-title">The Brush and the Rake</div>
+
+    <p>The Sculptor has two painting modes. Learn both before you start.</p>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-text">
+        <span class="keyword">BRUSH</span> — The default. Paints energy at the frequency under your cursor.
+        Adjust <span class="freq">SIZE</span> for width and <span class="freq">INTENSITY</span> for loudness.
+        Good for precise single-frequency work.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-text">
+        <span class="keyword">RAKE</span> — Slide the <span class="freq">RAKE</span> control above 1.
+        Now when you paint at any frequency, the tool automatically paints harmonics above it
+        at 2&times;, 3&times;, 4&times;, etc. — all from a single drag. Higher harmonics are
+        progressively quieter, just like in nature. Set it to <span class="freq">8</span> for a full
+        harmonic series.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-text">
+        <span class="keyword">ODD ONLY</span> — Click this button to make the rake skip even harmonics
+        (2nd, 4th, 6th). It only paints 1st, 3rd, 5th, 7th — the recipe for a square wave
+        or clarinet tone.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-text">
+        <span class="keyword">ERASE</span> — Click <span class="freq">ERASE (−)</span> or hold
+        <span class="freq">SHIFT</span> while dragging to remove energy.
+        The rake works in erase mode too — it removes all harmonics at once.
+      </div>
+    </div>
+
+    <div class="hint">
+      The frequency readout at the bottom of the spectrogram shows the exact Hz under your
+      cursor. Use it to place your lines precisely.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ═══════ PART 1 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 1</div>
+    <div class="part-title">The Harmonic Series by Hand</div>
+
+    <p>Every pitched sound is built from a stack of sine waves at whole-number multiples
+    of a fundamental frequency. You are going to prove this by building one yourself.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        In the Sculptor, click <span class="keyword">SILENCE</span> to start with an empty spectrogram.
+        Set brush size to <span class="freq">3</span> and intensity to about <span class="freq">30%</span>.
+        Make sure <span class="freq">RAKE</span> is set to <span class="freq">1</span> (off) — you'll
+        do this one by hand first.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Paint a thin horizontal line at <span class="freq">220 Hz</span> (that's A3).
+        Drag slowly from left to right to fill the whole 2-second loop.
+        Press play.
+      </div>
+    </div>
+
+    <div class="listen">You should hear a pure sine tone — smooth, featureless, almost electronic.</div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Now paint a second horizontal line at exactly <span class="freq">440 Hz</span> (2 &times; 220).
+        This is the second harmonic. Listen again.
+      </div>
+    </div>
+
+    <div class="listen">Same pitch, but it sounds different — brighter, more present. That's timbre changing.</div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Keep adding harmonics one at a time. Each one is at a whole-number multiple of 220 Hz.
+        Listen after each new harmonic and notice how the timbre evolves:
+      </div>
+    </div>
+
+    <table class="freq-table">
+      <tr><th>HARMONIC</th><th>FREQUENCY</th><th>INTERVAL</th></tr>
+      <tr><td>1st</td><td>220 Hz</td><td class="dim">fundamental</td></tr>
+      <tr><td>2nd</td><td>440 Hz</td><td class="dim">octave</td></tr>
+      <tr><td>3rd</td><td>660 Hz</td><td class="dim">octave + fifth</td></tr>
+      <tr><td>4th</td><td>880 Hz</td><td class="dim">two octaves</td></tr>
+      <tr><td>5th</td><td>1100 Hz</td><td class="dim">two octaves + major third</td></tr>
+      <tr><td>6th</td><td>1320 Hz</td><td class="dim">two octaves + fifth</td></tr>
+      <tr><td>7th</td><td>1540 Hz</td><td class="dim">two octaves + minor seventh</td></tr>
+      <tr><td>8th</td><td>1760 Hz</td><td class="dim">three octaves</td></tr>
+    </table>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">
+        After adding all eight, listen. You've built something close to a <span class="keyword">sawtooth wave</span>
+        — the same waveform an analog synth generates. Every harmonic is present, each a little quieter than the last.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-text">
+        Now try it the fast way. Click <span class="keyword">SILENCE</span> again. Set the
+        <span class="freq">RAKE</span> slider to <span class="freq">8</span>.
+        Paint a single line at <span class="freq">220 Hz</span> — all eight harmonics
+        appear at once, with natural rolloff.
+        Compare the sound to what you built by hand.
+      </div>
+    </div>
+
+    <div class="hint">
+      The rake applies 1/n rolloff — the 2nd harmonic is half as loud as the fundamental,
+      the 3rd is a third as loud, and so on. This is the natural spectrum of a sawtooth wave.
+      When you painted by hand, did you make the higher harmonics progressively quieter?
+      If not, your hand-built version probably sounded buzzier and brighter.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 1</div>
+      <p>Your hand-painted harmonic series spectrogram with all eight harmonics visible as horizontal lines.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 2 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 2</div>
+    <div class="part-title">What Makes a Clarinet?</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click <span class="keyword">SILENCE</span> to start fresh.
+        Set <span class="freq">RAKE</span> to <span class="freq">8</span> and click the
+        <span class="keyword">ODD ONLY</span> button (it should highlight).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Paint a single horizontal line at <span class="freq">220 Hz</span>.
+        The rake paints only the odd harmonics for you — 1st, 3rd, 5th, 7th:
+      </div>
+    </div>
+
+    <table class="freq-table">
+      <tr><th>HARMONIC</th><th>FREQUENCY</th><th>EVEN/ODD</th></tr>
+      <tr><td>1st</td><td>220 Hz</td><td>odd — painted by rake</td></tr>
+      <tr><td>2nd</td><td>440 Hz</td><td class="dim">even — skipped</td></tr>
+      <tr><td>3rd</td><td>660 Hz</td><td>odd — painted by rake</td></tr>
+      <tr><td>4th</td><td>880 Hz</td><td class="dim">even — skipped</td></tr>
+      <tr><td>5th</td><td>1100 Hz</td><td>odd — painted by rake</td></tr>
+      <tr><td>6th</td><td>1320 Hz</td><td class="dim">even — skipped</td></tr>
+      <tr><td>7th</td><td>1540 Hz</td><td>odd — painted by rake</td></tr>
+    </table>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Press play and compare to Part 1.
+      </div>
+    </div>
+
+    <div class="listen">
+      It sounds hollow, woody, nasal — like a clarinet or a square wave.
+      The missing even harmonics create gaps in the spectrum that give it that distinctive color.
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Turn off <span class="keyword">ODD ONLY</span> and set <span class="freq">RAKE</span> back
+        to <span class="freq">1</span>. Now paint in one even harmonic by hand — a line at
+        <span class="freq">440 Hz</span>. Listen to how the character shifts.
+        The hollowness fills in.
+      </div>
+    </div>
+
+    <div class="hint">
+      A clarinet's cylindrical bore naturally cancels even harmonics. An oboe's conical bore
+      keeps them. This is why they sound so different playing the same note.
+      The physics of the tube determines which harmonics survive.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 2</div>
+      <p>Your odd-harmonics-only spectrogram. Write one sentence: how does removing the even
+      harmonics change the sound compared to Part 1?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 3 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 3</div>
+    <div class="part-title">Destroy and Discover</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click the <span class="keyword">VOWEL</span> preset. It generates a synthetic "ahh" sound.
+        Study the spectrogram before you touch anything.
+      </div>
+    </div>
+
+    <div class="listen">
+      You should see several bright horizontal bands at specific heights.
+      These are <span class="keyword">formants</span> — resonant frequencies
+      created by the shape of the mouth and throat. Every vowel has a different
+      pattern of formants. This is how your brain tells "ah" from "ee" from "oo."
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Switch to the <span class="keyword">eraser</span> (hold Shift while dragging, or use a large brush
+        at high intensity to paint over areas). Erase the <span class="keyword">lowest bright band</span>
+        (around 200–400 Hz). Listen.
+      </div>
+    </div>
+
+    <div class="listen">
+      The vowel should sound thinner, less full — you removed the first formant, which
+      carries the "body" of the voice.
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Reload <span class="keyword">VOWEL</span>. Now erase everything <em>except</em> the fundamental
+        (the very lowest line). Leave only that single horizontal stripe at the bottom.
+      </div>
+    </div>
+
+    <div class="listen">
+      Same pitch — but it doesn't sound like a voice anymore. It's just a sine tone.
+      <span class="keyword">Timbre is everything above the fundamental.</span>
+      The fundamental tells you the note. Everything else tells you what's playing it.
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Reload <span class="keyword">VOWEL</span> one more time. Now erase the <em>fundamental</em>
+        (lowest line) and keep everything else.
+      </div>
+    </div>
+
+    <div class="listen">
+      Surprise — you still hear roughly the same pitch. Your brain reconstructs the fundamental
+      from the harmonic series above it. This is called the <span class="keyword">missing fundamental</span>
+      effect. It's why tiny phone speakers can reproduce bass notes whose wavelengths
+      are longer than the speaker itself.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 3</div>
+      <p>Your vowel with the fundamental erased. Write one sentence: why can you still hear the pitch?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 4 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 4</div>
+    <div class="part-title">Spectral Self-Portrait</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click <span class="keyword">RECORD</span> and say "ahhh" steadily for 2 seconds. Let it loop
+        and study your spectrogram.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Find your <span class="keyword">fundamental frequency</span> — the lowest bright horizontal line.
+        It's probably between <span class="freq">85 Hz</span> (low male voice)
+        and <span class="freq">250 Hz</span> (high female voice). Note the frequency.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Count the harmonics above it. Are they evenly spaced? (They should be — each one
+        is at a whole-number multiple of your fundamental.) How many can you see before
+        they fade into the noise floor?
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Find the <span class="keyword">formants</span> — the frequency regions where the harmonics are
+        brightest. For "ahh," you should see strong energy around
+        <span class="freq">700–800 Hz</span> (first formant) and
+        <span class="freq">1000–1200 Hz</span> (second formant).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">
+        Now click <span class="keyword">SILENCE</span>. From memory and from what you observed,
+        try to <span class="keyword">repaint your own voice</span>. Use the <span class="freq">RAKE</span>
+        set to about <span class="freq">10–12</span> harmonics and paint at your fundamental
+        frequency — you'll get the whole harmonic stack in one stroke. Then switch to the regular
+        brush (<span class="freq">RAKE = 1</span>) and boost the formant regions where the
+        harmonics should be brighter.
+      </div>
+    </div>
+
+    <div class="listen">
+      Don't expect a perfect recreation — the point is to see how close you can get and to
+      understand what your voice is actually made of. If it sounds vaguely vowel-like,
+      you've understood the physics.
+    </div>
+
+    <div class="hint">
+      Voices are rich and complex. A typical speaking voice has 20+ audible harmonics,
+      vibrato (slight pitch wavering), noise from breath, and formant transitions.
+      Getting even a rough approximation by painting teaches you more about voice
+      acoustics than any textbook diagram.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 4A</div>
+      <p>Your recorded voice spectrogram, with your fundamental frequency labeled.</p>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 4B</div>
+      <p>Your painted recreation. Write 2–3 sentences: what was hardest to recreate? What does that
+      tell you about the complexity of human voice?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 5 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 5 — BONUS</div>
+    <div class="part-title">Spectral Score</div>
+
+    <p>Composers like Iannis Xenakis and Aphex Twin have hidden images inside spectrograms.
+    The spectrogram is a canvas. Whatever you draw, you will hear.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Start from <span class="keyword">SILENCE</span>. Using the brush, draw something — a shape,
+        a letter, an abstract pattern, a face. Don't think about what it will sound like.
+        Just draw.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Press play and listen. Now adjust your drawing to make it sound more interesting.
+        Notice: horizontal lines sustain, vertical lines click, diagonals sweep,
+        filled regions roar, thin lines sing.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Try to make a 2-second sound that <em>tells a story</em> or <em>describes a place</em>.
+        A rainstorm. A machine starting up. A creature calling. An explosion in reverse.
+        Think cinematically.
+      </div>
+    </div>
+
+    <div class="hint">
+      Horizontal = tone. Vertical = percussion. Diagonal = glissando.
+      Wide band = noise/texture. Narrow band = pitch. Low = rumble. High = shimmer.
+      You are composing with the raw physics of sound.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">SCREENSHOT 5</div>
+      <p>Your spectral score. Title it and write one sentence describing what you were trying to evoke.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="part" style="background:transparent; border-color: var(--phosphor-dim);">
+    <div class="part-title" style="font-size:1.2rem;">What to Turn In</div>
+    <p>Five screenshots with short written responses as described above. Submit as a single PDF or a series of images.
+    There are no wrong sounds — the goal is to understand the relationship between what you see in the spectrogram
+    and what you hear.</p>
+  </div>
+
+  <div class="footer">
+    Doug Goodwin — CalArts 2026 — CSCM 373-01 Fuzzbox Physics<br>
+    <a href="fuzzbox-sculptor.html" style="color:var(--phosphor-dim); text-decoration:none;">Open Spectral Sculptor</a>
+  </div>
+
+</div>
+</body>
+</html>

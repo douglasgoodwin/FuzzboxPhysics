@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Spectral Sculptor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --red: #ff3030;
+    --blue: #00cfff;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 16px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor);
+    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.2em;
+    margin-top: 2px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  .panel-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  canvas {
+    width: 100%;
+    height: 380px;
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: #020502;
+    cursor: crosshair;
+  }
+
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 64px;
+  }
+
+  .knob-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .knob-value {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor);
+    min-width: 48px;
+    text-align: center;
+    background: #020a02;
+    border: 1px solid var(--border);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    max-width: 140px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+    cursor: pointer;
+  }
+
+  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  button.active {
+    background: rgba(57,255,20,0.1);
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 10px var(--phosphor-glow);
+  }
+
+  button.amber-btn {
+    border-color: rgba(255,149,0,0.5);
+    color: var(--amber);
+  }
+  button.amber-btn:hover, button.amber-btn.active {
+    background: rgba(255,149,0,0.1);
+    border-color: var(--amber);
+    box-shadow: 0 0 8px rgba(255,149,0,0.4);
+  }
+
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  a.nav-link {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    transition: color 0.15s;
+  }
+  a.nav-link:hover { color: var(--phosphor); }
+
+  .recording { animation: rec-blink 0.5s infinite alternate; }
+  @keyframes rec-blink {
+    from { border-color: var(--red); color: var(--red); box-shadow: 0 0 8px rgba(255,48,48,0.4); }
+    to { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 4px rgba(255,149,0,0.2); }
+  }
+
+  @media (max-width: 700px) {
+    canvas { height: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>SPECTRAL SCULPTOR</h1>
+    <div class="subtitle">∿ FUZZBOX PHYSICS — PAINT SOUND IN THE FREQUENCY DOMAIN</div>
+  </div>
+  <div>
+    <a href="fuzzbox-lab.html" class="nav-link">← DISTORTION LAB</a>
+  </div>
+</header>
+
+<!-- SOURCE + TRANSPORT -->
+<div class="panel" style="margin-bottom:12px">
+  <div class="panel-label">⬡ Signal Source</div>
+  <div class="btn-group" id="source-btns">
+    <button onclick="loadSource('pluck')" class="active" id="src-pluck">PLUCK</button>
+    <button onclick="loadSource('drone')" id="src-drone">DRONE</button>
+    <button onclick="loadSource('fifth')" id="src-fifth">FIFTH</button>
+    <button onclick="loadSource('vowel')" id="src-vowel">VOWEL "AH"</button>
+    <button onclick="loadSource('noise')" id="src-noise">NOISE</button>
+    <button onclick="loadSource('silence')" id="src-silence">SILENCE</button>
+    <button onclick="startRecording()" id="btn-record" class="amber-btn">🎙 RECORD 2s</button>
+    <button onclick="document.getElementById('file-input').click()" class="amber-btn">📂 LOAD FILE</button>
+  </div>
+  <div class="btn-group" id="wav-btns" style="margin-top:6px"></div>
+  <input type="file" id="file-input" accept="audio/*" style="display:none" onchange="loadFileInput(this)">
+  <div style="display:flex; gap:12px; margin-top:10px; align-items:center; flex-wrap:wrap">
+    <button onclick="togglePlay()" id="btn-play" style="font-size:1rem; padding:8px 20px">▶ PLAY</button>
+    <button onclick="resetToOriginal()">RESET</button>
+    <div id="readout" style="font-family:'VT323',monospace; font-size:0.95rem; color:var(--phosphor-dim); margin-left:auto">
+      FREQ: — &nbsp; TIME: — &nbsp; MAG: —
+    </div>
+  </div>
+</div>
+
+<!-- SPECTROGRAM -->
+<div class="panel" style="margin-bottom:12px; padding:10px">
+  <div class="panel-label">⬡ Spectrogram — Click &amp; Drag to Sculpt Sound</div>
+  <canvas id="sgram"></canvas>
+</div>
+
+<!-- BRUSH CONTROLS -->
+<div class="panel">
+  <div style="display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap">
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">BRUSH SIZE</div>
+      <input type="range" id="brush-size" min="2" max="40" value="12" step="1"
+        oninput="document.getElementById('bsz-val').textContent=this.value+'px'">
+      <div class="knob-value" id="bsz-val">12px</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">INTENSITY</div>
+      <input type="range" id="brush-intensity" min="0.05" max="1" value="0.15" step="0.05" class="amber"
+        oninput="document.getElementById('bint-val').textContent=Math.round(this.value*100)+'%'">
+      <div class="knob-value" id="bint-val">15%</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">RAKE</div>
+      <input type="range" id="rake-tines" min="1" max="12" value="1" step="1"
+        oninput="document.getElementById('rake-val').textContent=this.value==1?'OFF':this.value+' harmonics'">
+      <div class="knob-value" id="rake-val">OFF</div>
+    </div>
+    <div class="btn-group">
+      <button onclick="setBrushMode('paint')" id="mode-paint" class="active">PAINT (+)</button>
+      <button onclick="setBrushMode('erase')" id="mode-erase">ERASE (−)</button>
+      <button onclick="toggleRakeOdd()" id="btn-rake-odd" title="Odd harmonics only (clarinet)">ODD ONLY</button>
+    </div>
+    <div style="font-size:0.65rem; color:var(--phosphor-dim); line-height:1.7; margin-left:auto; max-width:420px; font-family:'VT323',monospace; font-size:0.85rem">
+      Paint energy into the frequency spectrum. Vertical = frequency (log scale), horizontal = time.
+      Changes are heard when you release the mouse.
+      <span style="color:var(--amber)">SHIFT+click to erase without switching modes.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FFT — Radix-2 Cooley-Tukey (iterative, in-place)
+// ============================================================
+function fft(re, im, inverse) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    while (j & bit) { j ^= bit; bit >>= 1; }
+    j ^= bit;
+    if (i < j) {
+      let tmp = re[i]; re[i] = re[j]; re[j] = tmp;
+      tmp = im[i]; im[i] = im[j]; im[j] = tmp;
+    }
+  }
+  const dir = inverse ? 1 : -1;
+  for (let len = 2; len <= n; len <<= 1) {
+    const half = len >> 1;
+    const angle = dir * 2 * Math.PI / len;
+    const wRe = Math.cos(angle), wIm = Math.sin(angle);
+    for (let i = 0; i < n; i += len) {
+      let tRe = 1, tIm = 0;
+      for (let j = 0; j < half; j++) {
+        const a = i + j, b = a + half;
+        const uRe = re[a], uIm = im[a];
+        const vRe = re[b] * tRe - im[b] * tIm;
+        const vIm = re[b] * tIm + im[b] * tRe;
+        re[a] = uRe + vRe; im[a] = uIm + vIm;
+        re[b] = uRe - vRe; im[b] = uIm - vIm;
+        const nRe = tRe * wRe - tIm * wIm;
+        tIm = tRe * wIm + tIm * wRe;
+        tRe = nRe;
+      }
+    }
+  }
+  if (inverse) {
+    for (let i = 0; i < n; i++) { re[i] /= n; im[i] /= n; }
+  }
+}
+
+// ============================================================
+// STFT / ISTFT
+// ============================================================
+const FFT_SIZE = 2048;
+const HOP_SIZE = 512;
+const LOOP_DURATION = 2;
+
+let hannWin;
+function getHannWindow() {
+  if (hannWin && hannWin.length === FFT_SIZE) return hannWin;
+  hannWin = new Float64Array(FFT_SIZE);
+  for (let i = 0; i < FFT_SIZE; i++) hannWin[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (FFT_SIZE - 1)));
+  return hannWin;
+}
+
+function analyzeSignal(signal) {
+  const win = getHannWindow();
+  const nBins = (FFT_SIZE >> 1) + 1;
+  const nFrames = Math.floor((signal.length - FFT_SIZE) / HOP_SIZE) + 1;
+  const mags = new Array(nFrames);
+  const phas = new Array(nFrames);
+  let peak = 1e-10;
+
+  for (let f = 0; f < nFrames; f++) {
+    const off = f * HOP_SIZE;
+    const re = new Float64Array(FFT_SIZE);
+    const im = new Float64Array(FFT_SIZE);
+    for (let i = 0; i < FFT_SIZE; i++) re[i] = (off + i < signal.length ? signal[off + i] : 0) * win[i];
+    fft(re, im, false);
+    const m = new Float32Array(nBins);
+    const p = new Float32Array(nBins);
+    for (let i = 0; i < nBins; i++) {
+      m[i] = Math.sqrt(re[i] * re[i] + im[i] * im[i]);
+      p[i] = Math.atan2(im[i], re[i]);
+      if (m[i] > peak) peak = m[i];
+    }
+    mags[f] = m;
+    phas[f] = p;
+  }
+  return { mags, phas, nFrames, nBins, peak };
+}
+
+function synthesizeAudio() {
+  const win = getHannWindow();
+  const output = new Float64Array(loopLength);
+  const wSum = new Float64Array(loopLength);
+
+  for (let f = 0; f < numFrames; f++) {
+    const off = f * HOP_SIZE;
+    const re = new Float64Array(FFT_SIZE);
+    const im = new Float64Array(FFT_SIZE);
+    for (let i = 0; i < numBins; i++) {
+      re[i] = magnitudes[f][i] * Math.cos(phases[f][i]);
+      im[i] = magnitudes[f][i] * Math.sin(phases[f][i]);
+    }
+    for (let i = numBins; i < FFT_SIZE; i++) {
+      re[i] = re[FFT_SIZE - i];
+      im[i] = -im[FFT_SIZE - i];
+    }
+    fft(re, im, true);
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const idx = off + i;
+      if (idx < loopLength) {
+        output[idx] += re[i] * win[i];
+        wSum[idx] += win[i] * win[i];
+      }
+    }
+  }
+  for (let i = 0; i < loopLength; i++) {
+    if (wSum[i] > 1e-8) output[i] /= wSum[i];
+  }
+  // Copy to playback buffer
+  for (let i = 0; i < loopLength; i++) playBuffer[i] = output[i];
+}
+
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let audioCtx, scriptNode;
+let sampleRate = 44100;
+let loopLength, numFrames, numBins;
+let magnitudes, phases, origMags, origPhas;
+let playBuffer, playPos = 0;
+let isPlaying = false;
+let maxMag = 1e-10;
+let currentSource = 'pluck';
+
+async function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  sampleRate = audioCtx.sampleRate;
+  loopLength = Math.floor(sampleRate * LOOP_DURATION);
+  // Align to STFT frames
+  numFrames = Math.floor((loopLength - FFT_SIZE) / HOP_SIZE) + 1;
+  loopLength = (numFrames - 1) * HOP_SIZE + FFT_SIZE;
+  playBuffer = new Float32Array(loopLength);
+
+  scriptNode = audioCtx.createScriptProcessor(4096, 0, 1);
+  scriptNode.onaudioprocess = function(e) {
+    const out = e.outputBuffer.getChannelData(0);
+    if (!isPlaying) { out.fill(0); return; }
+    for (let i = 0; i < out.length; i++) {
+      out[i] = playBuffer[playPos];
+      playPos = (playPos + 1) % loopLength;
+    }
+  };
+  scriptNode.connect(audioCtx.destination);
+}
+
+// ============================================================
+// SOURCE GENERATORS
+// ============================================================
+function generateSource(type) {
+  const sig = new Float32Array(loopLength);
+  switch (type) {
+    case 'pluck': {
+      const f0 = 220;
+      for (let h = 1; h <= 25; h++) {
+        const amp = 0.5 / h;
+        const dec = 2 + h * 0.4;
+        for (let i = 0; i < loopLength; i++) {
+          const t = i / sampleRate;
+          sig[i] += amp * Math.exp(-t * dec) * Math.sin(2 * Math.PI * f0 * h * t);
+        }
+      }
+      break;
+    }
+    case 'drone': {
+      const f0 = 110;
+      for (let h = 1; h <= 30; h++) {
+        const amp = 0.4 / h;
+        for (let i = 0; i < loopLength; i++) {
+          sig[i] += amp * Math.sin(2 * Math.PI * f0 * h * i / sampleRate);
+        }
+      }
+      break;
+    }
+    case 'fifth': {
+      for (const f0 of [220, 330]) {
+        for (let h = 1; h <= 20; h++) {
+          const amp = 0.25 / h;
+          for (let i = 0; i < loopLength; i++) {
+            sig[i] += amp * Math.sin(2 * Math.PI * f0 * h * i / sampleRate);
+          }
+        }
+      }
+      break;
+    }
+    case 'vowel': {
+      const f0 = 150;
+      const formants = [{f:800,bw:80,a:1},{f:1200,bw:90,a:0.7},{f:2800,bw:120,a:0.3}];
+      for (let h = 1; h <= 40; h++) {
+        const hf = f0 * h;
+        let gain = 0.05;
+        for (const fm of formants) {
+          const d = (hf - fm.f) / fm.bw;
+          gain += fm.a * Math.exp(-0.5 * d * d);
+        }
+        const amp = 0.3 * gain / Math.sqrt(h);
+        for (let i = 0; i < loopLength; i++) {
+          sig[i] += amp * Math.sin(2 * Math.PI * hf * i / sampleRate);
+        }
+      }
+      break;
+    }
+    case 'noise': {
+      for (let i = 0; i < loopLength; i++) {
+        const t = i / sampleRate;
+        const tMod = t % 0.5;
+        if (tMod < 0.15) {
+          sig[i] = (Math.random() * 2 - 1) * 0.5 * Math.exp(-tMod * 15);
+        }
+      }
+      break;
+    }
+    case 'silence': break;
+  }
+  // Normalize
+  let pk = 0;
+  for (let i = 0; i < loopLength; i++) pk = Math.max(pk, Math.abs(sig[i]));
+  if (pk > 0.001) {
+    const sc = 0.8 / pk;
+    for (let i = 0; i < loopLength; i++) sig[i] *= sc;
+  }
+  return sig;
+}
+
+async function loadSource(type) {
+  await initAudio();
+  currentSource = type;
+  document.querySelectorAll('#source-btns button:not(.amber-btn)').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('src-' + type);
+  if (el) el.classList.add('active');
+
+  const signal = generateSource(type);
+  loadSignal(signal);
+}
+
+function loadSignal(signal) {
+  // Trim/pad to loopLength
+  const trimmed = new Float32Array(loopLength);
+  trimmed.set(signal.subarray(0, Math.min(signal.length, loopLength)));
+
+  const result = analyzeSignal(trimmed);
+  numFrames = result.nFrames;
+  numBins = result.nBins;
+  magnitudes = result.mags;
+  phases = result.phas;
+  maxMag = Math.max(result.peak, 1e-10);
+
+  // Deep copy for reset
+  origMags = magnitudes.map(f => new Float32Array(f));
+  origPhas = phases.map(f => new Float32Array(f));
+
+  // Synthesize and fill play buffer
+  synthesizeAudio();
+  playPos = 0;
+  computeYMapping();
+  renderSgramImage();
+}
+
+function resetToOriginal() {
+  if (!origMags) return;
+  magnitudes = origMags.map(f => new Float32Array(f));
+  phases = origPhas.map(f => new Float32Array(f));
+  // Recalculate maxMag from originals
+  maxMag = 1e-10;
+  for (let f = 0; f < numFrames; f++)
+    for (let b = 0; b < numBins; b++)
+      if (magnitudes[f][b] > maxMag) maxMag = magnitudes[f][b];
+  synthesizeAudio();
+  renderSgramImage();
+}
+
+// ============================================================
+// MIC RECORDING
+// ============================================================
+async function startRecording() {
+  await initAudio();
+  const btn = document.getElementById('btn-record');
+  btn.classList.add('recording');
+  btn.textContent = '● REC 2...';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+
+    const done = new Promise(resolve => {
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        btn.classList.remove('recording');
+        btn.textContent = '🎙 RECORD 2s';
+        const blob = new Blob(chunks, { type: recorder.mimeType });
+        const arrayBuf = await blob.arrayBuffer();
+        try {
+          const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+          const raw = audioBuf.getChannelData(0);
+          const sig = new Float32Array(loopLength);
+          sig.set(raw.subarray(0, Math.min(raw.length, loopLength)));
+          // Clear source highlights
+          document.querySelectorAll('#source-btns button:not(.amber-btn)').forEach(b => b.classList.remove('active'));
+          loadSignal(sig);
+        } catch(err) {
+          console.error('Decode failed', err);
+        }
+        resolve();
+      };
+    });
+
+    recorder.start();
+    setTimeout(() => { btn.textContent = '● REC 1...'; }, 1000);
+    setTimeout(() => recorder.stop(), LOOP_DURATION * 1000);
+    await done;
+  } catch(err) {
+    btn.classList.remove('recording');
+    btn.textContent = '🎙 RECORD 2s';
+    alert('Microphone access denied: ' + err.message);
+  }
+}
+
+// ============================================================
+// TRANSPORT
+// ============================================================
+async function togglePlay() {
+  await initAudio();
+  if (!magnitudes) await loadSource('pluck');
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('btn-play');
+  btn.textContent = isPlaying ? '■ STOP' : '▶ PLAY';
+  btn.classList.toggle('active', isPlaying);
+  if (isPlaying && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// ============================================================
+// SPECTROGRAM RENDERING
+// ============================================================
+let sgramImage = null;
+let yToBin = null;
+
+function computeYMapping() {
+  const c = document.getElementById('sgram');
+  const H = c.height;
+  yToBin = new Int32Array(H);
+  const logMin = Math.log(20);
+  const logMax = Math.log(sampleRate / 2);
+  for (let y = 0; y < H; y++) {
+    const freq = Math.exp(logMin + (1 - y / H) * (logMax - logMin));
+    const bin = Math.round(freq * FFT_SIZE / sampleRate);
+    yToBin[y] = Math.max(0, Math.min(numBins - 1, bin));
+  }
+  computeBinToY();
+}
+
+function magToColor(mag) {
+  const db = 20 * Math.log10(mag / maxMag + 1e-10);
+  const norm = Math.max(0, Math.min(1, (db + 80) / 80));
+  let r, g, b;
+  if (norm < 0.15) {
+    const s = norm / 0.15;
+    r = 2; g = Math.floor(5 + s * 25); b = 2;
+  } else if (norm < 0.4) {
+    const s = (norm - 0.15) / 0.25;
+    r = Math.floor(s * 57); g = Math.floor(30 + s * 225); b = Math.floor(s * 20);
+  } else if (norm < 0.7) {
+    const s = (norm - 0.4) / 0.3;
+    r = Math.floor(57 + s * 198); g = Math.floor(255 - s * 106); b = Math.floor(20 - s * 20);
+  } else {
+    const s = (norm - 0.7) / 0.3;
+    r = 255; g = Math.floor(149 + s * 106); b = Math.floor(s * 220);
+  }
+  return (r << 16) | (g << 8) | b;
+}
+
+function renderSgramImage() {
+  const c = document.getElementById('sgram');
+  const W = c.width, H = c.height;
+  const ctx2 = c.getContext('2d');
+  sgramImage = ctx2.createImageData(W, H);
+  const d = sgramImage.data;
+
+  if (!magnitudes || !yToBin) return;
+
+  for (let x = 0; x < W; x++) {
+    const frame = Math.floor(x / W * numFrames);
+    const fr = Math.min(frame, numFrames - 1);
+    for (let y = 0; y < H; y++) {
+      const bin = yToBin[y];
+      const rgb = magToColor(magnitudes[fr][bin]);
+      const idx = (y * W + x) << 2;
+      d[idx]     = (rgb >> 16) & 0xff;
+      d[idx + 1] = (rgb >> 8) & 0xff;
+      d[idx + 2] = rgb & 0xff;
+      d[idx + 3] = 255;
+    }
+  }
+}
+
+// ============================================================
+// MOUSE INTERACTION — PAINTING
+// ============================================================
+let mouseDown = false;
+let lastMX = -1, lastMY = -1;
+let brushMode = 'paint';
+let hoverX = -1, hoverY = -1;
+let rakeOddOnly = false;
+let binToY = null;  // reverse mapping: bin index → canvas y-coordinate
+
+function computeBinToY() {
+  const c = document.getElementById('sgram');
+  const H = c.height;
+  // Build reverse map: for each bin, find the closest y
+  if (!numBins) return;
+  binToY = new Int32Array(numBins).fill(-1);
+  for (let y = 0; y < H; y++) {
+    const bin = yToBin[y];
+    // Take the last y that maps to this bin (highest on canvas = lowest y value)
+    binToY[bin] = y;
+  }
+}
+
+function toggleRakeOdd() {
+  rakeOddOnly = !rakeOddOnly;
+  document.getElementById('btn-rake-odd').classList.toggle('active', rakeOddOnly);
+}
+
+function setBrushMode(mode) {
+  brushMode = mode;
+  document.getElementById('mode-paint').classList.toggle('active', mode === 'paint');
+  document.getElementById('mode-erase').classList.toggle('active', mode === 'erase');
+}
+
+function canvasCoords(e) {
+  const c = document.getElementById('sgram');
+  const rect = c.getBoundingClientRect();
+  return {
+    x: Math.floor((e.clientX - rect.left) / rect.width * c.width),
+    y: Math.floor((e.clientY - rect.top) / rect.height * c.height)
+  };
+}
+
+function paintAt(cx, cy, erase) {
+  if (!magnitudes) return;
+  const c = document.getElementById('sgram');
+  const W = c.width, H = c.height;
+  const radius = parseInt(document.getElementById('brush-size').value);
+  const intensity = parseFloat(document.getElementById('brush-intensity').value);
+  const rakeTines = parseInt(document.getElementById('rake-tines').value);
+  const sigma = radius / 2.2;
+
+  // Get fundamental frequency from cursor position
+  const fundBin = yToBin[Math.max(0, Math.min(H - 1, cy))];
+  const fundFreq = fundBin * sampleRate / FFT_SIZE;
+
+  // Build list of y-offsets for rake tines: [0, yOffset for 2nd harmonic, ...]
+  const tineOffsets = [0]; // first tine is always at cursor
+  if (rakeTines > 1 && fundFreq > 0 && binToY) {
+    for (let h = 2; h <= rakeTines; h++) {
+      if (rakeOddOnly && h % 2 === 0) continue;
+      const harmBin = Math.round(h * fundFreq * FFT_SIZE / sampleRate);
+      if (harmBin >= numBins) break;
+      const harmY = binToY[harmBin];
+      if (harmY >= 0) tineOffsets.push(harmY - cy);
+    }
+  }
+
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > radius) continue;
+      const px = cx + dx, py = cy + dy;
+      if (px < 0 || px >= W || py < 0 || py >= H) continue;
+
+      const weight = Math.exp(-dist * dist / (2 * sigma * sigma)) * intensity;
+      const frame = Math.min(Math.floor(px / W * numFrames), numFrames - 1);
+
+      // Paint at each rake tine
+      for (let t = 0; t < tineOffsets.length; t++) {
+        const tineY = py + tineOffsets[t];
+        if (tineY < 0 || tineY >= H) continue;
+        const bin = yToBin[tineY];
+        // Natural rolloff: each harmonic is quieter (1/harmonic number)
+        const harmNum = t === 0 ? 1 : (rakeOddOnly ? 2 * t + 1 : t + 1);
+        const rolloff = 1 / harmNum;
+
+        if (erase) {
+          magnitudes[frame][bin] *= (1 - weight * rolloff * 0.7);
+        } else {
+          const refMag = Math.max(maxMag, FFT_SIZE * 0.05);
+          const boost = weight * refMag * 0.02 * rolloff;
+          magnitudes[frame][bin] += boost;
+          if (magnitudes[frame][bin] > maxMag) maxMag = magnitudes[frame][bin];
+          if (magnitudes[frame][bin] > maxMag * 0.001 && Math.abs(phases[frame][bin]) < 1e-6) {
+            phases[frame][bin] = Math.random() * 2 * Math.PI - Math.PI;
+          }
+        }
+      }
+    }
+  }
+}
+
+function paintLine(x0, y0, x1, y1, erase) {
+  const dist = Math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2);
+  const steps = Math.max(1, Math.ceil(dist / 2));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    paintAt(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), erase);
+  }
+}
+
+function setupCanvasEvents() {
+  const c = document.getElementById('sgram');
+
+  c.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    mouseDown = true;
+    const p = canvasCoords(e);
+    lastMX = p.x; lastMY = p.y;
+    const erase = e.shiftKey ? true : brushMode === 'erase';
+    paintAt(p.x, p.y, erase);
+    renderSgramImage();
+  });
+
+  c.addEventListener('mousemove', function(e) {
+    const p = canvasCoords(e);
+    hoverX = p.x; hoverY = p.y;
+    updateReadout(p.x, p.y);
+    if (!mouseDown) return;
+    const erase = e.shiftKey ? true : brushMode === 'erase';
+    paintLine(lastMX, lastMY, p.x, p.y, erase);
+    lastMX = p.x; lastMY = p.y;
+    renderSgramImage();
+  });
+
+  window.addEventListener('mouseup', function() {
+    if (mouseDown) {
+      mouseDown = false;
+      synthesizeAudio();
+    }
+  });
+
+  c.addEventListener('mouseleave', function() {
+    hoverX = -1; hoverY = -1;
+  });
+
+  // Touch support
+  c.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const p = canvasCoords(touch);
+    mouseDown = true;
+    lastMX = p.x; lastMY = p.y;
+    paintAt(p.x, p.y, brushMode === 'erase');
+    renderSgramImage();
+  }, { passive: false });
+
+  c.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (!mouseDown) return;
+    const touch = e.touches[0];
+    const p = canvasCoords(touch);
+    hoverX = p.x; hoverY = p.y;
+    paintLine(lastMX, lastMY, p.x, p.y, brushMode === 'erase');
+    lastMX = p.x; lastMY = p.y;
+    renderSgramImage();
+  }, { passive: false });
+
+  c.addEventListener('touchend', function() {
+    if (mouseDown) {
+      mouseDown = false;
+      synthesizeAudio();
+    }
+    hoverX = -1; hoverY = -1;
+  });
+}
+
+function updateReadout(px, py) {
+  const c = document.getElementById('sgram');
+  if (!magnitudes || !yToBin) {
+    document.getElementById('readout').textContent = 'FREQ: — \u00a0 TIME: — \u00a0 MAG: —';
+    return;
+  }
+  const frame = Math.min(Math.floor(px / c.width * numFrames), numFrames - 1);
+  const bin = yToBin[py];
+  const freq = bin * sampleRate / FFT_SIZE;
+  const time = (frame * HOP_SIZE / sampleRate).toFixed(3);
+  const mag = magnitudes[frame] ? magnitudes[frame][bin] : 0;
+  const db = mag > 1e-10 ? (20 * Math.log10(mag / maxMag)).toFixed(1) : '-∞';
+  const freqStr = freq < 1000 ? Math.round(freq) + ' Hz' : (freq / 1000).toFixed(1) + ' kHz';
+  document.getElementById('readout').textContent =
+    'FREQ: ' + freqStr + ' \u00a0 TIME: ' + time + 's \u00a0 MAG: ' + db + ' dB';
+}
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+function drawFrame() {
+  requestAnimationFrame(drawFrame);
+  const c = document.getElementById('sgram');
+  const ctx2 = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  // Draw cached spectrogram
+  if (sgramImage && sgramImage.width === W && sgramImage.height === H) {
+    ctx2.putImageData(sgramImage, 0, 0);
+  } else {
+    ctx2.fillStyle = '#020502';
+    ctx2.fillRect(0, 0, W, H);
+  }
+
+  // Frequency axis labels
+  ctx2.fillStyle = 'rgba(57,255,20,0.5)';
+  ctx2.font = '10px "Share Tech Mono", monospace';
+  const logMin = Math.log(20);
+  const logMax = Math.log(sampleRate / 2);
+  for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000]) {
+    if (f > sampleRate / 2) continue;
+    const t = (Math.log(f) - logMin) / (logMax - logMin);
+    const y = (1 - t) * H;
+    if (y > 12 && y < H - 5) {
+      const label = f >= 1000 ? (f / 1000) + 'k' : f + '';
+      ctx2.fillText(label, 4, y - 3);
+      ctx2.fillRect(0, y, W, 0.5);
+    }
+  }
+
+  // Time axis labels
+  if (magnitudes) {
+    const totalTime = loopLength / sampleRate;
+    for (let t = 0.25; t < totalTime; t += 0.25) {
+      const x = (t / totalTime) * W;
+      ctx2.fillStyle = 'rgba(57,255,20,0.25)';
+      ctx2.fillRect(x, 0, 0.5, H);
+      ctx2.fillStyle = 'rgba(57,255,20,0.5)';
+      ctx2.fillText(t.toFixed(2) + 's', x + 3, H - 4);
+    }
+  }
+
+  // Playback cursor
+  if (isPlaying && loopLength > 0) {
+    const cx = (playPos / loopLength) * W;
+    ctx2.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx2.lineWidth = 1.5;
+    ctx2.shadowBlur = 6;
+    ctx2.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx2.beginPath();
+    ctx2.moveTo(cx, 0);
+    ctx2.lineTo(cx, H);
+    ctx2.stroke();
+    ctx2.shadowBlur = 0;
+  }
+
+  // Brush cursor
+  if (hoverX >= 0 && hoverY >= 0) {
+    const r = parseInt(document.getElementById('brush-size').value);
+    ctx2.strokeStyle = brushMode === 'erase' ? 'rgba(255,48,48,0.6)' : 'rgba(57,255,20,0.6)';
+    ctx2.lineWidth = 1;
+    ctx2.beginPath();
+    ctx2.arc(hoverX, hoverY, r, 0, 2 * Math.PI);
+    ctx2.stroke();
+  }
+}
+
+// ============================================================
+// CANVAS SIZING
+// ============================================================
+function resizeCanvas() {
+  const c = document.getElementById('sgram');
+  const rect = c.getBoundingClientRect();
+  c.width = Math.floor(rect.width) || 900;
+  c.height = Math.floor(rect.height) || 380;
+  if (magnitudes) {
+    computeYMapping();
+    renderSgramImage();
+  }
+}
+
+// ============================================================
+// WAV FILE LOADING
+// ============================================================
+async function loadFileInput(input) {
+  if (!input.files.length) return;
+  await initAudio();
+  const buf = await input.files[0].arrayBuffer();
+  try {
+    const audioBuffer = await audioCtx.decodeAudioData(buf);
+    const raw = audioBuffer.getChannelData(0);
+    document.querySelectorAll('#source-btns button:not(.amber-btn)').forEach(b => b.classList.remove('active'));
+    loadSignal(raw);
+  } catch(err) {
+    alert('Could not decode audio: ' + err.message);
+  }
+}
+
+async function loadNamedWav(filename) {
+  await initAudio();
+  try {
+    const resp = await fetch('wavs/' + filename);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    const audioBuffer = await audioCtx.decodeAudioData(buf);
+    const raw = audioBuffer.getChannelData(0);
+    document.querySelectorAll('#source-btns button:not(.amber-btn)').forEach(b => b.classList.remove('active'));
+    loadSignal(raw);
+  } catch(err) {
+    alert('Could not load wavs/' + filename + '.\n\nRun: node server.js\nThen open http://localhost:3000/fuzzbox-sculptor.html');
+  }
+}
+
+async function loadWavList() {
+  const container = document.getElementById('wav-btns');
+  try {
+    const resp = await fetch('/api/wavs');
+    if (!resp.ok) throw new Error('no api');
+    const data = await resp.json();
+    if (!data.files.length) return;
+    container.innerHTML = '';
+    data.files.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'amber-btn';
+      btn.style.fontSize = '0.6rem';
+      btn.style.padding = '3px 6px';
+      btn.textContent = f.replace(/\.[^.]+$/, '').replace(/_/g, ' ').toUpperCase();
+      btn.onclick = () => loadNamedWav(f);
+      container.appendChild(btn);
+    });
+  } catch(e) {}
+}
+loadWavList();
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    setupCanvasEvents();
+  }, 100);
+});
+
+// Auto-init on first click
+document.addEventListener('click', async function handler() {
+  if (!audioCtx) {
+    await initAudio();
+    if (!magnitudes) await loadSource('pluck');
+  }
+  document.removeEventListener('click', handler);
+}, { once: false });
+
+drawFrame();
+</script>
+</body>
+</html>

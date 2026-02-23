@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Waveform Distortion Lab</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --red: #ff3030;
+    --blue: #00cfff;
+    --text: #8bba8b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 16px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor);
+    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.2em;
+    margin-top: 2px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .status-bar {
+    font-size: 0.72rem;
+    color: var(--phosphor-dim);
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: 6px;
+    box-shadow: 0 0 6px var(--red);
+    transition: all 0.3s;
+  }
+  .status-dot.active { background: var(--phosphor); box-shadow: 0 0 8px var(--phosphor); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  .panel-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  canvas {
+    width: 100%;
+    height: 160px;
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: #020502;
+    cursor: crosshair;
+    image-rendering: pixelated;
+  }
+
+  canvas.scope-large {
+    height: 200px;
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 64px;
+  }
+
+  .knob-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .knob-value {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor);
+    min-width: 48px;
+    text-align: center;
+    background: #020a02;
+    border: 1px solid var(--border);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    max-width: 120px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+    cursor: pointer;
+    transition: box-shadow 0.1s;
+  }
+
+  input[type=range]:hover::-webkit-slider-thumb {
+    box-shadow: 0 0 14px var(--phosphor);
+  }
+
+  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
+  input[type=range].blue::-webkit-slider-thumb { background: var(--blue); box-shadow: 0 0 8px rgba(0,207,255,0.5); }
+  input[type=range].red-slider::-webkit-slider-thumb { background: var(--red); box-shadow: 0 0 8px rgba(255,48,48,0.5); }
+
+  input[type=range].amber { background: var(--border); }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  button.active {
+    background: rgba(57,255,20,0.1);
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 10px var(--phosphor-glow);
+  }
+
+  button.amber-btn {
+    border-color: rgba(255,149,0,0.5);
+    color: var(--amber);
+  }
+  button.amber-btn:hover, button.amber-btn.active {
+    background: rgba(255,149,0,0.1);
+    border-color: var(--amber);
+    box-shadow: 0 0 8px rgba(255,149,0,0.4);
+  }
+
+  button.blue-btn {
+    border-color: rgba(0,207,255,0.4);
+    color: var(--blue);
+  }
+  button.blue-btn:hover, button.blue-btn.active {
+    background: rgba(0,207,255,0.08);
+    border-color: var(--blue);
+    box-shadow: 0 0 8px rgba(0,207,255,0.3);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .full-width { grid-column: 1 / -1; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-line {
+    width: 20px; height: 2px;
+  }
+
+  .meter-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--phosphor-dim), var(--phosphor), var(--amber), var(--red));
+    border-radius: 3px;
+    transition: width 0.05s;
+  }
+
+  .algo-info {
+    font-size: 0.65rem;
+    color: var(--phosphor-dim);
+    margin-top: 8px;
+    line-height: 1.6;
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 14px 0 10px;
+    opacity: 0.5;
+  }
+
+  select {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    background: #020a02;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--phosphor);
+    padding: 5px 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  select option { background: #050a04; }
+
+  .warning {
+    color: var(--amber);
+    font-size: 0.7rem;
+    margin-top: 6px;
+  }
+
+  .vu-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .vu-seg {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 1px;
+    transition: background 0.05s;
+  }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .three-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>FUZZBOX PHYSICS</h1>
+    <div class="subtitle">∿ WAVEFORM DISTORTION &amp; FERMENTATION LAB — CALARTS EXPERIMENTAL ANIMATION</div>
+  </div>
+  <div class="status-bar">
+    <div><a href="fuzzbox-sculptor.html" style="color:var(--phosphor-dim); text-decoration:none; font-size:0.72rem; letter-spacing:0.1em; transition:color 0.15s" onmouseover="this.style.color='var(--phosphor)'" onmouseout="this.style.color='var(--phosphor-dim)'">SPECTRAL SCULPTOR →</a></div>
+    <div><a href="fuzzbox-octavia.html" style="color:var(--phosphor-dim); text-decoration:none; font-size:0.72rem; letter-spacing:0.1em; transition:color 0.15s" onmouseover="this.style.color='var(--phosphor)'" onmouseout="this.style.color='var(--phosphor-dim)'">DIGITAL OCTAVIA →</a></div>
+    <div><span class="status-dot" id="mic-dot"></span><span id="mic-status">AUDIO OFFLINE</span></div>
+    <div><span style="color:var(--phosphor-dim)">SR:</span> <span id="sr-display">—</span> Hz &nbsp; <span style="color:var(--phosphor-dim)">BUF:</span> <span id="buf-display">—</span></div>
+  </div>
+</header>
+
+<!-- SOURCE CONTROLS -->
+<div class="three-col">
+  <div class="panel">
+    <div class="panel-label">⬡ Signal Source</div>
+    <div class="btn-group" style="margin-bottom:10px">
+      <button id="btn-mic" class="amber-btn" onclick="setSource('mic')">🎙 MIC IN</button>
+      <button id="btn-osc" onclick="setSource('osc')" class="active">OSC TEST</button>
+      <button id="btn-wav-pick" class="amber-btn" onclick="document.getElementById('wav-file-input').click()">📂 LOAD FILE</button>
+    </div>
+    <div class="btn-group" id="wav-btns-lab" style="margin-bottom:6px"></div>
+    <input type="file" id="wav-file-input" accept="audio/*" style="display:none" onchange="loadWavFile(this)">
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">OSC WAVEFORM</div>
+      <select id="osc-type" onchange="updateOsc()">
+        <option value="sine">SINE</option>
+        <option value="sawtooth" selected>SAWTOOTH</option>
+        <option value="square">SQUARE</option>
+        <option value="triangle">TRIANGLE</option>
+      </select>
+    </div>
+    <div class="controls-row" style="margin-top:8px">
+      <div class="knob-group">
+        <div class="knob-label">FREQ (Hz)</div>
+        <input type="range" id="osc-freq" min="50" max="2000" value="220" step="1" oninput="updateOsc(); updateDisplay('osc-freq-val', this.value+'Hz')">
+        <div class="knob-value" id="osc-freq-val">220Hz</div>
+      </div>
+      <div class="knob-group">
+        <div class="knob-label">INPUT GAIN</div>
+        <input type="range" id="input-gain" min="0" max="2" value="0.8" step="0.01" oninput="updateGains(); updateDisplay('input-gain-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="input-gain-val">80%</div>
+      </div>
+    </div>
+    <p class="warning" id="mic-warning" style="display:none">⚠ Use headphones to avoid feedback</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">⬡ Clipping Algorithm</div>
+    <div class="btn-group" id="clip-btns">
+      <button onclick="setClip('hard')" class="active" id="clip-hard">HARD</button>
+      <button onclick="setClip('soft')" id="clip-soft">SOFT (tanh)</button>
+      <button onclick="setClip('asymmetric')" id="clip-asym">ASYMMETRIC</button>
+      <button onclick="setClip('foldback')" id="clip-fold">FOLDBACK</button>
+      <button onclick="setClip('bitcrush')" id="clip-bit">BIT CRUSH</button>
+      <button onclick="setClip('tube')" id="clip-tube">TUBE (even harm)</button>
+      <button onclick="setClip('rectify')" id="clip-rect">HALF RECTIFY</button>
+    </div>
+    <div class="algo-info" id="algo-info">
+      Hard clip: f(x) = clamp(x, −T, +T) — abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">⬡ Drive &amp; Mix</div>
+    <div class="controls-row" style="flex-direction:column; gap:10px; margin-top:0">
+      <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+        <div class="knob-label">DRIVE / THRESHOLD</div>
+        <input type="range" id="drive" min="0.01" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="red-slider" oninput="updateDrive(); updateDisplay('drive-val', Math.round((1-this.value)*100)+'%')">
+        <div class="knob-value" id="drive-val">50%</div>
+      </div>
+      <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+        <div class="knob-label">BIT DEPTH (crush)</div>
+        <input type="range" id="bit-depth" min="1" max="16" value="8" step="1" style="max-width:100%; width:100%" oninput="updateDisplay('bit-val', this.value+' bit')">
+        <div class="knob-value" id="bit-val">8 bit</div>
+      </div>
+      <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+        <div class="knob-label">WET / DRY MIX</div>
+        <input type="range" id="wet-dry" min="0" max="1" value="1" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="updateGains(); updateDisplay('wetdry-val', Math.round(this.value*100)+'% W')">
+        <div class="knob-value" id="wetdry-val">100% W</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OSCILLOSCOPE DISPLAYS -->
+<div class="grid">
+  <div class="panel">
+    <div class="panel-label">⬡ Input Waveform (Dry)</div>
+    <canvas id="scope-in" class="scope-large"></canvas>
+    <div class="vu-row" id="vu-in"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">⬡ Output Waveform (Post-Distortion)</div>
+    <canvas id="scope-out" class="scope-large"></canvas>
+    <div class="vu-row" id="vu-out"></div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-line" style="background:var(--phosphor)"></div>
+        <span style="color:var(--phosphor); font-size:0.65rem">WET OUT</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:rgba(57,255,20,0.25); border-top: 1px dashed rgba(57,255,20,0.4)"></div>
+        <span style="color:var(--phosphor-dim); font-size:0.65rem">DRY REF (overlay)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:var(--red)"></div>
+        <span style="color:var(--red); font-size:0.65rem">CLIP THRESHOLD</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPECTRUM -->
+<div class="grid" style="margin-bottom:12px">
+  <div class="panel">
+    <div class="panel-label">⬡ Frequency Spectrum — Input</div>
+    <canvas id="fft-in" height="120"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-label">⬡ Frequency Spectrum — Output (distortion creates harmonics)</div>
+    <canvas id="fft-out" height="120"></canvas>
+  </div>
+</div>
+
+<!-- SPECTROGRAM -->
+<div class="grid" style="margin-bottom:12px">
+  <div class="panel">
+    <div class="panel-label">⬡ Spectrogram — Input (time → frequency → amplitude)</div>
+    <canvas id="sgram-in" class="scope-large"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-label">⬡ Spectrogram — Output (watch harmonics appear)</div>
+    <canvas id="sgram-out" class="scope-large"></canvas>
+  </div>
+</div>
+
+<!-- REVERB CHAMBER -->
+<div class="panel full-width" style="margin-bottom:12px">
+  <div class="panel-label">⬡ Reverb Chamber — Acoustic Space Simulation</div>
+  <div style="display:grid; grid-template-columns: auto 1fr 1fr 1fr 1fr; gap:16px; align-items:start">
+    <div>
+      <div style="margin-bottom:8px">
+        <button id="btn-reverb" class="blue-btn" onclick="toggleReverb()">REVERB OFF</button>
+      </div>
+      <div class="btn-group" id="ir-btns" style="flex-direction:column; gap:4px">
+        <button class="blue-btn active" id="ir-room" onclick="setIR('room')">ROOM</button>
+        <button class="blue-btn" id="ir-hall" onclick="setIR('hall')">CONCERT HALL</button>
+        <button class="blue-btn" id="ir-plate" onclick="setIR('plate')">PLATE</button>
+        <button class="blue-btn" id="ir-cave" onclick="setIR('cave')">CAVE / TUNNEL</button>
+        <button class="blue-btn" id="ir-spring" onclick="setIR('spring')">SPRING</button>
+      </div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+      <div class="knob-label">DECAY TIME (s)</div>
+      <input type="range" id="rev-decay" min="0.1" max="8" value="1.5" step="0.1" style="max-width:100%; width:100%" class="blue" oninput="buildIR(); updateDisplay('rev-decay-val', this.value+'s')">
+      <div class="knob-value" id="rev-decay-val">1.5s</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+      <div class="knob-label">ROOM CHARACTER</div>
+      <input type="range" id="rev-density" min="0" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="buildIR(); updateDisplay('rev-density-val', Math.round(this.value*100)+'%')">
+      <div class="knob-value" id="rev-density-val">50%</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+      <div class="knob-label">REV WET/DRY</div>
+      <input type="range" id="rev-wet" min="0" max="1" value="0.4" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="updateReverbMix(); updateDisplay('rev-wet-val', Math.round(this.value*100)+'% W')">
+      <div class="knob-value" id="rev-wet-val">40% W</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+      <div class="knob-label">PRE-DELAY (ms)</div>
+      <input type="range" id="rev-predelay" min="0" max="100" value="10" step="1" style="max-width:100%; width:100%" class="blue" oninput="updatePreDelay(); updateDisplay('rev-predelay-val', this.value+'ms')">
+      <div class="knob-value" id="rev-predelay-val">10ms</div>
+    </div>
+  </div>
+</div>
+
+<!-- MASTER OUTPUT -->
+<div class="panel">
+  <div class="panel-label">⬡ Master Output</div>
+  <div class="controls-row" style="align-items:center">
+    <div class="knob-group">
+      <div class="knob-label">OUTPUT VOLUME</div>
+      <input type="range" id="out-vol" min="0" max="1" value="0.7" step="0.01" oninput="updateGains(); updateDisplay('out-vol-val', Math.round(this.value*100)+'%')">
+      <div class="knob-value" id="out-vol-val">70%</div>
+    </div>
+    <button onclick="togglePlay()" id="play-btn" class="active" style="font-size:1rem; padding:8px 20px">▶ PLAYING</button>
+    <div style="flex:1; min-width:120px">
+      <div class="knob-label" style="margin-bottom:4px">OUTPUT LEVEL</div>
+      <div class="vu-row" id="vu-master"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let ctx, sourceNode, oscNode, micStream, wavSourceNode;
+let inputGain, dryGain, wetGain, outputGain;
+let distortionNode, reverbNode, preDelayNode, revWetGain, revDryGain;
+let analyserIn, analyserOut;
+let playing = false;
+let sourceType = 'osc';
+let reverbEnabled = false;
+let currentIR = 'room';
+let clipMode = 'hard';
+let animFrame;
+
+const BUFFER_SIZE = 4096;
+
+async function initAudio() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  document.getElementById('sr-display').textContent = ctx.sampleRate;
+  document.getElementById('buf-display').textContent = BUFFER_SIZE;
+
+  // Gainz
+  inputGain = ctx.createGain();
+  dryGain = ctx.createGain();
+  wetGain = ctx.createGain();
+  outputGain = ctx.createGain();
+
+  // Distortion via ScriptProcessor
+  distortionNode = ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+  distortionNode.onaudioprocess = processDistortion;
+
+  // Analysers
+  analyserIn = ctx.createAnalyser();
+  analyserIn.fftSize = 2048;
+  analyserOut = ctx.createAnalyser();
+  analyserOut.fftSize = 2048;
+
+  // Reverb
+  preDelayNode = ctx.createDelay(0.5);
+  preDelayNode.delayTime.value = 0.01;
+  reverbNode = ctx.createConvolver();
+  revWetGain = ctx.createGain();
+  revDryGain = ctx.createGain();
+  revWetGain.gain.value = 0.4;
+  revDryGain.gain.value = 0.6;
+
+  buildIR();
+
+  // Signal flow:
+  // src → inputGain → analyserIn
+  //   → distortionNode → analyserOut
+  //     → dryGain + wetGain → outputGain → speakers
+  // (reverb is inserted in wet path when enabled)
+
+  updateGains();
+  updateReverbRouting();
+  await startOsc();
+}
+
+function updateReverbRouting() {
+  try { analyserOut.disconnect(); } catch(e) {}
+  try { preDelayNode.disconnect(); } catch(e) {}
+  try { reverbNode.disconnect(); } catch(e) {}
+  try { revWetGain.disconnect(); } catch(e) {}
+  try { revDryGain.disconnect(); } catch(e) {}
+  try { outputGain.disconnect(); } catch(e) {}
+
+  outputGain.connect(ctx.destination);
+
+  if (reverbEnabled) {
+    // analyserOut → revDryGain → outputGain
+    analyserOut.connect(revDryGain);
+    revDryGain.connect(outputGain);
+    // analyserOut → preDelay → reverb → revWetGain → outputGain
+    analyserOut.connect(preDelayNode);
+    preDelayNode.connect(reverbNode);
+    reverbNode.connect(revWetGain);
+    revWetGain.connect(outputGain);
+  } else {
+    analyserOut.connect(outputGain);
+  }
+}
+
+function buildIR() {
+  if (!ctx) return;
+  const decay = parseFloat(document.getElementById('rev-decay').value);
+  const density = parseFloat(document.getElementById('rev-density').value);
+  const sampleRate = ctx.sampleRate;
+  const ir = generateIR(sampleRate, decay, density, currentIR);
+  reverbNode.buffer = ir;
+}
+
+function generateIR(sampleRate, decay, density, type) {
+  const length = Math.floor(sampleRate * decay);
+  const buf = ctx.createBuffer(2, length, sampleRate);
+
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      let env;
+
+      switch(type) {
+        case 'hall':
+          // Slower attack, long smooth tail
+          env = (t < 0.02 ? t / 0.02 : 1) * Math.exp(-t * (3 / decay));
+          break;
+        case 'plate':
+          // Dense, metallic — lots of early reflections
+          env = Math.exp(-t * (5 / decay));
+          break;
+        case 'cave':
+          // Very long, low density
+          env = Math.exp(-t * (1.5 / decay));
+          break;
+        case 'spring':
+          // Spring character: oscillating envelope
+          env = Math.exp(-t * (4 / decay)) * (0.5 + 0.5 * Math.cos(t * 60 * Math.PI));
+          break;
+        default: // room
+          env = Math.exp(-t * (4 / decay));
+      }
+
+      // Base noise
+      let sample = (Math.random() * 2 - 1) * env;
+
+      // Density adds early reflections
+      if (density > 0 && Math.random() < density * 0.3) {
+        sample += (Math.random() * 2 - 1) * env * 0.4;
+      }
+
+      // Spring gets chirp
+      if (type === 'spring') {
+        sample *= 1 + 0.3 * Math.sin(t * sampleRate * 0.001);
+      }
+
+      data[i] = sample * 0.5;
+    }
+  }
+  return buf;
+}
+
+// ============================================================
+// DISTORTION ALGORITHMS
+// ============================================================
+function processDistortion(e) {
+  const input = e.inputBuffer.getChannelData(0);
+  const output = e.outputBuffer.getChannelData(0);
+  const threshold = parseFloat(document.getElementById('drive').value);
+  const bits = parseInt(document.getElementById('bit-depth').value);
+  const wetDry = parseFloat(document.getElementById('wet-dry').value);
+  const drive = (1 - threshold) * 10 + 1; // map so higher = more distortion
+
+  for (let i = 0; i < input.length; i++) {
+    let x = input[i];
+    let wet;
+
+    switch(clipMode) {
+      case 'hard':
+        wet = Math.max(-threshold, Math.min(threshold, x)) / threshold;
+        break;
+
+      case 'soft':
+        // tanh saturation — smooth, musical
+        wet = Math.tanh(drive * x) / Math.tanh(drive);
+        break;
+
+      case 'asymmetric':
+        // Different clipping on positive vs negative → even harmonics
+        if (x >= 0) {
+          wet = Math.min(x, threshold) / threshold;
+        } else {
+          wet = Math.max(x, -threshold * 0.6) / (threshold * 0.6);
+          // scale back
+          wet *= 0.8;
+        }
+        break;
+
+      case 'foldback':
+        // Mirror signal back when it exceeds threshold — extreme harmonic density
+        let val = x;
+        while (Math.abs(val) > threshold) {
+          if (val > threshold) val = 2 * threshold - val;
+          else if (val < -threshold) val = -2 * threshold - val;
+        }
+        wet = val / threshold;
+        break;
+
+      case 'bitcrush':
+        // Quantize to N bits
+        const steps = Math.pow(2, bits - 1);
+        wet = Math.round(x * steps) / steps;
+        wet = Math.max(-1, Math.min(1, wet));
+        break;
+
+      case 'tube':
+        // Tube-like: asymmetric tanh — emphasizes even harmonics like a triode
+        const bias = 0.15;
+        wet = Math.tanh(drive * (x + bias)) - Math.tanh(drive * bias);
+        // normalize approx
+        wet = wet / (1 + Math.tanh(drive * bias));
+        break;
+
+      case 'rectify':
+        // Half-wave rectifier: negative half removed → strong even harmonics
+        wet = x > 0 ? x : 0;
+        // AC restore
+        wet = wet * 2 - 0.5;
+        wet = Math.max(-1, Math.min(1, wet));
+        break;
+
+      default:
+        wet = x;
+    }
+
+    output[i] = wet * wetDry + x * (1 - wetDry);
+  }
+}
+
+// ============================================================
+// SOURCE MANAGEMENT
+// ============================================================
+async function startOsc() {
+  if (!ctx) return;
+  stopSource();
+  oscNode = ctx.createOscillator();
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+  oscNode.connect(inputGain);
+  inputGain.connect(analyserIn);
+  inputGain.connect(distortionNode);
+  distortionNode.connect(analyserOut);
+  oscNode.start();
+  playing = true;
+  document.getElementById('play-btn').textContent = '▶ PLAYING';
+  document.getElementById('play-btn').classList.add('active');
+  updateMicStatus(false);
+}
+
+async function startMic() {
+  stopSource();
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    sourceNode = ctx.createMediaStreamSource(micStream);
+    sourceNode.connect(inputGain);
+    inputGain.connect(analyserIn);
+    inputGain.connect(distortionNode);
+    distortionNode.connect(analyserOut);
+    updateMicStatus(true);
+    document.getElementById('mic-warning').style.display = 'block';
+  } catch(err) {
+    alert('Microphone access denied: ' + err.message);
+    setSource('osc');
+  }
+}
+
+function stopSource() {
+  try { if (oscNode) { oscNode.stop(); oscNode.disconnect(); } } catch(e) {}
+  try { if (sourceNode) { sourceNode.disconnect(); } } catch(e) {}
+  try { if (wavSourceNode) { wavSourceNode.stop(); wavSourceNode.disconnect(); } } catch(e) {}
+  try { if (micStream) { micStream.getTracks().forEach(t => t.stop()); } } catch(e) {}
+  try { inputGain.disconnect(); } catch(e) {}
+  try { distortionNode.disconnect(); } catch(e) {}
+  wavSourceNode = null;
+  document.getElementById('mic-warning').style.display = 'none';
+}
+
+async function setSource(type) {
+  await initAudio();
+  sourceType = type;
+  document.getElementById('btn-mic').classList.toggle('active', type === 'mic');
+  document.getElementById('btn-osc').classList.toggle('active', type === 'osc');
+  if (type === 'mic') await startMic();
+  else await startOsc();
+}
+
+function updateOsc() {
+  if (!oscNode) return;
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+}
+
+// ============================================================
+// CONTROLS
+// ============================================================
+function updateGains() {
+  if (!ctx) return;
+  outputGain.gain.value = parseFloat(document.getElementById('out-vol').value);
+  inputGain.gain.value = parseFloat(document.getElementById('input-gain').value);
+}
+
+function updateDrive() { /* handled in processDistortion live */ }
+
+function updateReverbMix() {
+  if (!ctx) return;
+  const w = parseFloat(document.getElementById('rev-wet').value);
+  revWetGain.gain.value = w;
+  revDryGain.gain.value = 1 - w * 0.5;
+}
+
+function updatePreDelay() {
+  if (!ctx) return;
+  preDelayNode.delayTime.value = parseFloat(document.getElementById('rev-predelay').value) / 1000;
+}
+
+function toggleReverb() {
+  reverbEnabled = !reverbEnabled;
+  const btn = document.getElementById('btn-reverb');
+  btn.textContent = reverbEnabled ? 'REVERB ON' : 'REVERB OFF';
+  btn.classList.toggle('active', reverbEnabled);
+  updateReverbRouting();
+}
+
+function setIR(type) {
+  currentIR = type;
+  ['room','hall','plate','cave','spring'].forEach(t => {
+    document.getElementById('ir-' + t).classList.toggle('active', t === type);
+  });
+  buildIR();
+}
+
+const algoInfo = {
+  hard: 'Hard clip: f(x) = clamp(x, −T, +T) — abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.',
+  soft: 'Soft clip: f(x) = tanh(D·x) / tanh(D) — smooth saturation, musical warmth. Vintage tube-amp character.',
+  asymmetric: 'Asymmetric: different thresholds on +/− halves → even-order harmonics (2nd, 4th). Transistor bias distortion.',
+  foldback: 'Foldback / wavefold: signal mirrors back past threshold. Extreme density, metallic texture. Buchla-style.',
+  bitcrush: 'Bit Crush: quantize to N bits = reduce amplitude resolution → harsh quantization noise / aliasing.',
+  tube: 'Tube (triode bias): tanh with DC offset → even harmonics dominate. Warm, complex saturation.',
+  rectify: 'Half-Wave Rectify: strips negative half → strong even harmonics. Like a simple diode clipper.'
+};
+
+function setClip(mode) {
+  clipMode = mode;
+  document.querySelectorAll('#clip-btns button').forEach(b => b.classList.remove('active'));
+  document.getElementById('clip-' + mode.replace('crush','bit').replace('metric','asym').replace('back','fold').replace('tify','rect').replace('tube','tube')).classList.add('active');
+  document.getElementById('algo-info').textContent = algoInfo[mode] || '';
+}
+
+// Fix button IDs for setClip
+const clipIdMap = { hard:'clip-hard', soft:'clip-soft', asymmetric:'clip-asym', foldback:'clip-fold', bitcrush:'clip-bit', tube:'clip-tube', rectify:'clip-rect' };
+function setClip(mode) {
+  clipMode = mode;
+  Object.keys(clipIdMap).forEach(k => {
+    const el = document.getElementById(clipIdMap[k]);
+    if (el) el.classList.toggle('active', k === mode);
+  });
+  document.getElementById('algo-info').textContent = algoInfo[mode] || '';
+}
+
+async function togglePlay() {
+  await initAudio();
+  if (sourceType !== 'osc') return;
+  if (playing) {
+    oscNode.stop();
+    playing = false;
+    document.getElementById('play-btn').textContent = '▶ PLAY';
+    document.getElementById('play-btn').classList.remove('active');
+  } else {
+    await startOsc();
+  }
+}
+
+function updateMicStatus(active) {
+  document.getElementById('mic-dot').className = 'status-dot' + (active ? ' active' : '');
+  document.getElementById('mic-status').textContent = active ? 'MIC ACTIVE' : (playing ? 'OSC RUNNING' : 'AUDIO OFFLINE');
+}
+
+function updateDisplay(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ============================================================
+// VISUALIZATION
+// ============================================================
+const SCOPE_COLOR_DRY = 'rgba(57,255,20,0.3)';
+const SCOPE_COLOR_WET = '#39ff14';
+const SCOPE_COLOR_CLIP = '#ff3030';
+const SPEC_COLOR_IN = '#ff9500';
+const SPEC_COLOR_OUT = '#39ff14';
+
+function drawScope(canvas, analyser, showDryRef, analyserDry) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx2.clearRect(0, 0, W, H);
+
+  // Background
+  ctx2.fillStyle = '#020502';
+  ctx2.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx2.strokeStyle = 'rgba(57,255,20,0.07)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+  for (let j = 0; j <= 4; j++) {
+    const y = H * j / 4;
+    ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke();
+  }
+
+  // Zero line
+  ctx2.strokeStyle = 'rgba(57,255,20,0.18)';
+  ctx2.setLineDash([4, 4]);
+  ctx2.beginPath(); ctx2.moveTo(0, H/2); ctx2.lineTo(W, H/2); ctx2.stroke();
+  ctx2.setLineDash([]);
+
+  if (!analyser) return;
+
+  const buffer = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buffer);
+
+  // Find zero crossing for stable display
+  let start = 0;
+  for (let i = 1; i < buffer.length / 2; i++) {
+    if (buffer[i - 1] < 0 && buffer[i] >= 0) { start = i; break; }
+  }
+
+  // Draw dry reference if this is output scope
+  if (showDryRef && analyserDry) {
+    const dryBuf = new Float32Array(analyserDry.fftSize);
+    analyserDry.getFloatTimeDomainData(dryBuf);
+    ctx2.strokeStyle = SCOPE_COLOR_DRY;
+    ctx2.lineWidth = 1.5;
+    ctx2.beginPath();
+    const drawLen = Math.min(W, buffer.length - start);
+    for (let i = 0; i < drawLen; i++) {
+      const x = (i / drawLen) * W;
+      const y = ((1 - dryBuf[start + i]) / 2) * H;
+      i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+    }
+    ctx2.stroke();
+  }
+
+  // Draw clip threshold lines
+  const drive = parseFloat(document.getElementById('drive').value);
+  if (clipMode !== 'bitcrush') {
+    const clampY = ((1 - drive) / 2) * H;
+    const clampYN = ((1 + drive) / 2) * H;
+    ctx2.strokeStyle = 'rgba(255,48,48,0.5)';
+    ctx2.lineWidth = 1;
+    ctx2.setLineDash([6, 3]);
+    ctx2.beginPath(); ctx2.moveTo(0, clampY); ctx2.lineTo(W, clampY); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(0, clampYN); ctx2.lineTo(W, clampYN); ctx2.stroke();
+    ctx2.setLineDash([]);
+  }
+
+  // Draw main waveform
+  const drawLen = Math.min(W * 2, buffer.length - start);
+  ctx2.strokeStyle = analyserDry ? SCOPE_COLOR_WET : SCOPE_COLOR_WET;
+  ctx2.lineWidth = 2;
+  ctx2.shadowBlur = 6;
+  ctx2.shadowColor = 'rgba(57,255,20,0.4)';
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const idx = Math.floor(i / W * drawLen);
+    const x = i;
+    const y = ((1 - buffer[start + idx]) / 2) * H;
+    i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+  }
+  ctx2.stroke();
+  ctx2.shadowBlur = 0;
+}
+
+function drawSpectrum(canvas, analyser, color) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = '#020502';
+  ctx2.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx2.strokeStyle = 'rgba(57,255,20,0.05)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+
+  if (!analyser) return;
+
+  const bufLen = analyser.frequencyBinCount;
+  const freqData = new Uint8Array(bufLen);
+  analyser.getByteFrequencyData(freqData);
+
+  // Log-scale spectrum
+  const gradient = ctx2.createLinearGradient(0, H, 0, 0);
+  gradient.addColorStop(0, color + '99');
+  gradient.addColorStop(1, color);
+  ctx2.fillStyle = gradient;
+
+  ctx2.beginPath();
+  ctx2.moveTo(0, H);
+
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    const v = freqData[Math.min(logIdx, bufLen - 1)];
+    const y = H - (v / 255) * H;
+    ctx2.lineTo(i, y);
+  }
+  ctx2.lineTo(W, H);
+  ctx2.closePath();
+  ctx2.fill();
+
+  // Bright top line
+  ctx2.strokeStyle = color;
+  ctx2.lineWidth = 1.5;
+  ctx2.shadowBlur = 4;
+  ctx2.shadowColor = color + '80';
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    const v = freqData[Math.min(logIdx, bufLen - 1)];
+    const y = H - (v / 255) * H;
+    i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
+  }
+  ctx2.stroke();
+  ctx2.shadowBlur = 0;
+}
+
+// VU Meters
+function buildVU(containerId, count) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'vu-seg';
+    el.appendChild(seg);
+  }
+}
+
+const VU_COUNT = 24;
+buildVU('vu-in', VU_COUNT);
+buildVU('vu-out', VU_COUNT);
+buildVU('vu-master', VU_COUNT);
+
+function updateVU(containerId, rms) {
+  const segs = document.getElementById(containerId).children;
+  const level = Math.min(1, rms * 4);
+  const lit = Math.floor(level * VU_COUNT);
+  for (let i = 0; i < VU_COUNT; i++) {
+    let color = 'var(--border)';
+    if (i < lit) {
+      const t = i / VU_COUNT;
+      if (t < 0.6) color = 'var(--phosphor-dim)';
+      else if (t < 0.8) color = 'var(--phosphor)';
+      else if (t < 0.92) color = 'var(--amber)';
+      else color = 'var(--red)';
+    }
+    segs[i].style.background = color;
+    if (i < lit && i > VU_COUNT * 0.6) {
+      segs[i].style.boxShadow = `0 0 4px ${color}`;
+    } else {
+      segs[i].style.boxShadow = 'none';
+    }
+  }
+}
+
+function getRMS(analyser) {
+  if (!analyser) return 0;
+  const data = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(data);
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+  return Math.sqrt(sum / data.length);
+}
+
+// ============================================================
+// SPECTROGRAM
+// ============================================================
+// We keep an offscreen ImageData for each spectrogram and scroll it left each frame
+const sgramState = {};
+
+function initSgram(canvasId) {
+  const c = document.getElementById(canvasId);
+  const W = c.width;
+  const H = c.height;
+  const ctx2 = c.getContext('2d');
+  const imageData = ctx2.createImageData(W, H);
+  // Fill with near-black
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    imageData.data[i] = 2;
+    imageData.data[i+1] = 5;
+    imageData.data[i+2] = 2;
+    imageData.data[i+3] = 255;
+  }
+  sgramState[canvasId] = { imageData, width: W, height: H };
+}
+
+function drawSpectrogram(canvasId, analyser) {
+  const c = document.getElementById(canvasId);
+  const ctx2 = c.getContext('2d');
+  const W = c.width;
+  const H = c.height;
+
+  // Re-init if canvas resized
+  if (!sgramState[canvasId] || sgramState[canvasId].width !== W || sgramState[canvasId].height !== H) {
+    initSgram(canvasId);
+  }
+
+  const state = sgramState[canvasId];
+  const img = state.imageData;
+
+  // Scroll everything left by 1 pixel
+  for (let y = 0; y < H; y++) {
+    const rowStart = y * W * 4;
+    for (let x = 0; x < (W - 1); x++) {
+      const dst = rowStart + x * 4;
+      const src = rowStart + (x + 1) * 4;
+      img.data[dst]     = img.data[src];
+      img.data[dst + 1] = img.data[src + 1];
+      img.data[dst + 2] = img.data[src + 2];
+    }
+  }
+
+  // Paint new column on the right edge from frequency data
+  if (analyser) {
+    const bufLen = analyser.frequencyBinCount;
+    const freqData = new Uint8Array(bufLen);
+    analyser.getByteFrequencyData(freqData);
+
+    for (let y = 0; y < H; y++) {
+      // Map y (top = high freq, bottom = low freq) to frequency bin with log scale
+      const t = 1 - (y / H); // 0 at bottom, 1 at top
+      const logIdx = Math.floor(Math.pow(t, 2) * bufLen);
+      const v = freqData[Math.min(logIdx, bufLen - 1)];
+      const norm = v / 255;
+
+      // Color: black → dark green → bright green → amber → red/white for hot
+      let r, g, b;
+      if (norm < 0.25) {
+        // black to dark green
+        const s = norm / 0.25;
+        r = 2;
+        g = Math.floor(5 + s * 117); // 5 → 122
+        b = 2;
+      } else if (norm < 0.55) {
+        // dark green to bright phosphor green
+        const s = (norm - 0.25) / 0.3;
+        r = Math.floor(s * 57);
+        g = Math.floor(122 + s * 133); // 122 → 255
+        b = Math.floor(s * 20);
+      } else if (norm < 0.8) {
+        // phosphor green to amber
+        const s = (norm - 0.55) / 0.25;
+        r = Math.floor(57 + s * 198); // 57 → 255
+        g = Math.floor(255 - s * 106); // 255 → 149
+        b = Math.floor(20 - s * 20);
+      } else {
+        // amber to hot red-white
+        const s = (norm - 0.8) / 0.2;
+        r = 255;
+        g = Math.floor(149 + s * 106); // 149 → 255
+        b = Math.floor(s * 200);
+      }
+
+      const idx = (y * W + (W - 1)) * 4;
+      img.data[idx]     = r;
+      img.data[idx + 1] = g;
+      img.data[idx + 2] = b;
+    }
+  } else {
+    // No analyser — paint black column
+    for (let y = 0; y < H; y++) {
+      const idx = (y * W + (W - 1)) * 4;
+      img.data[idx]     = 2;
+      img.data[idx + 1] = 5;
+      img.data[idx + 2] = 2;
+    }
+  }
+
+  ctx2.putImageData(img, 0, 0);
+
+  // Frequency axis labels (sparse, redrawn each frame over the image)
+  ctx2.fillStyle = 'rgba(57,255,20,0.4)';
+  ctx2.font = '9px "Share Tech Mono", monospace';
+  const sr = ctx ? ctx.sampleRate : 44100;
+  const nyquist = sr / 2;
+  const freqMarks = [100, 500, 1000, 2000, 5000, 10000];
+  for (const f of freqMarks) {
+    if (f > nyquist) continue;
+    // Reverse the log mapping: t = sqrt(f / nyquist), y = (1-t)*H
+    const t = Math.sqrt(f / nyquist);
+    const y = (1 - t) * H;
+    if (y > 10 && y < H - 5) {
+      const label = f >= 1000 ? (f/1000) + 'k' : f + '';
+      ctx2.fillText(label, 3, y - 2);
+    }
+  }
+}
+
+// Resize canvases to match CSS
+function resizeCanvases() {
+  ['scope-in','scope-out','fft-in','fft-out','sgram-in','sgram-out'].forEach(id => {
+    const c = document.getElementById(id);
+    const rect = c.getBoundingClientRect();
+    c.width = Math.floor(rect.width) || 600;
+    c.height = Math.floor(rect.height) || 160;
+  });
+}
+window.addEventListener('resize', resizeCanvases);
+setTimeout(resizeCanvases, 100);
+
+// Main render loop
+function render() {
+  animFrame = requestAnimationFrame(render);
+  if (!ctx) return;
+
+  drawScope(document.getElementById('scope-in'), analyserIn, false, null);
+  drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn);
+  drawSpectrum(document.getElementById('fft-in'), analyserIn, '#ff9500');
+  drawSpectrum(document.getElementById('fft-out'), analyserOut, '#39ff14');
+
+  drawSpectrogram('sgram-in', analyserIn);
+  drawSpectrogram('sgram-out', analyserOut);
+
+  updateVU('vu-in', getRMS(analyserIn));
+  updateVU('vu-out', getRMS(analyserOut));
+  updateVU('vu-master', getRMS(analyserOut) * parseFloat(document.getElementById('out-vol').value));
+}
+render();
+
+// ============================================================
+// WAV FILE LOADING
+// ============================================================
+async function startWavSource(audioBuffer) {
+  await initAudio();
+  stopSource();
+  sourceType = 'wav';
+  wavSourceNode = ctx.createBufferSource();
+  wavSourceNode.buffer = audioBuffer;
+  wavSourceNode.loop = true;
+  wavSourceNode.connect(inputGain);
+  inputGain.connect(analyserIn);
+  inputGain.connect(distortionNode);
+  distortionNode.connect(analyserOut);
+  wavSourceNode.start();
+  playing = true;
+  document.getElementById('play-btn').textContent = '▶ PLAYING';
+  document.getElementById('play-btn').classList.add('active');
+  document.getElementById('btn-mic').classList.remove('active');
+  document.getElementById('btn-osc').classList.remove('active');
+  updateMicStatus(false);
+}
+
+async function loadWavFromFetch(filename) {
+  await initAudio();
+  try {
+    const resp = await fetch('wavs/' + filename);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+  } catch(err) {
+    alert('Could not load wavs/' + filename + '.\n\nRun: node server.js\nThen open http://localhost:3000');
+  }
+}
+
+async function loadWavFile(input) {
+  if (!input.files.length) return;
+  await initAudio();
+  const buf = await input.files[0].arrayBuffer();
+  try {
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+  } catch(err) {
+    alert('Could not decode audio: ' + err.message);
+  }
+}
+
+// Discover WAV files from the server API
+async function loadWavListLab() {
+  const container = document.getElementById('wav-btns-lab');
+  try {
+    const resp = await fetch('/api/wavs');
+    if (!resp.ok) throw new Error('no api');
+    const data = await resp.json();
+    if (!data.files.length) return;
+    container.innerHTML = '';
+    data.files.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'amber-btn';
+      btn.style.fontSize = '0.6rem';
+      btn.style.padding = '3px 6px';
+      btn.textContent = f.replace(/\.[^.]+$/, '').replace(/_/g, ' ').toUpperCase();
+      btn.onclick = () => loadWavFromFetch(f);
+      container.appendChild(btn);
+    });
+  } catch(e) {
+    // Not running via server — that's fine, file picker still works
+  }
+}
+loadWavListLab();
+
+// Auto-init on first interaction
+document.addEventListener('click', async () => {
+  if (!ctx) {
+    await initAudio();
+  }
+}, { once: true });
+
+// Also init on page load attempt
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(resizeCanvases, 200);
+});
+</script>
+</body>
+</html>
