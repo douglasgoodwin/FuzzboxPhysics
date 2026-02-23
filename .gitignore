@@ -13,8 +13,9 @@ node_modules/
 # wavs/*.aif
 # wavs/*.aiff
 
-# Large video files in listening folders
+# Large video files
 listening/**/*.mp4
+field/**/*.MOV
 # listening/**/*.webm
 # listening/**/*.mov
 
