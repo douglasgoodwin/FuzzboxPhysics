@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Spectrograph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
+
+  :root {
+    --phosphor: #39ff14;
+    --phosphor-dim: #1a7a08;
+    --phosphor-glow: rgba(57,255,20,0.4);
+    --bg: #050a04;
+    --panel: #0a110a;
+    --border: #1c2e1c;
+    --amber: #ff9500;
+    --red: #ff3030;
+    --blue: #00cfff;
+    --text: #8bba8b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--phosphor);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 16px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 0.12em;
+    color: var(--phosphor);
+    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.2em;
+    margin-top: 2px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+    opacity: 0.5;
+  }
+
+  .panel-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--phosphor-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  canvas {
+    width: 100%;
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: #020502;
+  }
+
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 64px;
+  }
+
+  .knob-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .knob-value {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor);
+    min-width: 48px;
+    text-align: center;
+    background: #020a02;
+    border: 1px solid var(--border);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    max-width: 140px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+    cursor: pointer;
+  }
+
+  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid var(--phosphor-dim);
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor-glow);
+  }
+
+  button.active {
+    background: rgba(57,255,20,0.1);
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    box-shadow: 0 0 10px var(--phosphor-glow);
+  }
+
+  button.amber-btn {
+    border-color: rgba(255,149,0,0.5);
+    color: var(--amber);
+  }
+  button.amber-btn:hover, button.amber-btn.active {
+    background: rgba(255,149,0,0.1);
+    border-color: var(--amber);
+    box-shadow: 0 0 8px rgba(255,149,0,0.4);
+  }
+
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  a.nav-link {
+    color: var(--phosphor-dim);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    transition: color 0.15s;
+  }
+  a.nav-link:hover { color: var(--phosphor); }
+
+  /* Upload drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 4px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .drop-zone.dragover {
+    border-color: var(--phosphor);
+    background: rgba(57,255,20,0.05);
+    box-shadow: inset 0 0 20px var(--phosphor-glow);
+  }
+
+  .drop-zone .drop-text {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+  }
+
+  .drop-zone .drop-hint {
+    font-size: 0.6rem;
+    color: var(--text);
+    opacity: 0.6;
+  }
+
+  /* Two-up canvas layout */
+  .canvas-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .canvas-wrap { position: relative; }
+
+  .canvas-wrap .canvas-label {
+    position: absolute;
+    top: 6px; left: 8px;
+    font-family: 'VT323', monospace;
+    font-size: 0.8rem;
+    color: var(--phosphor-dim);
+    letter-spacing: 0.15em;
+    z-index: 1;
+    pointer-events: none;
+    text-shadow: 0 0 4px rgba(0,0,0,0.8);
+  }
+
+  /* Camera video hidden */
+  #camera-video { display: none; }
+
+  /* Status bar */
+  .status-bar {
+    font-family: 'VT323', monospace;
+    font-size: 0.9rem;
+    color: var(--phosphor-dim);
+    padding: 6px 0;
+    min-height: 1.5em;
+  }
+
+  .status-bar .active-status { color: var(--phosphor); }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .canvas-row { grid-template-columns: 1fr; }
+    canvas { height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>SPECTROGRAPH</h1>
+    <div class="subtitle">∿ FUZZBOX PHYSICS — ENCODE AN IMAGE INTO SOUND</div>
+  </div>
+  <div style="display:flex; gap:12px;">
+    <a href="fuzzbox-sculptor.html" class="nav-link">SPECTRAL SCULPTOR</a>
+    <a href="fuzzbox-lab.html" class="nav-link">DISTORTION LAB</a>
+  </div>
+</header>
+
+<!-- UPLOAD + CONTROLS -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
+  <!-- Left: upload -->
+  <div class="panel">
+    <div class="panel-label">&#x2B21; Image Source</div>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-text">DROP IMAGE HERE</div>
+      <div class="drop-hint">or click to choose file &middot; paste from clipboard</div>
+      <div class="btn-group" style="margin-top:8px">
+        <button onclick="document.getElementById('file-input').click()" class="amber-btn">CHOOSE FILE</button>
+        <button onclick="startCamera()" id="btn-camera" class="amber-btn">CAMERA</button>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+    <video id="camera-video" playsinline></video>
+    <div id="camera-controls" style="display:none; margin-top:8px">
+      <div class="btn-group">
+        <button onclick="captureFrame()" class="active">CAPTURE</button>
+        <button onclick="stopCamera()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: controls -->
+  <div class="panel">
+    <div class="panel-label">&#x2B21; Synthesis Controls</div>
+    <div style="display:flex; flex-direction:column; gap:12px">
+      <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+        <div class="knob-group" style="align-items:flex-start; min-width:unset">
+          <div class="knob-label">DURATION</div>
+          <input type="range" id="duration" min="1" max="12" value="4" step="1"
+            oninput="document.getElementById('dur-val').textContent=this.value+'s'">
+          <div class="knob-value" id="dur-val">4s</div>
+        </div>
+        <div class="knob-group" style="align-items:flex-start; min-width:unset">
+          <div class="knob-label">VOLUME</div>
+          <input type="range" id="volume" min="0" max="1" value="0.7" step="0.01" class="amber"
+            oninput="document.getElementById('vol-val').textContent=Math.round(this.value*100)+'%'; updateVolume()">
+          <div class="knob-value" id="vol-val">70%</div>
+        </div>
+        <div class="knob-group" style="align-items:flex-start; min-width:unset">
+          <div class="knob-label">FREQ MAX</div>
+          <input type="range" id="freq-max" min="4000" max="22050" value="16000" step="100"
+            oninput="document.getElementById('fmax-val').textContent=(this.value/1000).toFixed(1)+'kHz'">
+          <div class="knob-value" id="fmax-val">16.0kHz</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+        <div class="knob-group" style="align-items:flex-start; min-width:unset">
+          <div class="knob-label">BRIGHTNESS</div>
+          <div class="btn-group">
+            <button onclick="setBrightness('linear')" id="br-linear" class="active">LINEAR</button>
+            <button onclick="setBrightness('log')" id="br-log">LOG</button>
+            <button onclick="setBrightness('gamma')" id="br-gamma">GAMMA</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <div class="knob-label" style="margin-right:4px">PHASE</div>
+        <div class="btn-group">
+          <button onclick="setPhaseMode('random')" id="ph-random" class="active">RANDOM</button>
+          <button onclick="setPhaseMode('griffin-lim')" id="ph-gl">GRIFFIN-LIM</button>
+        </div>
+        <button onclick="toggleInvert()" id="btn-invert" style="margin-left:auto">INVERT: OFF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CANVASES -->
+<div class="canvas-row">
+  <div class="canvas-wrap">
+    <div class="canvas-label">SOURCE IMAGE</div>
+    <canvas id="source-canvas" height="380"></canvas>
+  </div>
+  <div class="canvas-wrap">
+    <div class="canvas-label">OUTPUT SPECTROGRAM</div>
+    <canvas id="output-canvas" height="380"></canvas>
+  </div>
+</div>
+
+<!-- PLAYBACK -->
+<div class="panel" style="margin-bottom:12px">
+  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+    <button onclick="synthesizeAndPlay()" id="btn-synth" style="font-size:0.85rem; padding:8px 16px" class="amber-btn">SYNTHESIZE</button>
+    <button onclick="togglePlay()" id="btn-play" style="font-size:1rem; padding:8px 20px" disabled>&#x25B6; PLAY</button>
+    <button onclick="stopPlay()" id="btn-stop" disabled>&#x25A0; STOP</button>
+    <button onclick="downloadWav()" id="btn-download" class="amber-btn" disabled>DOWNLOAD WAV</button>
+    <div class="status-bar" id="status" style="margin-left:auto">Load an image to begin</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FFT — Radix-2 Cooley-Tukey (iterative, in-place)
+// ============================================================
+function fft(re, im, inverse) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    while (j & bit) { j ^= bit; bit >>= 1; }
+    j ^= bit;
+    if (i < j) {
+      let tmp = re[i]; re[i] = re[j]; re[j] = tmp;
+      tmp = im[i]; im[i] = im[j]; im[j] = tmp;
+    }
+  }
+  const dir = inverse ? 1 : -1;
+  for (let len = 2; len <= n; len <<= 1) {
+    const half = len >> 1;
+    const angle = dir * 2 * Math.PI / len;
+    const wRe = Math.cos(angle), wIm = Math.sin(angle);
+    for (let i = 0; i < n; i += len) {
+      let tRe = 1, tIm = 0;
+      for (let j = 0; j < half; j++) {
+        const a = i + j, b = a + half;
+        const uRe = re[a], uIm = im[a];
+        const vRe = re[b] * tRe - im[b] * tIm;
+        const vIm = re[b] * tIm + im[b] * tRe;
+        re[a] = uRe + vRe; im[a] = uIm + vIm;
+        re[b] = uRe - vRe; im[b] = uIm - vIm;
+        const nRe = tRe * wRe - tIm * wIm;
+        tIm = tRe * wIm + tIm * wRe;
+        tRe = nRe;
+      }
+    }
+  }
+  if (inverse) {
+    for (let i = 0; i < n; i++) { re[i] /= n; im[i] /= n; }
+  }
+}
+
+// ============================================================
+// STFT / ISTFT
+// ============================================================
+const FFT_SIZE = 2048;
+const HOP_SIZE = 512;
+
+let hannWin;
+function getHannWindow() {
+  if (hannWin && hannWin.length === FFT_SIZE) return hannWin;
+  hannWin = new Float64Array(FFT_SIZE);
+  for (let i = 0; i < FFT_SIZE; i++) hannWin[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (FFT_SIZE - 1)));
+  return hannWin;
+}
+
+function analyzeSignal(signal) {
+  const win = getHannWindow();
+  const nBins = (FFT_SIZE >> 1) + 1;
+  const nFrames = Math.floor((signal.length - FFT_SIZE) / HOP_SIZE) + 1;
+  const mags = new Array(nFrames);
+  const phas = new Array(nFrames);
+  let peak = 1e-10;
+
+  for (let f = 0; f < nFrames; f++) {
+    const off = f * HOP_SIZE;
+    const re = new Float64Array(FFT_SIZE);
+    const im = new Float64Array(FFT_SIZE);
+    for (let i = 0; i < FFT_SIZE; i++) re[i] = (off + i < signal.length ? signal[off + i] : 0) * win[i];
+    fft(re, im, false);
+    const m = new Float32Array(nBins);
+    const p = new Float32Array(nBins);
+    for (let i = 0; i < nBins; i++) {
+      m[i] = Math.sqrt(re[i] * re[i] + im[i] * im[i]);
+      p[i] = Math.atan2(im[i], re[i]);
+      if (m[i] > peak) peak = m[i];
+    }
+    mags[f] = m;
+    phas[f] = p;
+  }
+  return { mags, phas, nFrames, nBins, peak };
+}
+
+function synthesizeFromMagPhase(mags, phas, nFrames, nBins, totalLength) {
+  const win = getHannWindow();
+  const output = new Float64Array(totalLength);
+  const wSum = new Float64Array(totalLength);
+
+  for (let f = 0; f < nFrames; f++) {
+    const off = f * HOP_SIZE;
+    const re = new Float64Array(FFT_SIZE);
+    const im = new Float64Array(FFT_SIZE);
+    for (let i = 0; i < nBins; i++) {
+      re[i] = mags[f][i] * Math.cos(phas[f][i]);
+      im[i] = mags[f][i] * Math.sin(phas[f][i]);
+    }
+    // Mirror for real signal
+    for (let i = nBins; i < FFT_SIZE; i++) {
+      re[i] = re[FFT_SIZE - i];
+      im[i] = -im[FFT_SIZE - i];
+    }
+    fft(re, im, true);
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const idx = off + i;
+      if (idx < totalLength) {
+        output[idx] += re[i] * win[i];
+        wSum[idx] += win[i] * win[i];
+      }
+    }
+  }
+  const result = new Float32Array(totalLength);
+  for (let i = 0; i < totalLength; i++) {
+    result[i] = wSum[i] > 1e-8 ? output[i] / wSum[i] : 0;
+  }
+  return result;
+}
+
+// ============================================================
+// GRIFFIN-LIM
+// ============================================================
+function griffinLim(targetMags, nFrames, nBins, totalLength, iterations) {
+  // Start with random phases
+  const phas = new Array(nFrames);
+  for (let f = 0; f < nFrames; f++) {
+    phas[f] = new Float32Array(nBins);
+    for (let i = 0; i < nBins; i++) {
+      phas[f][i] = Math.random() * 2 * Math.PI - Math.PI;
+    }
+  }
+
+  for (let iter = 0; iter < iterations; iter++) {
+    // Synthesize signal from target magnitudes + current phases
+    const signal = synthesizeFromMagPhase(targetMags, phas, nFrames, nBins, totalLength);
+
+    // Re-analyze to get new phases
+    const result = analyzeSignal(signal);
+
+    // Keep the new phases, discard magnitudes (they'll be replaced by target)
+    for (let f = 0; f < nFrames; f++) {
+      for (let i = 0; i < nBins; i++) {
+        phas[f][i] = result.phas[f][i];
+      }
+    }
+
+    setStatus('Griffin-Lim iteration ' + (iter + 1) + '/' + iterations + '...');
+  }
+
+  return phas;
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let audioCtx, gainNode, sourceNode;
+let sampleRate = 44100;
+let playBuffer = null;
+let playStartTime = 0;
+let isPlaying = false;
+let sourceImage = null;  // HTMLImageElement
+let imageMags = null;    // magnitude array from image
+let imagePhas = null;    // phase array
+let numFrames = 0, numBins = 0, loopLength = 0;
+let maxMag = 1;
+
+let sourceCtx, outputCtx;
+
+let brightnessMode = 'linear';
+let phaseMode = 'random';
+let invertMode = false;
+let cameraStream = null;
+
+// ============================================================
+// AUDIO INIT
+// ============================================================
+async function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  sampleRate = audioCtx.sampleRate;
+
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = parseFloat(document.getElementById('volume').value);
+  gainNode.connect(audioCtx.destination);
+}
+
+function startPlayback() {
+  if (!playBuffer || !audioCtx) return;
+  stopPlayback();
+
+  const audioBuf = audioCtx.createBuffer(1, playBuffer.length, sampleRate);
+  audioBuf.getChannelData(0).set(playBuffer);
+
+  sourceNode = audioCtx.createBufferSource();
+  sourceNode.buffer = audioBuf;
+  sourceNode.loop = true;
+  sourceNode.connect(gainNode);
+  sourceNode.start(0);
+  playStartTime = audioCtx.currentTime;
+  isPlaying = true;
+  updatePlayButtons();
+}
+
+function stopPlayback() {
+  if (sourceNode) {
+    try { sourceNode.stop(); } catch(e) {}
+    sourceNode.disconnect();
+    sourceNode = null;
+  }
+  isPlaying = false;
+  updatePlayButtons();
+}
+
+function updateVolume() {
+  if (gainNode) gainNode.gain.value = parseFloat(document.getElementById('volume').value);
+}
+
+function getPlayPos() {
+  if (!isPlaying || !playBuffer) return 0;
+  const elapsed = audioCtx.currentTime - playStartTime;
+  const duration = loopLength / sampleRate;
+  return (elapsed % duration) / duration;
+}
+
+// ============================================================
+// IMAGE LOADING
+// ============================================================
+function handleFileSelect(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  loadImageFile(file);
+}
+
+function loadImageFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      sourceImage = img;
+      drawSourceImage();
+      setStatus('Image loaded (' + img.width + 'x' + img.height + '). Click SYNTHESIZE.');
+      enableSynth();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadImageFromUrl(url) {
+  const img = new Image();
+  img.onload = function() {
+    sourceImage = img;
+    drawSourceImage();
+    setStatus('Image loaded (' + img.width + 'x' + img.height + '). Click SYNTHESIZE.');
+    enableSynth();
+  };
+  img.src = url;
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function startCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    const video = document.getElementById('camera-video');
+    video.srcObject = cameraStream;
+    video.style.display = 'block';
+    video.style.width = '100%';
+    video.style.maxHeight = '200px';
+    video.style.objectFit = 'cover';
+    video.style.borderRadius = '4px';
+    video.style.border = '1px solid var(--border)';
+    video.style.marginTop = '8px';
+    video.play();
+    document.getElementById('camera-controls').style.display = 'block';
+    document.getElementById('btn-camera').disabled = true;
+    setStatus('Camera active. Click CAPTURE for selfie.');
+  } catch(err) {
+    setStatus('Camera denied: ' + err.message);
+  }
+}
+
+function captureFrame() {
+  const video = document.getElementById('camera-video');
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = video.videoWidth;
+  tmpCanvas.height = video.videoHeight;
+  const tmpCtx = tmpCanvas.getContext('2d');
+  tmpCtx.drawImage(video, 0, 0);
+  const img = new Image();
+  img.onload = function() {
+    sourceImage = img;
+    drawSourceImage();
+    setStatus('Selfie captured. Click SYNTHESIZE.');
+    enableSynth();
+  };
+  img.src = tmpCanvas.toDataURL();
+  stopCamera();
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('camera-video');
+  video.style.display = 'none';
+  video.srcObject = null;
+  document.getElementById('camera-controls').style.display = 'none';
+  document.getElementById('btn-camera').disabled = false;
+}
+
+// ============================================================
+// DRAG-AND-DROP + PASTE
+// ============================================================
+function setupDropZone() {
+  const zone = document.getElementById('drop-zone');
+
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    zone.classList.add('dragover');
+  });
+
+  zone.addEventListener('dragleave', function() {
+    zone.classList.remove('dragover');
+  });
+
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) loadImageFile(files[0]);
+  });
+
+  // Paste from clipboard
+  document.addEventListener('paste', function(e) {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        loadImageFile(file);
+        break;
+      }
+    }
+  });
+}
+
+// ============================================================
+// DRAW SOURCE IMAGE (mapped to spectrogram dimensions)
+// ============================================================
+function drawSourceImage() {
+  if (!sourceImage || !sourceCtx) return;
+  const c = document.getElementById('source-canvas');
+  const ctx = sourceCtx;
+  const W = c.width, H = c.height;
+
+  ctx.fillStyle = '#020502';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw image scaled to fill canvas, maintaining aspect ratio
+  const iw = sourceImage.width, ih = sourceImage.height;
+  const scale = Math.max(W / iw, H / ih);
+  const dw = iw * scale, dh = ih * scale;
+  const ox = (W - dw) / 2, oy = (H - dh) / 2;
+  ctx.drawImage(sourceImage, ox, oy, dw, dh);
+
+  // Overlay frequency axis labels
+  drawFreqAxis(ctx, W, H);
+}
+
+function drawFreqAxis(ctx, W, H) {
+  const freqMax = parseFloat(document.getElementById('freq-max').value);
+  const logMin = Math.log(20);
+  const logMax = Math.log(freqMax);
+  ctx.fillStyle = 'rgba(57,255,20,0.45)';
+  ctx.font = '10px "Share Tech Mono", monospace';
+  for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000, 20000]) {
+    if (f > freqMax) continue;
+    const t = (Math.log(f) - logMin) / (logMax - logMin);
+    const y = (1 - t) * H;
+    if (y > 12 && y < H - 5) {
+      const label = f >= 1000 ? (f / 1000) + 'k' : f + '';
+      ctx.fillText(label, 4, y - 3);
+      ctx.fillRect(0, y, W, 0.5);
+    }
+  }
+}
+
+// ============================================================
+// IMAGE → MAGNITUDES
+// ============================================================
+function imageToMagnitudes() {
+  if (!sourceImage) return null;
+
+  const duration = parseFloat(document.getElementById('duration').value);
+  const freqMax = parseFloat(document.getElementById('freq-max').value);
+
+  // Calculate STFT dimensions
+  loopLength = Math.floor(sampleRate * duration);
+  numFrames = Math.floor((loopLength - FFT_SIZE) / HOP_SIZE) + 1;
+  loopLength = (numFrames - 1) * HOP_SIZE + FFT_SIZE;
+  numBins = (FFT_SIZE >> 1) + 1;
+
+  // Draw image onto a temp canvas at spectrogram resolution
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = numFrames;
+  tmpCanvas.height = numBins;
+  const tmpCtx = tmpCanvas.getContext('2d');
+
+  // Fill black first
+  tmpCtx.fillStyle = '#000';
+  tmpCtx.fillRect(0, 0, numFrames, numBins);
+
+  // Draw image scaled to fill
+  const iw = sourceImage.width, ih = sourceImage.height;
+  const scale = Math.max(numFrames / iw, numBins / ih);
+  const dw = iw * scale, dh = ih * scale;
+  const ox = (numFrames - dw) / 2, oy = (numBins - dh) / 2;
+  tmpCtx.drawImage(sourceImage, ox, oy, dw, dh);
+
+  const imgData = tmpCtx.getImageData(0, 0, numFrames, numBins);
+  const pixels = imgData.data;
+
+  // Build frequency mapping: row y → FFT bin (log scale)
+  const logMin = Math.log(20);
+  const logMax = Math.log(Math.min(freqMax, sampleRate / 2));
+
+  // Peak magnitude reference (based on FFT_SIZE)
+  const peakMag = FFT_SIZE * 0.25;
+  maxMag = peakMag;
+
+  const mags = new Array(numFrames);
+  const phas = new Array(numFrames);
+
+  for (let f = 0; f < numFrames; f++) {
+    mags[f] = new Float32Array(numBins);
+    phas[f] = new Float32Array(numBins);
+
+    for (let b = 0; b < numBins; b++) {
+      // Map bin to frequency
+      const freq = b * sampleRate / FFT_SIZE;
+      if (freq < 20 || freq > freqMax) {
+        mags[f][b] = 0;
+        continue;
+      }
+
+      // Map frequency to image row (log scale, top = high freq)
+      const t = (Math.log(freq) - logMin) / (logMax - logMin);
+      const imgY = Math.round((1 - t) * (numBins - 1));
+      if (imgY < 0 || imgY >= numBins) { mags[f][b] = 0; continue; }
+
+      // Get pixel brightness
+      const px = (imgY * numFrames + f) * 4;
+      const r = pixels[px], g = pixels[px + 1], bl = pixels[px + 2];
+      let brightness = (0.299 * r + 0.587 * g + 0.114 * bl) / 255;
+
+      // Invert if needed
+      if (invertMode) brightness = 1 - brightness;
+
+      // Apply brightness curve
+      switch (brightnessMode) {
+        case 'log':
+          brightness = brightness > 0 ? Math.log(1 + brightness * 9) / Math.log(10) : 0;
+          break;
+        case 'gamma':
+          brightness = Math.pow(brightness, 0.5);
+          break;
+      }
+
+      // Convert brightness to magnitude using dB scale
+      // brightness 1.0 → 0 dB (full), brightness 0.0 → -80 dB (silence)
+      const dB = brightness * 80 - 80;
+      const mag = peakMag * Math.pow(10, dB / 20);
+      mags[f][b] = brightness < 0.005 ? 0 : mag;
+
+      // Random phase
+      if (mags[f][b] > 0) {
+        phas[f][b] = Math.random() * 2 * Math.PI - Math.PI;
+      }
+    }
+  }
+
+  return { mags, phas };
+}
+
+// ============================================================
+// SYNTHESIS PIPELINE
+// ============================================================
+async function synthesizeAndPlay() {
+  if (!sourceImage) { setStatus('Load an image first.'); return; }
+
+  await initAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  // Stop current playback
+  stopPlayback();
+
+  setStatus('Extracting image brightness...');
+  // Use setTimeout to allow UI update before heavy computation
+  await new Promise(r => setTimeout(r, 50));
+
+  const result = imageToMagnitudes();
+  if (!result) return;
+  imageMags = result.mags;
+  imagePhas = result.phas;
+
+  if (phaseMode === 'griffin-lim') {
+    setStatus('Running Griffin-Lim phase reconstruction...');
+    await new Promise(r => setTimeout(r, 50));
+    imagePhas = griffinLim(imageMags, numFrames, numBins, loopLength, 20);
+  }
+
+  setStatus('Synthesizing audio via ISTFT...');
+  await new Promise(r => setTimeout(r, 50));
+
+  playBuffer = synthesizeFromMagPhase(imageMags, imagePhas, numFrames, numBins, loopLength);
+
+  // Normalize by RMS (random-phase ISTFT has extreme crest factor,
+  // so peak normalization crushes the audible content to silence)
+  let sumSq = 0;
+  for (let i = 0; i < loopLength; i++) sumSq += playBuffer[i] * playBuffer[i];
+  const rms = Math.sqrt(sumSq / loopLength);
+  console.log('[spectrograph] rms:', rms, 'loopLength:', loopLength, 'frames:', numFrames);
+  if (rms > 1e-6) {
+    const targetRms = 0.4;
+    const sc = targetRms / rms;
+    for (let i = 0; i < loopLength; i++) {
+      playBuffer[i] *= sc;
+      // Soft clip (tanh) to tame peaks without hard distortion
+      if (Math.abs(playBuffer[i]) > 0.8) {
+        playBuffer[i] = Math.tanh(playBuffer[i]);
+      }
+    }
+  }
+
+  // Draw output spectrogram
+  setStatus('Rendering verification spectrogram...');
+  await new Promise(r => setTimeout(r, 50));
+  drawOutputSpectrogram();
+
+  setStatus('Ready. Duration: ' + (loopLength / sampleRate).toFixed(1) + 's, ' + numFrames + ' frames');
+  document.getElementById('btn-play').disabled = false;
+  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('btn-download').disabled = false;
+
+  // Auto-play
+  startPlayback();
+}
+
+// ============================================================
+// OUTPUT SPECTROGRAM (re-analysis of synthesized audio)
+// ============================================================
+function drawOutputSpectrogram() {
+  if (!playBuffer || !outputCtx) return;
+  const result = analyzeSignal(playBuffer);
+  const c = document.getElementById('output-canvas');
+  const W = c.width, H = c.height;
+  const ctx = outputCtx;
+  const img = ctx.createImageData(W, H);
+  const d = img.data;
+
+  const oMags = result.mags;
+  const oFrames = result.nFrames;
+  const oBins = result.nBins;
+  const oPeak = Math.max(result.peak, 1e-10);
+
+  const freqMax = parseFloat(document.getElementById('freq-max').value);
+  const logMin = Math.log(20);
+  const logMax = Math.log(Math.min(freqMax, sampleRate / 2));
+
+  for (let x = 0; x < W; x++) {
+    const frame = Math.min(Math.floor(x / W * oFrames), oFrames - 1);
+    for (let y = 0; y < H; y++) {
+      // Map canvas y to frequency (log scale)
+      const freq = Math.exp(logMin + (1 - y / H) * (logMax - logMin));
+      const bin = Math.round(freq * FFT_SIZE / sampleRate);
+      const b = Math.max(0, Math.min(oBins - 1, bin));
+
+      const mag = oMags[frame][b];
+      const rgb = magToColor(mag, oPeak);
+      const idx = (y * W + x) << 2;
+      d[idx]     = (rgb >> 16) & 0xff;
+      d[idx + 1] = (rgb >> 8) & 0xff;
+      d[idx + 2] = rgb & 0xff;
+      d[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(img, 0, 0);
+  drawFreqAxis(ctx, W, H);
+
+  // Cache for animation loop cursor overlay
+  cachedOutputImage = ctx.getImageData(0, 0, W, H);
+}
+
+function magToColor(mag, peak) {
+  const db = 20 * Math.log10(mag / peak + 1e-10);
+  const norm = Math.max(0, Math.min(1, (db + 80) / 80));
+  let r, g, b;
+  if (norm < 0.15) {
+    const s = norm / 0.15;
+    r = 2; g = Math.floor(5 + s * 25); b = 2;
+  } else if (norm < 0.4) {
+    const s = (norm - 0.15) / 0.25;
+    r = Math.floor(s * 57); g = Math.floor(30 + s * 225); b = Math.floor(s * 20);
+  } else if (norm < 0.7) {
+    const s = (norm - 0.4) / 0.3;
+    r = Math.floor(57 + s * 198); g = Math.floor(255 - s * 106); b = Math.floor(20 - s * 20);
+  } else {
+    const s = (norm - 0.7) / 0.3;
+    r = 255; g = Math.floor(149 + s * 106); b = Math.floor(s * 220);
+  }
+  return (r << 16) | (g << 8) | b;
+}
+
+// ============================================================
+// PLAYBACK
+// ============================================================
+async function togglePlay() {
+  if (!playBuffer) return;
+  if (!isPlaying) {
+    if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+    startPlayback();
+  } else {
+    stopPlayback();
+  }
+}
+
+function stopPlay() {
+  stopPlayback();
+}
+
+function updatePlayButtons() {
+  const btn = document.getElementById('btn-play');
+  btn.textContent = isPlaying ? '\u25A0 PAUSE' : '\u25B6 PLAY';
+  btn.classList.toggle('active', isPlaying);
+}
+
+// ============================================================
+// WAV DOWNLOAD
+// ============================================================
+function downloadWav() {
+  if (!playBuffer) return;
+  const numSamples = playBuffer.length;
+  const numChannels = 1;
+  const bitsPerSample = 16;
+  const bytesPerSample = bitsPerSample / 8;
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numSamples * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  function writeStr(offset, str) {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  }
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  for (let i = 0; i < numSamples; i++) {
+    let s = Math.max(-1, Math.min(1, playBuffer[i]));
+    s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    view.setInt16(44 + i * 2, s, true);
+  }
+
+  const blob = new Blob([buffer], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'spectrograph-' + Date.now() + '.wav';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// UI CONTROLS
+// ============================================================
+function setBrightness(mode) {
+  brightnessMode = mode;
+  document.getElementById('br-linear').classList.toggle('active', mode === 'linear');
+  document.getElementById('br-log').classList.toggle('active', mode === 'log');
+  document.getElementById('br-gamma').classList.toggle('active', mode === 'gamma');
+}
+
+function setPhaseMode(mode) {
+  phaseMode = mode;
+  document.getElementById('ph-random').classList.toggle('active', mode === 'random');
+  document.getElementById('ph-gl').classList.toggle('active', mode === 'griffin-lim');
+}
+
+function toggleInvert() {
+  invertMode = !invertMode;
+  document.getElementById('btn-invert').textContent = 'INVERT: ' + (invertMode ? 'ON' : 'OFF');
+  document.getElementById('btn-invert').classList.toggle('active', invertMode);
+}
+
+function enableSynth() {
+  document.getElementById('btn-synth').disabled = false;
+}
+
+function setStatus(msg) {
+  document.getElementById('status').innerHTML = '<span class="active-status">' + msg + '</span>';
+}
+
+// ============================================================
+// ANIMATION — playback cursor on output spectrogram
+// ============================================================
+let cachedOutputImage = null;
+
+function drawFrame() {
+  requestAnimationFrame(drawFrame);
+
+  // Playback cursor on output canvas
+  if (isPlaying && playBuffer && loopLength > 0 && cachedOutputImage && outputCtx) {
+    const c = document.getElementById('output-canvas');
+    const ctx = outputCtx;
+    const W = c.width, H = c.height;
+
+    ctx.putImageData(cachedOutputImage, 0, 0);
+
+    const cx = getPlayPos() * W;
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, H);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+}
+
+// ============================================================
+// CANVAS SIZING
+// ============================================================
+function resizeCanvases() {
+  ['source-canvas', 'output-canvas'].forEach(id => {
+    const c = document.getElementById(id);
+    const rect = c.getBoundingClientRect();
+    c.width = Math.floor(rect.width) || 500;
+    c.height = Math.floor(rect.height) || 380;
+  });
+  sourceCtx = document.getElementById('source-canvas').getContext('2d');
+  outputCtx = document.getElementById('output-canvas').getContext('2d', { willReadFrequently: true });
+  if (sourceImage) drawSourceImage();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('resize', resizeCanvases);
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    resizeCanvases();
+    setupDropZone();
+  }, 100);
+});
+
+drawFrame();
+</script>
+</body>
+</html>
