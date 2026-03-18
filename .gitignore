@@ -31,3 +31,5 @@ texts/*.pdf
 .vscode/
 .idea/
 *.mp4
+*.mp3
+*.webm
