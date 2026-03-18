@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distortion Circuit Design — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  body { max-width: 780px; }
+
+  h2 {
+    font-size: 1.6rem;
+    margin-top: 40px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  h3 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+
+  p, li {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.85;
+  }
+
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+
+  strong { color: var(--text); font-weight: 500; }
+
+  .math {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: block;
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: rgba(232,128,58,0.04);
+    border-left: 3px solid rgba(232,128,58,0.3);
+    line-height: 1.7;
+  }
+
+  .math-inline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--accent);
+  }
+
+  .callout {
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+
+  .callout-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stage-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 16px 0;
+  }
+  .stage-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stage-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.6;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+  }
+  .stage-table td:first-child {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .scope-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 16px 0;
+  }
+  .scope-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scope-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.6;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+  }
+  .scope-table .label {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .chain-stage {
+    flex: 1;
+    min-width: 140px;
+    border: 1px solid var(--border-light);
+    padding: 12px;
+  }
+  .chain-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    min-width: 24px;
+    flex-shrink: 0;
+  }
+  .chain-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .chain-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .chain-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .chain-harmonics {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  .footer {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 40px;
+    line-height: 1.8;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+
+  @media (max-width: 700px) {
+    .chain { flex-direction: column; }
+    .chain-arrow { transform: rotate(90deg); min-height: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>Distortion Circuit Design</h1>
+</header>
+
+<p>
+  Distortion is all about how a <strong>nonlinear transfer function</strong> reshapes a waveform
+  around some chosen <strong>bias point</strong>. That's what decides which harmonics — even, odd,
+  or both — appear and how they evolve through stages. This document gives you the conceptual
+  framework for <em>designing</em> distortion, not just using it.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>1. Nonlinear Transfer and Harmonics</h2>
+
+<p>
+  Think of an amp stage as a function <span class="math-inline">y = f(x)</span> applied sample by
+  sample: the input waveform <span class="math-inline">x(t)</span> goes into a nonlinear curve,
+  and the output <span class="math-inline">y(t)</span> is that same waveform but reshaped.
+</p>
+
+<p>
+  If <span class="math-inline">f(x)</span> is smooth, you can approximate it with a power series
+  around the region where the signal lives:
+</p>
+
+<div class="math">f(x) = a₁x + a₂x² + a₃x³ + a₄x⁴ + ...</div>
+
+<p>
+  Feed in a pure sine <span class="math-inline">x(t) = sin(ωt)</span>, and each power of
+  <span class="math-inline">x</span> generates specific harmonics via trig identities:
+</p>
+
+<table class="scope-table">
+  <tr><th>Term</th><th>Expansion</th><th>Produces</th></tr>
+  <tr>
+    <td class="label">x²</td>
+    <td>sin²(ωt) = ½ − ½cos(<strong>2</strong>ωt)</td>
+    <td>DC + <strong>2nd harmonic</strong></td>
+  </tr>
+  <tr>
+    <td class="label">x³</td>
+    <td>sin³(ωt) = ¾sin(ωt) − ¼sin(<strong>3</strong>ωt)</td>
+    <td>fundamental + <strong>3rd harmonic</strong></td>
+  </tr>
+  <tr>
+    <td class="label">x⁴</td>
+    <td>mix of DC + cos(2ωt) + cos(4ωt)</td>
+    <td>DC + <strong>2nd</strong> + <strong>4th</strong></td>
+  </tr>
+  <tr>
+    <td class="label">x⁵</td>
+    <td>mix of sin(ωt) + sin(3ωt) + sin(5ωt)</td>
+    <td>fundamental + <strong>3rd</strong> + <strong>5th</strong></td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-label">Rule</div>
+  <p style="margin-bottom:0">
+    <strong>Even powers produce even harmonics</strong> (2nd, 4th, …) plus DC.<br>
+    <strong>Odd powers produce odd harmonics</strong> (1st, 3rd, 5th, …).<br><br>
+    The FFT/spectrum analyzer only <em>decomposes</em> the already-reshaped waveform into these
+    components. It doesn't create them.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>2. Symmetry, the Zero Line, and Odd vs. Even Content</h2>
+
+<p>
+  Draw the horizontal axis and call it the <strong>zero line</strong> — zero volts, zero pressure.
+  The waveform oscillates above and below this line.
+</p>
+
+<ul>
+  <li>If the transfer function is <strong>symmetric</strong> in the sense
+    <span class="math-inline">f(−x) = −f(x)</span>, its series has only odd powers
+    (no x², x⁴, …).</li>
+  <li>A sine through a symmetric nonlinearity produces <strong>only odd harmonics</strong>
+    (3rd, 5th, 7th…) plus the fundamental.</li>
+</ul>
+
+<h3>What symmetric distortion looks like on a scope</h3>
+
+<ul>
+  <li>The positive and negative halves of the waveform are <strong>mirror images</strong> around
+    the zero line.</li>
+  <li>Clipping or rounding happens similarly on the top and bottom.</li>
+  <li>Zero crossings stay regularly spaced. The shape is "balanced."</li>
+</ul>
+
+<p>
+  <strong>Break that mirror symmetry</strong> and you inevitably get even harmonics. As soon as
+  the positive and negative halves no longer match, representing that lopsided shape requires
+  even-order components (2nd, 4th, …).
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>3. Bias: Where We Park the Wave on the Curve</h2>
+
+<p>
+  Bias is the <strong>DC offset</strong> you apply so that, with no audio signal present,
+  the device sits at a chosen operating point on its transfer curve.
+</p>
+
+<div class="math">input = x(t) + B &nbsp;&nbsp;&nbsp; → &nbsp;&nbsp;&nbsp; output = f(x(t) + B)</div>
+
+<p>Changing <span class="math-inline">B</span> moves the oscillation of
+  <span class="math-inline">x(t)</span> into different parts of the curve:</p>
+
+<table class="scope-table">
+  <tr><th>Bias Position</th><th>What Happens</th><th>Harmonics</th></tr>
+  <tr>
+    <td class="label">Centered</td>
+    <td>Signal swings symmetrically around the linear-ish region. Both halves
+      hit the same part of the curve.</td>
+    <td>Mostly <strong>odd-order</strong> when pushed hard</td>
+  </tr>
+  <tr>
+    <td class="label">Shifted</td>
+    <td>Positive and negative swings live in different regions of the curve.
+      One side compresses or clips earlier than the other.</td>
+    <td><strong>Both even and odd</strong> as soon as you drive into nonlinearity</td>
+  </tr>
+</table>
+
+<p>
+  From the power series perspective, adding bias effectively injects even-power behavior into
+  the local expansion, even if the underlying device is mathematically odd-symmetric around zero.
+</p>
+
+<div class="callout">
+  <div class="callout-label">Key Insight</div>
+  <p style="margin-bottom:0">
+    You can take a perfectly symmetric nonlinear element and make it produce even harmonics
+    just by shifting the bias. The <strong>same circuit, different bias</strong>, gives a
+    fundamentally different harmonic recipe.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>4. Tube vs. Solid-State in These Terms</h2>
+
+<p>
+  This isn't about tubes magically "loving music" and transistors "hating it." It's about
+  how typical stages are biased and what their transfer curves look like.
+</p>
+
+<table class="scope-table">
+  <tr><th></th><th>Solid-State (Typical)</th><th>Tube (Typical)</th></tr>
+  <tr>
+    <td class="label">Curve</td>
+    <td>Tight, symmetric clipping when overdriven. Hard rails, feedback around op-amps,
+      carefully biased transistor pairs.</td>
+    <td>Biased and coupled so the signal rides asymmetrically on the tube's S-shaped curve.
+      Transformers and coupling caps further tilt the operating point.</td>
+  </tr>
+  <tr>
+    <td class="label">On a scope</td>
+    <td>Clipping is abrupt and fairly symmetric about zero. The envelope stays similar until
+      you really slam it.</td>
+    <td>One half-cycle rounds/compresses before the other, or the entire waveform sits slightly
+      above or below the nominal zero line.</td>
+  </tr>
+  <tr>
+    <td class="label">Harmonics</td>
+    <td>Strong <strong>odd-order</strong> content, especially higher odd harmonics → "buzzy," "grainy"</td>
+    <td><strong>Even-order</strong> components alongside odd; the mixture plus softer onset
+      → "warm," "thick," "singing"</td>
+  </tr>
+</table>
+
+<p>
+  You can demonstrate this directly: same input sine, three cases — <strong>clean</strong> (linear),
+  <strong>symmetric clip</strong>, <strong>asymmetric clip</strong> — and tie each to the harmonic
+  story: "fundamental only," "odd only," "even + odd."
+</p>
+
+<p style="margin-top:12px">
+  <a href="fuzzbox-transfer.html">Try it in the Transfer Function Lab →</a>
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>5. Thinking in Stages for Distortion Design</h2>
+
+<p>
+  If you're planning multiple stages, think of each stage as a different combination of
+  <strong>curve shape + bias point</strong>. Here's a four-stage mental model:
+</p>
+
+<div class="chain">
+  <div class="chain-stage">
+    <div class="chain-num">Stage 1</div>
+    <div class="chain-title">Clean Gain</div>
+    <div class="chain-desc">Nearly linear. Sets overall level and maybe a small, mostly odd-order
+      softening. Goal: place the signal at a good amplitude for the next, more nonlinear stage.</div>
+    <div class="chain-harmonics">→ fundamental + gentle odd</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">Stage 2</div>
+    <div class="chain-title">Symmetric Distortion</div>
+    <div class="chain-desc">Centered bias, symmetric curve (soft or hard). Deliberately generates
+      odd harmonics for brightness and edge without too much asymmetry.</div>
+    <div class="chain-harmonics">→ odd harmonics = "edge"</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">Stage 3</div>
+    <div class="chain-title">Asymmetric / Biased</div>
+    <div class="chain-desc">Deliberately offset bias or a curve that's not centered about zero.
+      This is where you dial in even harmonics and a gentle sense of compression.</div>
+    <div class="chain-harmonics">→ even + odd = "warmth"</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">Stage 4</div>
+    <div class="chain-title">Post-Shaping</div>
+    <div class="chain-desc">Filtering to tame or emphasize certain harmonics (low-pass to soften
+      fizz, mid bumps for "voice"). Compression/limiting to reshape the large-scale envelope.</div>
+    <div class="chain-harmonics">→ character + taming</div>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-label">Design Principle</div>
+  <p style="margin-bottom:0">
+    Each stage chooses two things: <strong>what curve</strong> we use, and <strong>where we bias</strong>
+    the input on that curve. That's the entire design space for distortion. Everything else —
+    "tube vs. solid-state," "warm vs. harsh," "vintage vs. modern" — is a consequence of
+    those two choices repeated through a chain of stages.
+  </p>
+</div>
+
+<h3>Distortion Stage Archetypes</h3>
+
+<p>Six building blocks you can mix and match in any order to design a signal chain:</p>
+
+<table class="stage-table">
+  <tr>
+    <th>Stage Type</th>
+    <th>Curve Shape</th>
+    <th>Bias / Symmetry</th>
+    <th>Harmonics Focus</th>
+    <th>Sonic / Visual Note</th>
+  </tr>
+  <tr>
+    <td>Odd‑soft pre‑stage</td>
+    <td>Gently rounded</td>
+    <td>Centered, symmetric</td>
+    <td>Mostly low‑order odd</td>
+    <td>Adds mild edge; sine becomes "plumper" but still centered on the scope.</td>
+  </tr>
+  <tr>
+    <td>Odd‑hard clipper</td>
+    <td>Abrupt flat rails</td>
+    <td>Centered, symmetric</td>
+    <td>Strong high‑order odd</td>
+    <td>Square‑ish tops and bottoms; buzzy, aggressive, scope looks very rectangular.</td>
+  </tr>
+  <tr>
+    <td>Even+odd soft "tube‑ish"</td>
+    <td>S‑curve (tanh‑like)</td>
+    <td>Slightly off‑center bias</td>
+    <td>Mix of even + odd, softer onset</td>
+    <td>One side rounds earlier; waveform rides above/below the zero line, sounds warm/chewy.</td>
+  </tr>
+  <tr>
+    <td>Even‑rich rectifier</td>
+    <td>Half / full rectifier</td>
+    <td>Strongly asymmetric (biased)</td>
+    <td>Strong even (2nd, 4th) + some odd</td>
+    <td>One polarity suppressed; envelope "pulses" at twice the original frequency.</td>
+  </tr>
+  <tr>
+    <td>Saturating compressor</td>
+    <td>Gradual ceiling</td>
+    <td>Often slightly asymmetric</td>
+    <td>Mostly low‑order, both even/odd</td>
+    <td>Peaks gently squash; envelope flattens while oscillation still visible.</td>
+  </tr>
+  <tr>
+    <td>Post‑shaper EQ/filter</td>
+    <td>Linear (filters only)</td>
+    <td>N/A (no new nonlinearity)</td>
+    <td>No new harmonics; selective emphasis</td>
+    <td>Carves the existing spectrum; makes certain harmonics or bands read as "voice."</td>
+  </tr>
+</table>
+
+<p>You can describe a chain by combining these archetypes. For example:</p>
+
+<div class="callout">
+  <div class="callout-label">Example Chain</div>
+  <p style="margin-bottom:0">
+    <strong>Odd‑soft pre‑stage</strong> to wake up harmonics →
+    <strong>even+odd soft tube‑ish</strong> for warmth →
+    <strong>odd‑hard clipper</strong> for aggression →
+    <strong>post‑shaper EQ</strong> to sculpt what's been generated.
+  </p>
+</div>
+
+<h3>Case Study: The Fuzz Face (1966)</h3>
+
+<p>
+  The Dallas-Arbiter Fuzz Face is one of the simplest distortion circuits ever made — just two
+  transistors and a handful of passive components. But it maps cleanly onto the archetype framework.
+</p>
+
+<div class="chain">
+  <div class="chain-stage">
+    <div class="chain-num">Q1</div>
+    <div class="chain-title">Pre-Stage (Common Emitter)</div>
+    <div class="chain-desc">The first transistor (originally germanium AC128/NKT275) provides moderate
+      gain with a soft, slightly asymmetric transfer curve. Biased via the 33K/8.2K voltage divider.
+      At low input levels, this is the <strong>odd‑soft pre‑stage</strong> — it rounds the signal
+      gently. As the signal grows, the transistor's base-emitter junction starts to compress one
+      side earlier than the other.</div>
+    <div class="chain-harmonics">→ gentle odd + hint of even</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">Q2</div>
+    <div class="chain-title">Main Fuzz Stage</div>
+    <div class="chain-desc">The second transistor gets the already-clipped signal from Q1 and drives it
+      much harder. This is where the heavy distortion happens. The 500Ω collector resistor and direct
+      coupling from Q1 set the bias point. At full fuzz, Q2 is driven into hard saturation and
+      cutoff — the signal slams into both rails. This is the <strong>odd‑hard clipper</strong>.
+      But because Q1's output is already slightly asymmetric, Q2's clipping isn't perfectly
+      symmetric either — so both even and odd harmonics are present.</div>
+    <div class="chain-harmonics">→ strong odd + moderate even</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">Output</div>
+    <div class="chain-title">Post-Shaping</div>
+    <div class="chain-desc">The output network (coupling cap + volume pot) acts as a simple high-pass
+      into a resistive load. This rolls off bass mud from the heavy clipping and the DC offset
+      from the asymmetry. The guitar's volume knob interacts with Q1's input impedance to change
+      the effective bias — cleaning up the sound at lower volumes. This is why Hendrix could go
+      from clean to fuzz by rolling his volume knob.</div>
+    <div class="chain-harmonics">→ post‑shaper + interactive bias</div>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-label">Why Germanium vs. Silicon Matters</div>
+  <p style="margin-bottom:0">
+    The original germanium transistors (AC128, NKT275) have a lower, softer turn-on voltage
+    (~0.2V) compared to silicon (~0.6V). This means the transfer curve bends more gradually —
+    the transition from linear to clipping is smoother. In archetype terms, germanium makes Q1
+    more "odd‑soft" and Q2's clipping onset more gradual. Silicon replacements (BC108, 2N3904)
+    have a sharper knee, pushing the character toward "odd‑hard" with a more abrupt, buzzy clip.
+    Same topology, different curve shape → different harmonic recipe.
+  </p>
+</div>
+
+<h3>Case Study: The Octavia (1967)</h3>
+
+<p>
+  The <a href="fuzzbox-octavia.html">Digital Octavia lab</a> demonstrates a more complex staging
+  approach. Roger Mayer's Octavia chains five stages:
+</p>
+
+<ol>
+  <li><strong>Input buffer</strong> — clean gain, impedance matching (odd‑soft pre‑stage)</li>
+  <li><strong>Fuzz / transistor gain</strong> — heavy symmetric clipping (odd‑hard clipper)</li>
+  <li><strong>Transformer saturation</strong> — soft asymmetric, adds even harmonics (even+odd soft)</li>
+  <li><strong>Full-wave rectifier</strong> — extreme asymmetry, doubles frequency = octave up (even‑rich rectifier)</li>
+  <li><strong>Output filter</strong> — tames the high-frequency mess (post‑shaper EQ)</li>
+</ol>
+
+<p>
+  Each stage has a purpose in the harmonic story. The fuzz gives edge, the transformer gives body,
+  the rectifier gives the octave, and the filter makes it playable. Remove any stage and the
+  character changes fundamentally.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>6. Where to Go from Here</h2>
+
+<p>With this framework in mind:</p>
+
+<ul>
+  <li>Open the <a href="fuzzbox-transfer.html">Transfer Function Lab</a> and draw custom curves.
+    Try centered vs. offset bias by shifting your curve left or right on the grid.</li>
+  <li>Open the <a href="fuzzbox-octavia.html">Digital Octavia</a> and watch each stage's
+    oscilloscope. Identify which stages add odd harmonics and which add even.</li>
+  <li>Play the <a href="fuzzbox-game.html">Name That Distortion</a> game — once you can reliably
+    hear the difference between symmetric and asymmetric clipping, you have the ear for
+    circuit design.</li>
+  <li>Read the <a href="4069ub-guide.html"><strong>4069UB Build Guide</strong></a> — take these
+    concepts to the breadboard with a $0.50 chip that gives you six configurable distortion stages.</li>
+</ul>
+
+<div class="callout" style="border-color: var(--accent);">
+  <div class="callout-label" style="color:var(--accent)">The Two-Knob Mental Model</div>
+  <p style="margin-bottom:0">
+    Each stage chooses two things: <strong>what curve we use</strong> and
+    <strong>where we bias the input on that curve</strong>. That's the entire design space
+    for distortion. Everything else — "tube vs. solid-state," "warm vs. harsh," "vintage vs.
+    modern" — is a consequence of those two choices repeated through a chain of stages.
+  </p>
+</div>
+
+<div class="footer">
+  Doug Goodwin — CalArts 2026 — CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>

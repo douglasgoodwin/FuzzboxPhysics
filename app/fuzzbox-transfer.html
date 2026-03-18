@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Transfer Function Lab</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  canvas { height: 160px; cursor: crosshair; image-rendering: pixelated; }
+
+  #transfer-canvas {
+    height: 360px;
+    border: 1px solid var(--border);
+    background: #0a0a0a;
+    touch-action: none;
+  }
+
+  .transfer-wrap {
+    position: relative;
+  }
+
+  .axis-label {
+    position: absolute;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .axis-label.x-axis {
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .axis-label.y-axis {
+    top: 50%;
+    left: -24px;
+    transform: rotate(-90deg) translateX(-50%);
+    transform-origin: left center;
+  }
+
+  .preset-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .formula {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-line {
+    width: 20px; height: 2px;
+  }
+
+  select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .warning {
+    color: var(--red);
+    font-size: 0.7rem;
+    margin-top: 6px;
+  }
+
+  .vu-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .vu-seg {
+    flex: 1;
+    height: 8px;
+    background: var(--border-light);
+    border-radius: 1px;
+    transition: background 0.05s;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 14px 0 10px;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .three-col { grid-template-columns: 1fr; }
+    #transfer-canvas { height: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>Transfer Function Lab</h1>
+</header>
+
+<div class="explanation" style="margin-bottom:24px">
+  A <strong>transfer function</strong> maps every input amplitude to an output amplitude.
+  A straight diagonal line means no distortion — what goes in comes out unchanged.
+  Any other shape creates distortion by reshaping the waveform, which adds harmonics.
+  Draw your own curve below to hear what it sounds like.
+</div>
+
+<!-- SOURCE CONTROLS -->
+<div class="three-col">
+  <div class="panel">
+    <div class="section-label">Signal Source</div>
+    <div class="btn-group" style="margin-bottom:10px">
+      <button id="btn-mic" class="amber-btn" onclick="setSource('mic')">MIC IN</button>
+      <button id="btn-osc" onclick="setSource('osc')" class="active">OSC TEST</button>
+      <button id="btn-wav-pick" class="amber-btn" onclick="document.getElementById('wav-file-input').click()">LOAD FILE</button>
+    </div>
+    <div class="btn-group" id="wav-btns" style="margin-bottom:6px"></div>
+    <input type="file" id="wav-file-input" accept="audio/*" style="display:none" onchange="loadWavFile(this)">
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">OSC WAVEFORM</div>
+      <select id="osc-type" onchange="updateOsc()">
+        <option value="sine" selected>SINE</option>
+        <option value="sawtooth">SAWTOOTH</option>
+        <option value="square">SQUARE</option>
+        <option value="triangle">TRIANGLE</option>
+      </select>
+    </div>
+    <div class="controls-row" style="margin-top:8px">
+      <div class="knob-group">
+        <div class="knob-label">FREQ (Hz)</div>
+        <input type="range" id="osc-freq" min="50" max="2000" value="220" step="1" oninput="updateOsc(); updateDisplay('osc-freq-val', this.value+'Hz')">
+        <div class="knob-value" id="osc-freq-val">220Hz</div>
+      </div>
+      <div class="knob-group">
+        <div class="knob-label">INPUT GAIN</div>
+        <input type="range" id="input-gain" min="0" max="2" value="0.8" step="0.01" oninput="updateGains(); updateDisplay('input-gain-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="input-gain-val">80%</div>
+      </div>
+    </div>
+    <p class="warning" id="mic-warning" style="display:none">Use headphones to avoid feedback</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Presets</div>
+    <div class="btn-group" style="flex-direction:column; gap:4px">
+      <button onclick="setPreset('linear')" class="active" id="pre-linear">LINEAR (clean)</button>
+      <button onclick="setPreset('hard')" id="pre-hard">HARD CLIP</button>
+      <button onclick="setPreset('soft')" id="pre-soft">SOFT CLIP (tanh)</button>
+      <button onclick="setPreset('fold')" id="pre-fold">FOLDBACK</button>
+      <button onclick="setPreset('rectify')" id="pre-rectify">HALF RECTIFY</button>
+      <button onclick="setPreset('stairs')" id="pre-stairs">STAIRCASE (quantize)</button>
+      <button onclick="setPreset('deadzone')" id="pre-deadzone">DEAD ZONE</button>
+    </div>
+    <div class="preset-info" id="preset-info">
+      Linear: f(x) = x — no distortion. The output is an exact copy of the input.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Drawing Tools</div>
+    <div class="btn-group" style="margin-bottom:8px">
+      <button onclick="setTool('draw')" class="active" id="tool-draw">DRAW</button>
+      <button onclick="setTool('line')" id="tool-line">LINE</button>
+      <button onclick="setTool('smooth')" id="tool-smooth">SMOOTH</button>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
+      <div class="knob-label">BRUSH SIZE</div>
+      <input type="range" id="brush-size" min="1" max="40" value="4" step="1" style="max-width:100%; width:100%" oninput="updateDisplay('brush-val', this.value+'px')">
+      <div class="knob-value" id="brush-val">4px</div>
+    </div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%; margin-top:8px">
+      <div class="knob-label">WET / DRY MIX</div>
+      <input type="range" id="wet-dry" min="0" max="1" value="1" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="updateGains(); updateDisplay('wetdry-val', Math.round(this.value*100)+'% W')">
+      <div class="knob-value" id="wetdry-val">100% W</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="stats" style="margin-bottom:12px">
+  <span class="status-dot" id="mic-dot"></span><span id="mic-status">AUDIO OFFLINE</span>
+  &nbsp;&nbsp; SR: <span id="sr-display">--</span> Hz &nbsp; BUF: <span id="buf-display">--</span>
+</div>
+
+<!-- TRANSFER FUNCTION CANVAS -->
+<div class="panel">
+  <div class="section-label">Transfer Function — Draw Your Waveshaper</div>
+  <div class="transfer-wrap">
+    <canvas id="transfer-canvas"></canvas>
+    <div class="axis-label x-axis">INPUT AMPLITUDE &rarr;</div>
+  </div>
+  <div class="legend" style="margin-top:8px">
+    <div class="legend-item">
+      <div class="legend-line" style="background:var(--accent)"></div>
+      <span style="color:var(--text-secondary)">YOUR CURVE: f(input) &rarr; output</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background:rgba(255,255,255,0.2); border-top:1px dashed rgba(255,255,255,0.3)"></div>
+      <span style="color:var(--text-tertiary)">LINEAR REFERENCE</span>
+    </div>
+  </div>
+</div>
+
+<!-- OSCILLOSCOPE DISPLAYS -->
+<div class="grid">
+  <div class="panel">
+    <div class="section-label">Input Waveform (Dry)</div>
+    <canvas id="scope-in" class="scope-large"></canvas>
+    <div class="vu-row" id="vu-in"></div>
+  </div>
+  <div class="panel">
+    <div class="section-label">Output Waveform (Post-Transfer)</div>
+    <canvas id="scope-out" class="scope-large"></canvas>
+    <div class="vu-row" id="vu-out"></div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-line" style="background:#ffffff"></div>
+        <span style="color:var(--text); font-size:0.65rem">WET OUT</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:rgba(255,255,255,0.25); border-top: 1px dashed rgba(255,255,255,0.4)"></div>
+        <span style="color:var(--text-secondary); font-size:0.65rem">DRY REF</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPECTRUM -->
+<div class="grid" style="margin-bottom:12px">
+  <div class="panel">
+    <div class="section-label">Frequency Spectrum — Input</div>
+    <canvas id="fft-in" height="120"></canvas>
+  </div>
+  <div class="panel">
+    <div class="section-label">Frequency Spectrum — Output (distortion creates harmonics)</div>
+    <canvas id="fft-out" height="120"></canvas>
+  </div>
+</div>
+
+<!-- SPECTROGRAM -->
+<div class="grid" style="margin-bottom:12px">
+  <div class="panel">
+    <div class="section-label">Spectrogram — Input</div>
+    <canvas id="sgram-in" class="scope-large"></canvas>
+  </div>
+  <div class="panel">
+    <div class="section-label">Spectrogram — Output</div>
+    <canvas id="sgram-out" class="scope-large"></canvas>
+  </div>
+</div>
+
+<!-- MASTER OUTPUT -->
+<div class="panel">
+  <div class="section-label">Master Output</div>
+  <div class="controls-row" style="align-items:center">
+    <div class="knob-group">
+      <div class="knob-label">OUTPUT VOLUME</div>
+      <input type="range" id="out-vol" min="0" max="1" value="0.7" step="0.01" oninput="updateGains(); updateDisplay('out-vol-val', Math.round(this.value*100)+'%')">
+      <div class="knob-value" id="out-vol-val">70%</div>
+    </div>
+    <button onclick="togglePlay()" id="play-btn" class="active" style="font-size:1rem; padding:8px 20px">PLAYING</button>
+    <div style="flex:1; min-width:120px">
+      <div class="knob-label" style="margin-bottom:4px">OUTPUT LEVEL</div>
+      <div class="vu-row" id="vu-master"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// TRANSFER CURVE STATE
+// ============================================================
+// The curve is stored as 1025 output values for inputs from -1.0 to +1.0
+const CURVE_SIZE = 1025;
+let curve = new Float32Array(CURVE_SIZE);
+
+// Initialize to linear
+function initLinearCurve() {
+  for (let i = 0; i < CURVE_SIZE; i++) {
+    curve[i] = (i / (CURVE_SIZE - 1)) * 2 - 1; // -1 to +1
+  }
+}
+initLinearCurve();
+
+// Look up the curve value for a sample in [-1, 1]
+function lookupCurve(x) {
+  const clamped = Math.max(-1, Math.min(1, x));
+  const idx = (clamped + 1) / 2 * (CURVE_SIZE - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.min(lo + 1, CURVE_SIZE - 1);
+  const frac = idx - lo;
+  return curve[lo] * (1 - frac) + curve[hi] * frac;
+}
+
+// ============================================================
+// TRANSFER CANVAS DRAWING
+// ============================================================
+const tc = document.getElementById('transfer-canvas');
+const tctx = tc.getContext('2d');
+let drawing = false;
+let lastDrawX = -1, lastDrawY = -1;
+let currentTool = 'draw';
+let lineStart = null;
+
+function resizeTransferCanvas() {
+  const rect = tc.getBoundingClientRect();
+  tc.width = Math.floor(rect.width) || 600;
+  tc.height = Math.floor(rect.height) || 360;
+  drawTransferFunction();
+}
+
+function canvasToIndex(cx) {
+  // Canvas x -> curve index
+  const pad = 40;
+  const plotW = tc.width - pad * 2;
+  const t = (cx - pad) / plotW;
+  return Math.round(t * (CURVE_SIZE - 1));
+}
+
+function canvasToValue(cy) {
+  // Canvas y -> output value [-1, 1] (y is flipped: top = +1, bottom = -1)
+  const pad = 30;
+  const plotH = tc.height - pad * 2;
+  const t = (cy - pad) / plotH;
+  return 1 - t * 2; // top=+1, bottom=-1
+}
+
+function indexToCanvasX(i) {
+  const pad = 40;
+  const plotW = tc.width - pad * 2;
+  return pad + (i / (CURVE_SIZE - 1)) * plotW;
+}
+
+function valueToCanvasY(v) {
+  const pad = 30;
+  const plotH = tc.height - pad * 2;
+  return pad + ((1 - v) / 2) * plotH;
+}
+
+function drawTransferFunction() {
+  const W = tc.width, H = tc.height;
+  const pad = 40;
+  const padY = 30;
+  const plotW = W - pad * 2;
+  const plotH = H - padY * 2;
+
+  tctx.clearRect(0, 0, W, H);
+  tctx.fillStyle = '#0a0a0a';
+  tctx.fillRect(0, 0, W, H);
+
+  // Grid
+  tctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  tctx.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = pad + plotW * i / 8;
+    tctx.beginPath(); tctx.moveTo(x, padY); tctx.lineTo(x, padY + plotH); tctx.stroke();
+    const y = padY + plotH * i / 8;
+    tctx.beginPath(); tctx.moveTo(pad, y); tctx.lineTo(pad + plotW, y); tctx.stroke();
+  }
+
+  // Axes
+  tctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  tctx.lineWidth = 1;
+  // Center horizontal (output = 0)
+  const zeroY = valueToCanvasY(0);
+  tctx.beginPath(); tctx.moveTo(pad, zeroY); tctx.lineTo(pad + plotW, zeroY); tctx.stroke();
+  // Center vertical (input = 0)
+  const zeroX = indexToCanvasX(Math.floor(CURVE_SIZE / 2));
+  tctx.beginPath(); tctx.moveTo(zeroX, padY); tctx.lineTo(zeroX, padY + plotH); tctx.stroke();
+
+  // Axis labels
+  tctx.fillStyle = 'rgba(255,255,255,0.35)';
+  tctx.font = '9px "IBM Plex Mono", monospace';
+  tctx.textAlign = 'center';
+  tctx.fillText('-1', pad, padY + plotH + 14);
+  tctx.fillText('0', pad + plotW / 2, padY + plotH + 14);
+  tctx.fillText('+1', pad + plotW, padY + plotH + 14);
+  tctx.textAlign = 'right';
+  tctx.fillText('+1', pad - 6, padY + 4);
+  tctx.fillText('0', pad - 6, zeroY + 3);
+  tctx.fillText('-1', pad - 6, padY + plotH + 4);
+
+  // Linear reference (dashed)
+  tctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  tctx.lineWidth = 1;
+  tctx.setLineDash([4, 4]);
+  tctx.beginPath();
+  tctx.moveTo(pad, padY + plotH);
+  tctx.lineTo(pad + plotW, padY);
+  tctx.stroke();
+  tctx.setLineDash([]);
+
+  // The curve
+  tctx.strokeStyle = '#e8803a';
+  tctx.lineWidth = 2.5;
+  tctx.shadowColor = 'rgba(232,128,58,0.4)';
+  tctx.shadowBlur = 6;
+  tctx.beginPath();
+  for (let i = 0; i < CURVE_SIZE; i++) {
+    const x = indexToCanvasX(i);
+    const y = valueToCanvasY(curve[i]);
+    i === 0 ? tctx.moveTo(x, y) : tctx.lineTo(x, y);
+  }
+  tctx.stroke();
+  tctx.shadowBlur = 0;
+
+  // Border
+  tctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  tctx.lineWidth = 1;
+  tctx.strokeRect(pad, padY, plotW, plotH);
+}
+
+// Drawing interaction
+function getPos(e) {
+  const rect = tc.getBoundingClientRect();
+  const scaleX = tc.width / rect.width;
+  const scaleY = tc.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+function paintAt(cx, cy, brushSize) {
+  const idx = canvasToIndex(cx);
+  const val = canvasToValue(cy);
+  const radius = Math.max(1, brushSize);
+  for (let i = idx - radius; i <= idx + radius; i++) {
+    if (i >= 0 && i < CURVE_SIZE) {
+      const dist = Math.abs(i - idx) / radius;
+      const weight = 1 - dist;
+      curve[i] = curve[i] * (1 - weight) + val * weight;
+      curve[i] = Math.max(-1, Math.min(1, curve[i]));
+    }
+  }
+}
+
+function paintLine(x0, y0, x1, y1, brushSize) {
+  const dist = Math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2);
+  const steps = Math.max(1, Math.ceil(dist / 2));
+  for (let s = 0; s <= steps; s++) {
+    const t = s / steps;
+    const cx = x0 + (x1 - x0) * t;
+    const cy = y0 + (y1 - y0) * t;
+    paintAt(cx, cy, brushSize);
+  }
+}
+
+function onDrawStart(e) {
+  e.preventDefault();
+  const pos = getPos(e);
+  const brushSize = parseInt(document.getElementById('brush-size').value);
+
+  if (currentTool === 'line') {
+    lineStart = pos;
+    return;
+  }
+
+  drawing = true;
+  lastDrawX = pos.x;
+  lastDrawY = pos.y;
+  paintAt(pos.x, pos.y, brushSize);
+  drawTransferFunction();
+}
+
+function onDrawMove(e) {
+  e.preventDefault();
+  if (currentTool === 'line' && lineStart) return;
+  if (!drawing) return;
+
+  const pos = getPos(e);
+  const brushSize = parseInt(document.getElementById('brush-size').value);
+  paintLine(lastDrawX, lastDrawY, pos.x, pos.y, brushSize);
+  lastDrawX = pos.x;
+  lastDrawY = pos.y;
+  drawTransferFunction();
+}
+
+function onDrawEnd(e) {
+  if (currentTool === 'line' && lineStart) {
+    const pos = getPos(e.changedTouches ? e.changedTouches[0] : e);
+    const brushSize = parseInt(document.getElementById('brush-size').value);
+    paintLine(lineStart.x, lineStart.y, pos.x, pos.y, brushSize);
+    lineStart = null;
+    drawTransferFunction();
+    return;
+  }
+  drawing = false;
+}
+
+tc.addEventListener('mousedown', onDrawStart);
+tc.addEventListener('mousemove', onDrawMove);
+tc.addEventListener('mouseup', onDrawEnd);
+tc.addEventListener('mouseleave', onDrawEnd);
+tc.addEventListener('touchstart', onDrawStart);
+tc.addEventListener('touchmove', onDrawMove);
+tc.addEventListener('touchend', onDrawEnd);
+
+function setTool(tool) {
+  currentTool = tool;
+  ['draw', 'line', 'smooth'].forEach(t => {
+    document.getElementById('tool-' + t).classList.toggle('active', t === tool);
+  });
+  if (tool === 'smooth') {
+    smoothCurve();
+    currentTool = 'draw';
+    document.getElementById('tool-draw').classList.add('active');
+    document.getElementById('tool-smooth').classList.remove('active');
+  }
+}
+
+function smoothCurve() {
+  const temp = new Float32Array(CURVE_SIZE);
+  const radius = 8;
+  for (let i = 0; i < CURVE_SIZE; i++) {
+    let sum = 0, count = 0;
+    for (let j = Math.max(0, i - radius); j <= Math.min(CURVE_SIZE - 1, i + radius); j++) {
+      const w = 1 - Math.abs(j - i) / (radius + 1);
+      sum += curve[j] * w;
+      count += w;
+    }
+    temp[i] = sum / count;
+  }
+  curve.set(temp);
+  drawTransferFunction();
+}
+
+// ============================================================
+// PRESETS
+// ============================================================
+const presetInfo = {
+  linear: 'Linear: f(x) = x — no distortion. The output is an exact copy of the input.',
+  hard: 'Hard clip: f(x) = clamp(x, -0.5, +0.5) — flat ceiling creates odd harmonics. Classic solid-state crunch.',
+  soft: 'Soft clip: f(x) = tanh(3x) — smooth saturation curve. Warmth without harsh edges.',
+  fold: 'Foldback: signal mirrors back past ±0.5. Extreme harmonic density. Buchla wavefolder territory.',
+  rectify: 'Half rectify: f(x) = max(0, x) — strips the negative half. Strong even harmonics, octave-up effect.',
+  stairs: 'Staircase: quantize to 8 levels — like reducing bit depth. Grainy, lo-fi, 8-bit character.',
+  deadzone: 'Dead zone: silent below ±0.3, then linear. A gate that eats quiet signals — only peaks survive.'
+};
+
+function setPreset(name) {
+  switch (name) {
+    case 'linear':
+      initLinearCurve();
+      break;
+    case 'hard':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        const x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        curve[i] = Math.max(-0.5, Math.min(0.5, x)) * 2;
+      }
+      break;
+    case 'soft':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        const x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        curve[i] = Math.tanh(3 * x) / Math.tanh(3);
+      }
+      break;
+    case 'fold':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        let x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        const t = 0.5;
+        while (Math.abs(x) > t) {
+          if (x > t) x = 2 * t - x;
+          else if (x < -t) x = -2 * t - x;
+        }
+        curve[i] = x / t;
+      }
+      break;
+    case 'rectify':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        const x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        curve[i] = x > 0 ? x : 0;
+      }
+      break;
+    case 'stairs':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        const x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        const steps = 8;
+        curve[i] = Math.round(x * steps) / steps;
+      }
+      break;
+    case 'deadzone':
+      for (let i = 0; i < CURVE_SIZE; i++) {
+        const x = (i / (CURVE_SIZE - 1)) * 2 - 1;
+        if (Math.abs(x) < 0.3) curve[i] = 0;
+        else curve[i] = x > 0 ? (x - 0.3) / 0.7 : (x + 0.3) / 0.7;
+      }
+      break;
+  }
+
+  ['linear','hard','soft','fold','rectify','stairs','deadzone'].forEach(p => {
+    const el = document.getElementById('pre-' + p);
+    if (el) el.classList.toggle('active', p === name);
+  });
+  document.getElementById('preset-info').textContent = presetInfo[name] || '';
+  drawTransferFunction();
+}
+
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let ctx, sourceNode, oscNode, micStream, wavSourceNode;
+let inputGain, dryGain, wetGain, outputGain;
+let distortionNode;
+let analyserIn, analyserOut;
+let playing = false;
+let sourceType = 'osc';
+let animFrame;
+
+const BUFFER_SIZE = 4096;
+
+async function initAudio() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  document.getElementById('sr-display').textContent = ctx.sampleRate;
+  document.getElementById('buf-display').textContent = BUFFER_SIZE;
+
+  inputGain = ctx.createGain();
+  dryGain = ctx.createGain();
+  wetGain = ctx.createGain();
+  outputGain = ctx.createGain();
+
+  distortionNode = ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+  distortionNode.onaudioprocess = processTransfer;
+
+  analyserIn = ctx.createAnalyser();
+  analyserIn.fftSize = 2048;
+  analyserOut = ctx.createAnalyser();
+  analyserOut.fftSize = 2048;
+
+  updateGains();
+  await startOsc();
+}
+
+function processTransfer(e) {
+  const input = e.inputBuffer.getChannelData(0);
+  const output = e.outputBuffer.getChannelData(0);
+  const wetDry = parseFloat(document.getElementById('wet-dry').value);
+
+  for (let i = 0; i < input.length; i++) {
+    const x = input[i];
+    const wet = lookupCurve(x);
+    output[i] = wet * wetDry + x * (1 - wetDry);
+  }
+}
+
+// ============================================================
+// SOURCE MANAGEMENT
+// ============================================================
+async function startOsc() {
+  if (!ctx) return;
+  stopSource();
+  oscNode = ctx.createOscillator();
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+  oscNode.connect(inputGain);
+  inputGain.connect(analyserIn);
+  inputGain.connect(distortionNode);
+  distortionNode.connect(analyserOut);
+  analyserOut.connect(outputGain);
+  outputGain.connect(ctx.destination);
+  oscNode.start();
+  playing = true;
+  document.getElementById('play-btn').textContent = 'PLAYING';
+  document.getElementById('play-btn').classList.add('active');
+  updateMicStatus(false);
+}
+
+async function startMic() {
+  stopSource();
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    sourceNode = ctx.createMediaStreamSource(micStream);
+    sourceNode.connect(inputGain);
+    inputGain.connect(analyserIn);
+    inputGain.connect(distortionNode);
+    distortionNode.connect(analyserOut);
+    analyserOut.connect(outputGain);
+    outputGain.connect(ctx.destination);
+    updateMicStatus(true);
+    document.getElementById('mic-warning').style.display = 'block';
+  } catch(err) {
+    alert('Microphone access denied: ' + err.message);
+    setSource('osc');
+  }
+}
+
+function stopSource() {
+  try { if (oscNode) { oscNode.stop(); oscNode.disconnect(); } } catch(e) {}
+  try { if (sourceNode) { sourceNode.disconnect(); } } catch(e) {}
+  try { if (wavSourceNode) { wavSourceNode.stop(); wavSourceNode.disconnect(); } } catch(e) {}
+  try { if (micStream) { micStream.getTracks().forEach(t => t.stop()); } } catch(e) {}
+  try { inputGain.disconnect(); } catch(e) {}
+  try { distortionNode.disconnect(); } catch(e) {}
+  try { analyserOut.disconnect(); } catch(e) {}
+  try { outputGain.disconnect(); } catch(e) {}
+  wavSourceNode = null;
+  document.getElementById('mic-warning').style.display = 'none';
+}
+
+function connectSource(node) {
+  node.connect(inputGain);
+  inputGain.connect(analyserIn);
+  inputGain.connect(distortionNode);
+  distortionNode.connect(analyserOut);
+  analyserOut.connect(outputGain);
+  outputGain.connect(ctx.destination);
+}
+
+async function setSource(type) {
+  await initAudio();
+  sourceType = type;
+  document.getElementById('btn-mic').classList.toggle('active', type === 'mic');
+  document.getElementById('btn-osc').classList.toggle('active', type === 'osc');
+  if (type === 'mic') await startMic();
+  else await startOsc();
+}
+
+function updateOsc() {
+  if (!oscNode) return;
+  oscNode.type = document.getElementById('osc-type').value;
+  oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
+}
+
+function updateGains() {
+  if (!ctx) return;
+  outputGain.gain.value = parseFloat(document.getElementById('out-vol').value);
+  inputGain.gain.value = parseFloat(document.getElementById('input-gain').value);
+}
+
+async function togglePlay() {
+  await initAudio();
+  if (sourceType !== 'osc') return;
+  if (playing) {
+    oscNode.stop();
+    playing = false;
+    document.getElementById('play-btn').textContent = 'PLAY';
+    document.getElementById('play-btn').classList.remove('active');
+  } else {
+    await startOsc();
+  }
+}
+
+function updateMicStatus(active) {
+  document.getElementById('mic-dot').className = 'status-dot' + (active ? ' active' : '');
+  document.getElementById('mic-status').textContent = active ? 'MIC ACTIVE' : (playing ? 'OSC RUNNING' : 'AUDIO OFFLINE');
+}
+
+function updateDisplay(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ============================================================
+// WAV FILE LOADING
+// ============================================================
+async function startWavSource(audioBuffer) {
+  await initAudio();
+  stopSource();
+  sourceType = 'wav';
+  wavSourceNode = ctx.createBufferSource();
+  wavSourceNode.buffer = audioBuffer;
+  wavSourceNode.loop = true;
+  connectSource(wavSourceNode);
+  wavSourceNode.start();
+  playing = true;
+  document.getElementById('play-btn').textContent = 'PLAYING';
+  document.getElementById('play-btn').classList.add('active');
+  document.getElementById('btn-mic').classList.remove('active');
+  document.getElementById('btn-osc').classList.remove('active');
+  updateMicStatus(false);
+}
+
+async function loadWavFromFetch(filename) {
+  await initAudio();
+  try {
+    const resp = await fetch('wavs/' + filename);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+  } catch(err) {
+    alert('Could not load wavs/' + filename + '.\n\nRun: node server.js\nThen open http://localhost:3000');
+  }
+}
+
+async function loadWavFile(input) {
+  if (!input.files.length) return;
+  await initAudio();
+  const buf = await input.files[0].arrayBuffer();
+  try {
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+  } catch(err) {
+    alert('Could not decode audio: ' + err.message);
+  }
+}
+
+async function loadWavList() {
+  const container = document.getElementById('wav-btns');
+  try {
+    const resp = await fetch('/api/wavs');
+    if (!resp.ok) throw new Error('no api');
+    const data = await resp.json();
+    if (!data.files.length) return;
+    container.innerHTML = '';
+    data.files.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'amber-btn';
+      btn.style.fontSize = '0.6rem';
+      btn.style.padding = '3px 6px';
+      btn.textContent = f.replace(/\.[^.]+$/, '').replace(/_/g, ' ').toUpperCase();
+      btn.onclick = () => loadWavFromFetch(f);
+      container.appendChild(btn);
+    });
+  } catch(e) {}
+}
+loadWavList();
+
+// ============================================================
+// VISUALIZATION
+// ============================================================
+function drawScope(canvas, analyser, showDryRef, analyserDry) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = '#111111';
+  ctx2.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx2.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+  for (let j = 0; j <= 4; j++) {
+    const y = H * j / 4;
+    ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke();
+  }
+
+  // Zero line
+  ctx2.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx2.setLineDash([4, 4]);
+  ctx2.beginPath(); ctx2.moveTo(0, H/2); ctx2.lineTo(W, H/2); ctx2.stroke();
+  ctx2.setLineDash([]);
+
+  if (!analyser) return;
+
+  const buffer = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buffer);
+
+  // Zero crossing for stable display
+  let start = 0;
+  for (let i = 1; i < buffer.length / 2; i++) {
+    if (buffer[i - 1] < 0 && buffer[i] >= 0) { start = i; break; }
+  }
+
+  // Dry reference
+  if (showDryRef && analyserDry) {
+    const dryBuf = new Float32Array(analyserDry.fftSize);
+    analyserDry.getFloatTimeDomainData(dryBuf);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx2.lineWidth = 1.5;
+    ctx2.beginPath();
+    const drawLen = Math.min(W, buffer.length - start);
+    for (let i = 0; i < drawLen; i++) {
+      const x = (i / drawLen) * W;
+      const y = ((1 - dryBuf[start + i]) / 2) * H;
+      i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+    }
+    ctx2.stroke();
+  }
+
+  // Main waveform
+  const drawLen = Math.min(W * 2, buffer.length - start);
+  ctx2.strokeStyle = '#ffffff';
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const idx = Math.floor(i / W * drawLen);
+    const y = ((1 - buffer[start + idx]) / 2) * H;
+    i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
+  }
+  ctx2.stroke();
+}
+
+function drawSpectrum(canvas, analyser, color) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = '#111111';
+  ctx2.fillRect(0, 0, W, H);
+
+  ctx2.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+
+  if (!analyser) return;
+
+  const bufLen = analyser.frequencyBinCount;
+  const freqData = new Uint8Array(bufLen);
+  analyser.getByteFrequencyData(freqData);
+
+  const gradient = ctx2.createLinearGradient(0, H, 0, 0);
+  const fadeColor = color.startsWith('rgba') ? color.replace(/[\d.]+\)$/, '0.6)') : color + '99';
+  gradient.addColorStop(0, fadeColor);
+  gradient.addColorStop(1, color);
+  ctx2.fillStyle = gradient;
+
+  ctx2.beginPath();
+  ctx2.moveTo(0, H);
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    const v = freqData[Math.min(logIdx, bufLen - 1)];
+    ctx2.lineTo(i, H - (v / 255) * H);
+  }
+  ctx2.lineTo(W, H);
+  ctx2.closePath();
+  ctx2.fill();
+
+  ctx2.strokeStyle = color;
+  ctx2.lineWidth = 1.5;
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    const v = freqData[Math.min(logIdx, bufLen - 1)];
+    const y = H - (v / 255) * H;
+    i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
+  }
+  ctx2.stroke();
+}
+
+// VU Meters
+function buildVU(containerId, count) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'vu-seg';
+    el.appendChild(seg);
+  }
+}
+
+const VU_COUNT = 24;
+buildVU('vu-in', VU_COUNT);
+buildVU('vu-out', VU_COUNT);
+buildVU('vu-master', VU_COUNT);
+
+function updateVU(containerId, rms) {
+  const segs = document.getElementById(containerId).children;
+  const level = Math.min(1, rms * 4);
+  const lit = Math.floor(level * VU_COUNT);
+  for (let i = 0; i < VU_COUNT; i++) {
+    let color = 'var(--border-light)';
+    if (i < lit) {
+      const t = i / VU_COUNT;
+      if (t < 0.6) color = 'var(--text-tertiary)';
+      else if (t < 0.8) color = 'var(--text)';
+      else if (t < 0.92) color = 'var(--accent)';
+      else color = 'var(--red)';
+    }
+    segs[i].style.background = color;
+  }
+}
+
+function getRMS(analyser) {
+  if (!analyser) return 0;
+  const data = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(data);
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+  return Math.sqrt(sum / data.length);
+}
+
+// ============================================================
+// SPECTROGRAM
+// ============================================================
+const sgramState = {};
+
+function initSgram(canvasId) {
+  const c = document.getElementById(canvasId);
+  const W = c.width, H = c.height;
+  const ctx2 = c.getContext('2d');
+  const imageData = ctx2.createImageData(W, H);
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    imageData.data[i] = 17; imageData.data[i+1] = 17; imageData.data[i+2] = 17; imageData.data[i+3] = 255;
+  }
+  sgramState[canvasId] = { imageData, width: W, height: H };
+}
+
+function drawSpectrogram(canvasId, analyser) {
+  const c = document.getElementById(canvasId);
+  const ctx2 = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  if (!sgramState[canvasId] || sgramState[canvasId].width !== W || sgramState[canvasId].height !== H) {
+    initSgram(canvasId);
+  }
+
+  const state = sgramState[canvasId];
+  const img = state.imageData;
+
+  // Scroll left
+  for (let y = 0; y < H; y++) {
+    const rowStart = y * W * 4;
+    for (let x = 0; x < (W - 1); x++) {
+      const dst = rowStart + x * 4;
+      const src = rowStart + (x + 1) * 4;
+      img.data[dst] = img.data[src];
+      img.data[dst+1] = img.data[src+1];
+      img.data[dst+2] = img.data[src+2];
+    }
+  }
+
+  if (analyser) {
+    const bufLen = analyser.frequencyBinCount;
+    const freqData = new Uint8Array(bufLen);
+    analyser.getByteFrequencyData(freqData);
+
+    for (let y = 0; y < H; y++) {
+      const t = 1 - (y / H);
+      const logIdx = Math.floor(Math.pow(t, 2) * bufLen);
+      const v = freqData[Math.min(logIdx, bufLen - 1)];
+      const norm = v / 255;
+
+      let r, g, b;
+      if (norm < 0.25) {
+        const s = norm / 0.25;
+        r = Math.floor(17 + s * 10); g = Math.floor(17 + s * 10); b = Math.floor(17 + s * 80);
+      } else if (norm < 0.55) {
+        const s = (norm - 0.25) / 0.3;
+        r = Math.floor(27 + s * 41); g = Math.floor(27 + s * 41); b = Math.floor(97 + s * 107);
+      } else if (norm < 0.8) {
+        const s = (norm - 0.55) / 0.25;
+        r = Math.floor(68 + s * 187); g = Math.floor(68 + s * 147); b = Math.floor(204 + s * 51);
+      } else {
+        const s = (norm - 0.8) / 0.2;
+        r = 255; g = Math.floor(215 + s * 40); b = 255;
+      }
+
+      const idx = (y * W + (W - 1)) * 4;
+      img.data[idx] = r; img.data[idx+1] = g; img.data[idx+2] = b;
+    }
+  } else {
+    for (let y = 0; y < H; y++) {
+      const idx = (y * W + (W - 1)) * 4;
+      img.data[idx] = 17; img.data[idx+1] = 17; img.data[idx+2] = 17;
+    }
+  }
+
+  ctx2.putImageData(img, 0, 0);
+
+  // Frequency labels
+  ctx2.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx2.font = '9px "IBM Plex Mono", monospace';
+  const sr = ctx ? ctx.sampleRate : 44100;
+  const nyquist = sr / 2;
+  [100, 500, 1000, 2000, 5000, 10000].forEach(f => {
+    if (f > nyquist) return;
+    const t = Math.sqrt(f / nyquist);
+    const y = (1 - t) * H;
+    if (y > 10 && y < H - 5) {
+      ctx2.fillText(f >= 1000 ? (f/1000) + 'k' : f + '', 3, y - 2);
+    }
+  });
+}
+
+// Resize all canvases
+function resizeCanvases() {
+  ['scope-in','scope-out','fft-in','fft-out','sgram-in','sgram-out'].forEach(id => {
+    const c = document.getElementById(id);
+    const rect = c.getBoundingClientRect();
+    c.width = Math.floor(rect.width) || 600;
+    c.height = Math.floor(rect.height) || 160;
+  });
+  resizeTransferCanvas();
+}
+window.addEventListener('resize', resizeCanvases);
+setTimeout(resizeCanvases, 100);
+
+// Main render loop
+function render() {
+  animFrame = requestAnimationFrame(render);
+  if (!ctx) return;
+
+  drawScope(document.getElementById('scope-in'), analyserIn, false, null);
+  drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn);
+  drawSpectrum(document.getElementById('fft-in'), analyserIn, 'rgba(68,68,204,0.9)');
+  drawSpectrum(document.getElementById('fft-out'), analyserOut, '#ffffff');
+
+  drawSpectrogram('sgram-in', analyserIn);
+  drawSpectrogram('sgram-out', analyserOut);
+
+  updateVU('vu-in', getRMS(analyserIn));
+  updateVU('vu-out', getRMS(analyserOut));
+  updateVU('vu-master', getRMS(analyserOut) * parseFloat(document.getElementById('out-vol').value));
+}
+render();
+
+// Auto-init on first interaction
+document.addEventListener('click', async () => {
+  if (!ctx) await initAudio();
+}, { once: true });
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(resizeCanvases, 200);
+});
+</script>
+</body>
+</html>

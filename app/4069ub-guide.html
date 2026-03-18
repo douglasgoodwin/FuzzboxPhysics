@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4069UB Build Guide — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  body { max-width: 780px; }
+
+  h2 {
+    font-size: 1.6rem;
+    margin-top: 40px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  h3 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+
+  p, li {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.85;
+  }
+
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+
+  strong { color: var(--text); font-weight: 500; }
+
+  .math {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: block;
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: rgba(232,128,58,0.04);
+    border-left: 3px solid rgba(232,128,58,0.3);
+    line-height: 1.7;
+  }
+
+  .math-inline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--accent);
+  }
+
+  .callout {
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+
+  .callout-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .scope-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 16px 0;
+  }
+  .scope-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scope-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.6;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+  }
+  .scope-table .label {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .chain-stage {
+    flex: 1;
+    min-width: 140px;
+    border: 1px solid var(--border-light);
+    padding: 12px;
+  }
+  .chain-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    min-width: 24px;
+    flex-shrink: 0;
+  }
+  .chain-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .chain-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .chain-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .chain-harmonics {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  .footer {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 40px;
+    line-height: 1.8;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+
+  @media (max-width: 700px) {
+    .chain { flex-direction: column; }
+    .chain-arrow { transform: rotate(90deg); min-height: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>4069UB Build Guide</h1>
+</header>
+
+<p>
+  The <strong>CD4069UB</strong> is an unbuffered CMOS hex inverter — six independent gain stages
+  in a single 14-pin IC that costs about $0.50. It's one of the best components for exploring
+  multi-stage distortion design on a breadboard.
+</p>
+
+<p>
+  This guide assumes you've read the
+  <a href="circuit-design.html">Distortion Circuit Design</a> document, which covers the
+  conceptual framework: transfer functions, bias points, symmetric vs. asymmetric clipping,
+  and the stage archetype table. Here we put those ideas into practice with real circuits.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>1. Why the 4069UB?</h2>
+
+<p>
+  Each of the six inverters is a complementary MOSFET pair (one NMOS, one PMOS) that forms a
+  voltage amplifier. The <strong>UB (unbuffered)</strong> designation is critical — it means the
+  inverters have a smooth, analog transfer curve rather than the sharp digital snap of the
+  buffered version.
+</p>
+
+<div class="callout">
+  <div class="callout-label">Warning: Unbuffered Only</div>
+  <p style="margin-bottom:0">
+    Only <strong>unbuffered</strong> CMOS inverters work for analog use. That means 4069UB,
+    4069UBE, 4069UBF, or 74C04 — <em>not</em> 74HC04, not 40106 (Schmitt trigger), not any
+    TTL part. A buffered CMOS gate has far too much gain and will oscillate uncontrollably —
+    one test of a 74HC04 in linear mode produced a 240 MHz oscillation drawing over a watt.
+    If the part number doesn't have "UB" or a single "C," don't use it for this.
+  </p>
+</div>
+
+<p>
+  When biased at the midpoint of the supply voltage, each inverter acts like a small amplifier
+  with a voltage gain of <strong>~40× at 5V supply</strong> and a transfer curve that looks like
+  a steep S-curve — essentially a <span class="math-inline">tanh</span>-like function. The gain
+  increases at higher supply voltages, but so does heat dissipation.
+</p>
+
+<table class="scope-table">
+  <tr><th>Feature</th><th>What It Means for Distortion</th></tr>
+  <tr>
+    <td class="label">6 stages</td>
+    <td>You can cascade 2, 3, 4, or all 6 inverters in series, each adding its own layer of
+      harmonic content. This is the multi-stage design framework made physical.</td>
+  </tr>
+  <tr>
+    <td class="label">S-curve transfer</td>
+    <td>Each stage is naturally an <strong>odd-soft</strong> archetype when biased at center.
+      Gentle saturation, tanh-like. At 5V, the clean output swing is about 2Vpp before visible
+      distortion — push past that and the S-curve's soft corners start rounding the waveform.
+      Shift the bias off-center and it becomes <strong>even+odd soft</strong>.</td>
+  </tr>
+  <tr>
+    <td class="label">Bias via resistor</td>
+    <td>A single 1MΩ resistor from output to input provides DC feedback that stabilizes the
+      quiescent voltage at half the supply. The input coupling cap blocks DC so the audio signal
+      swings symmetrically around this midpoint. Input impedance is ~25KΩ (Rf / gain), or
+      ~100KΩ with a 100K resistor in the feedback path.</td>
+  </tr>
+  <tr>
+    <td class="label">Variable supply</td>
+    <td>The 4069UB runs on 3V to 15V. Lower voltage = less headroom = earlier clipping =
+      more distortion at lower signal levels. Battery sag is a feature, not a bug.</td>
+  </tr>
+  <tr>
+    <td class="label">$0.50</td>
+    <td>Cheap enough to put one on every student's breadboard.</td>
+  </tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>2. Power Dissipation</h2>
+
+<p>
+  Higher supply voltage means more gain but also more heat. Keep this in mind when cascading
+  multiple stages:
+</p>
+
+<table class="scope-table">
+  <tr><th>Supply</th><th>Current (per inverter)</th><th>Heat (per inverter)</th><th>Notes</th></tr>
+  <tr>
+    <td class="label">5V</td>
+    <td>~1 mA</td>
+    <td>5 mW</td>
+    <td>Safe to use all 6 inverters. Best starting point.</td>
+  </tr>
+  <tr>
+    <td class="label">9V</td>
+    <td>~3 mA</td>
+    <td>27 mW</td>
+    <td>Good for guitar pedal levels. Higher gain, more headroom.</td>
+  </tr>
+  <tr>
+    <td class="label">12V</td>
+    <td>~7 mA</td>
+    <td>84 mW</td>
+    <td>Use 3-4 inverters max. Significant heat.</td>
+  </tr>
+  <tr>
+    <td class="label">15V</td>
+    <td>~11 mA</td>
+    <td>165 mW</td>
+    <td>Use 2-3 inverters max. 6 inverters would exceed 1W — chip damage territory.</td>
+  </tr>
+</table>
+
+<p>
+  The chip's absolute maximum is ~500 mW total. At 5V you're nowhere near this even with all
+  6 stages. At 9V (a single battery) you have plenty of margin for 3-4 stages. This is another
+  reason 5V or 9V is the sweet spot for breadboard experiments.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>3. Single-Stage Circuits</h2>
+
+<h3>Self-Biased Inverter Amp (Full Gain)</h3>
+
+<p>The simplest useful circuit — one inverter stage biased at its midpoint:</p>
+
+<div class="math">
+input ──┤├── INV1 in ──── INV1 out ──┤├── output<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── Rf ──┘<br>
+<br>
+Rf = 1MΩ (self-bias to Vdd/2)<br>
+C1, C2 = 100nF (DC blocking — use non-electrolytic to minimize leakage)<br>
+Gain ≈ 40× at 5V supply<br>
+Input impedance ≈ 25KΩ (Rf / gain)
+</div>
+
+<p>
+  The feedback resistor <span class="math-inline">Rf</span> provides DC feedback that
+  stabilizes the quiescent point at half the supply voltage — right in the middle of the
+  S-curve. The input coupling cap blocks DC so the audio signal swings symmetrically around
+  that midpoint. At low levels this is nearly linear (clean gain of ~40×). Turn up the input
+  and the S-curve's soft corners start to round the peaks — <strong>odd-soft pre-stage</strong>
+  behavior. Push it harder and the output clips against the supply rails —
+  <strong>odd-hard clipper</strong>.
+</p>
+
+<p>
+  The low-frequency cutoff is set by the coupling cap and the input impedance:
+  <span class="math-inline">f = 1 / (2πRC)</span>. With 100nF and ~25KΩ input impedance,
+  cutoff is around 64 Hz — fine for guitar. Use a larger cap (1μF) for bass or full-range audio.
+</p>
+
+<h3>Reducing Gain with Negative Feedback</h3>
+
+<p>
+  Full open-loop gain (~40×) is a lot — it'll distort almost anything. To set a
+  <strong>controlled, lower gain</strong>, split the feedback resistor into two parts and use
+  negative feedback, just like an op-amp inverting amplifier:
+</p>
+
+<div class="math">
+input ──┤├── R1 ──┬── INV1 in ──── INV1 out ──┬──┤├── output<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;C2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└───────── Rf ──────────┘<br>
+<br>
+Gain ≈ Rf / R1<br>
+Example: Rf = 500KΩ, R1 = 100KΩ → gain ≈ 5×<br>
+Input impedance ≈ R1 = 100KΩ
+</div>
+
+<p>
+  This gives you a clean gain stage with predictable behavior — the <strong>odd-soft pre-stage</strong>
+  archetype at moderate levels. Input impedance is now set by R1, which is much easier to
+  control. The tradeoff: you're using the gain for linearity rather than distortion. To get
+  back to clipping, either increase the input level or cascade into a second, full-gain stage.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>4. Multi-Stage: Cascading Inverters</h2>
+
+<p>
+  This is where it gets interesting. Chain two or three inverter stages, each with its own
+  bias resistor and coupling cap:
+</p>
+
+<div class="math">
+input ──┤├── [INV1 + Rf1] ──┤├── [INV2 + Rf2] ──┤├── [INV3 + Rf3] ──┤├── output<br>
+<br>
+Each stage: Rf = 1MΩ (centered) or voltage divider (shifted)<br>
+Coupling caps between stages: 100nF (full range) or 10nF (treble only)
+</div>
+
+<p>Now you have independent control at each stage:</p>
+
+<ul>
+  <li><strong>Stage 1</strong> — Rf1 = 1MΩ (centered bias): odd-soft pre-stage. Wakes up harmonics gently.</li>
+  <li><strong>Stage 2</strong> — Rf2 = 1MΩ (centered): another symmetric stage. The already-rounded
+    signal gets rounded further. Odd harmonics compound — 3rd × 3rd starts generating 9th, etc.
+    Things get buzzy.</li>
+  <li><strong>Stage 3</strong> — Replace Rf3 with a voltage divider to shift bias off-center:
+    now this stage is <strong>even+odd soft</strong>. The asymmetry introduces 2nd harmonic warmth
+    into the already harmonically rich signal.</li>
+</ul>
+
+<h3>Inter-Stage Coupling Caps</h3>
+
+<p>
+  Between stages, the <strong>coupling cap value</strong> acts as a simple post-shaper — a
+  high-pass filter with cutoff <span class="math-inline">f = 1 / (2πRC)</span> where R is
+  the next stage's input impedance (~25KΩ at full gain):
+</p>
+
+<table class="scope-table">
+  <tr><th>Cap Value</th><th>Cutoff (with ~25KΩ)</th><th>Effect</th></tr>
+  <tr>
+    <td class="label">1 μF</td>
+    <td>~6 Hz</td>
+    <td>Full range. Everything passes. Fat, woolly, lots of bass intermodulation.</td>
+  </tr>
+  <tr>
+    <td class="label">100 nF</td>
+    <td>~64 Hz</td>
+    <td>Good default. Passes guitar range, rolls off sub-bass mud.</td>
+  </tr>
+  <tr>
+    <td class="label">10 nF</td>
+    <td>~640 Hz</td>
+    <td>Treble only. Tight, focused distortion. Bass stays clean underneath.</td>
+  </tr>
+  <tr>
+    <td class="label">1 nF</td>
+    <td>~6.4 kHz</td>
+    <td>Extreme — only the highest harmonics pass. Sizzle and presence only.</td>
+  </tr>
+</table>
+
+<p>
+  This is one of the most powerful tools in multi-stage design: by filtering <em>between</em>
+  stages rather than at the end, you control <strong>what gets distorted</strong> by the next
+  stage. A 10nF cap between stages 2 and 3 means only treble gets the third stage's clipping —
+  the bass from stages 1 and 2 passes through unmolested. This is how you get tight, defined
+  distortion rather than a wall of mush.
+</p>
+
+<div class="callout">
+  <div class="callout-label">Experiment: Three Stages, Three Characters</div>
+  <p style="margin-bottom:0">
+    Build three inverter stages on a breadboard. Make all three center-biased first — listen
+    to how the odd harmonics stack up with each added stage. Then shift the bias on stage 3
+    by replacing its 1MΩ feedback resistor with a 2.2MΩ to ground and 470KΩ to supply. Listen
+    for the even harmonics appearing. Then try moving the bias shift to stage 1 instead —
+    the character changes because the asymmetry happens <em>before</em> the heavy clipping
+    rather than after.
+    <strong>Same components, different order → different sound.</strong>
+  </p>
+</div>
+
+<h3>The 4069UB vs. the Fuzz Face</h3>
+
+<table class="scope-table">
+  <tr><th></th><th>Fuzz Face</th><th>4069UB Chain</th></tr>
+  <tr>
+    <td class="label">Stages</td>
+    <td>2 (fixed topology)</td>
+    <td>1-6 (you choose)</td>
+  </tr>
+  <tr>
+    <td class="label">Curve</td>
+    <td>Transistor exponential (germanium = softer, silicon = sharper)</td>
+    <td>CMOS S-curve (tanh-like), consistent stage to stage</td>
+  </tr>
+  <tr>
+    <td class="label">Bias control</td>
+    <td>Set by resistor network + transistor β (temperature-sensitive with germanium)</td>
+    <td>Simple: one resistor per stage, or a voltage divider to shift</td>
+  </tr>
+  <tr>
+    <td class="label">Design flexibility</td>
+    <td>Low — the topology is the sound, hard to modify without breaking it</td>
+    <td>High — add/remove stages, change bias per stage, vary coupling caps</td>
+  </tr>
+  <tr>
+    <td class="label">Best for</td>
+    <td>That specific classic fuzz character</td>
+    <td>Exploring the design space, learning, prototyping custom distortion</td>
+  </tr>
+</table>
+
+<p>
+  The Fuzz Face is a finished instrument — beautiful, specific, hard to improve on for what it does.
+  The 4069UB is a <strong>laboratory</strong> — it lets you test the archetype framework hands-on
+  and hear exactly what happens when you change one variable at a time.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>5. The 4069UB as Sound Source</h2>
+
+<p>
+  The 4069UB isn't just for processing audio — you can use it to <strong>generate</strong>
+  waveforms too. Combined with a 40106 (Schmitt trigger hex inverter), a handful of resistors,
+  caps, and diodes, you can build oscillators that produce triangle, sawtooth, and square waves
+  — then distort them through more 4069UB stages on the same breadboard.
+</p>
+
+<h3>Triangle Wave Oscillator (40106)</h3>
+
+<p>
+  The 40106's built-in hysteresis makes it a natural oscillator. A resistor and capacitor on
+  one inverter stage create a relaxation oscillator — the cap charges through the resistor until
+  it hits the upper threshold, the output flips low, the cap discharges until it hits the lower
+  threshold, the output flips high, and so on. The voltage on the cap is a <strong>triangle
+  wave</strong> — the charge/discharge cycles are linear because the resistor provides constant
+  current into the cap.
+</p>
+
+<div class="math">
+40106 pin 1 (in) ──┬── R ── 40106 pin 2 (out) → square wave<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GND<br>
+<br>
+Triangle wave available at the junction of R and C (pin 1)<br>
+Square wave at pin 2 (output)<br>
+Frequency ≈ 1 / (1.4 × R × C)<br>
+Example: R = 10KΩ, C = 100nF → ~714 Hz
+</div>
+
+<p>
+  You get <strong>two waveforms for free</strong>: the square wave at the output, and the
+  triangle wave at the input (the cap voltage). The triangle is the raw charge/discharge
+  ramp; the square is the oscillator's switching output.
+</p>
+
+<h3>Sawtooth from Triangle: Add a Diode</h3>
+
+<p>
+  To convert the triangle into a sawtooth, add a diode in parallel with the feedback resistor.
+  The diode conducts in one direction only, so:
+</p>
+
+<ul>
+  <li><strong>Charge cycle</strong> — diode conducts, cap charges quickly through the
+    diode's low resistance</li>
+  <li><strong>Discharge cycle</strong> — diode blocks, cap must discharge slowly through
+    the full resistor value</li>
+</ul>
+
+<p>
+  The result: fast rise, slow fall (or vice versa depending on diode orientation) — a
+  <strong>sawtooth wave</strong>. The asymmetry ratio depends on the resistor value vs.
+  the diode's forward resistance (~100Ω for a 1N4148). With a 10KΩ resistor, the
+  fast edge is about 100× faster than the slow ramp.
+</p>
+
+<div class="math">
+40106 pin 1 (in) ──┬── R ──┬── 40106 pin 2 (out)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;diode (1N4148)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GND<br>
+<br>
+Sawtooth wave at pin 1 (cap junction)<br>
+Flip the diode to reverse the ramp direction
+</div>
+
+<h3>From Oscillator to Fuzz: A Complete Signal Chain</h3>
+
+<p>
+  Here's where it comes together. Use one 40106 and one 4069UB to build a complete
+  synthesizer voice with shaped distortion — all on one breadboard:
+</p>
+
+<div class="chain">
+  <div class="chain-stage">
+    <div class="chain-num">40106</div>
+    <div class="chain-title">Oscillator</div>
+    <div class="chain-desc">One 40106 inverter + R + C generates triangle or sawtooth
+      (add diode). Frequency set by R×C. Use a pot for R to make it tunable.</div>
+    <div class="chain-harmonics">→ triangle or saw source</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">4069UB #1</div>
+    <div class="chain-title">Buffer</div>
+    <div class="chain-desc">Unity-gain buffer (equal R in + Rf) isolates the oscillator
+      from the distortion stages. Prevents loading from changing the pitch.</div>
+    <div class="chain-harmonics">→ clean isolation</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">4069UB #2</div>
+    <div class="chain-title">Overdrive</div>
+    <div class="chain-desc">Variable gain via pot as input resistor, fixed 100KΩ feedback.
+      The S-curve softly rounds the waveform — odd-soft or even+odd depending on bias.</div>
+    <div class="chain-harmonics">→ soft saturation</div>
+  </div>
+  <div class="chain-arrow">▸</div>
+  <div class="chain-stage">
+    <div class="chain-num">4069UB #3</div>
+    <div class="chain-title">Fuzz</div>
+    <div class="chain-desc">Full open-loop gain (1MΩ self-bias, no negative feedback).
+      Drives the already-rounded signal to the rails — heavy clipping, dense harmonics.</div>
+    <div class="chain-harmonics">→ full fuzz</div>
+  </div>
+</div>
+
+<p>
+  This architecture — oscillator → buffer → overdrive → fuzz — is essentially
+  <strong>Craig Anderton's "Tube Sound Fuzz"</strong> circuit from
+  <em>Electronic Projects for Musicians</em> (1980), one of the first published designs to
+  exploit the 4069UB's analog behavior for deliberate distortion. Anderton recognized that the
+  CMOS inverter's S-curve, when cascaded, produces a progressive saturation that mimics the
+  stage-by-stage compression of a tube amp.
+</p>
+
+<div class="callout">
+  <div class="callout-label">DC Offset Between Stages</div>
+  <p style="margin-bottom:0">
+    Multi-stage circuits accumulate DC voltage offsets. Each inverter's output sits at Vdd/2
+    (the bias point), but small mismatches add up. Use <strong>0.1μF coupling caps</strong>
+    between stages to block DC and keep each stage centered on its own bias point.
+    The tradeoff: coupling caps create high-pass filters (see the coupling cap table above),
+    so very small caps will thin out the bass. 100nF between stages is a good default.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>6. Parts List</h2>
+
+<p>Everything you need for the breadboard experiments above:</p>
+
+<table class="scope-table">
+  <tr><th>Component</th><th>Quantity</th><th>Notes</th></tr>
+  <tr><td class="label">CD4069UB</td><td>1</td><td>Unbuffered hex inverter. Must be UB variant.</td></tr>
+  <tr><td class="label">CD40106</td><td>1</td><td>Schmitt trigger hex inverter. For oscillator.</td></tr>
+  <tr><td class="label">1MΩ resistor</td><td>6</td><td>Self-bias feedback for each inverter stage.</td></tr>
+  <tr><td class="label">100KΩ resistor</td><td>4</td><td>Negative feedback, voltage dividers.</td></tr>
+  <tr><td class="label">10KΩ resistor</td><td>2</td><td>Oscillator frequency setting.</td></tr>
+  <tr><td class="label">100KΩ pot</td><td>2</td><td>Variable gain, variable oscillator frequency.</td></tr>
+  <tr><td class="label">100nF ceramic cap</td><td>8</td><td>Inter-stage coupling, oscillator. Non-electrolytic.</td></tr>
+  <tr><td class="label">10nF ceramic cap</td><td>2</td><td>Treble-only inter-stage coupling option.</td></tr>
+  <tr><td class="label">1N4148 diode</td><td>2</td><td>Sawtooth wave generation.</td></tr>
+  <tr><td class="label">Breadboard</td><td>1</td><td>Half-size is fine.</td></tr>
+  <tr><td class="label">9V battery + clip</td><td>1</td><td>Or 5V USB supply.</td></tr>
+  <tr><td class="label">Jumper wires</td><td>assorted</td><td></td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>Further Reading</h2>
+
+<ul>
+  <li><a href="circuit-design.html">Distortion Circuit Design</a> — the conceptual framework: transfer functions, bias, symmetry, and stage archetypes</li>
+  <li><a href="https://melbmcu.weebly.com/cmos-gate-as-analogue-amplifier.html">CMOS Gate as Analogue Amplifier</a> — detailed technical reference on 4069UB bias, gain, power dissipation, and feedback configurations</li>
+  <li><a href="https://hackaday.com/2015/03/09/logic-noise-sawing-away-with-analog-waveforms/">Logic Noise: Sawing Away with Analog Waveforms</a> — Hackaday series on CMOS oscillators, waveform generation, and the Craig Anderton "Tube Sound Fuzz" lineage</li>
+  <li>Craig Anderton, <em>Electronic Projects for Musicians</em> (1980) — the original "Tube Sound Fuzz" 4069UB circuit and many other CMOS audio designs</li>
+  <li><a href="fuzzbox-transfer.html">Transfer Function Lab</a> — draw your own waveshaper and hear the result</li>
+  <li><a href="fuzzbox-octavia.html">Digital Octavia Lab</a> — interactive stage-by-stage Octavia simulation</li>
+</ul>
+
+<div class="footer">
+  Doug Goodwin — CalArts 2026 — CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>

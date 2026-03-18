@@ -17,7 +17,7 @@ Requires [Node.js](https://nodejs.org) (any recent version). No dependencies to 
 
 ## Web Labs
 
-Three browser-based tools built with the Web Audio API. All are single self-contained HTML files — no build step, no frameworks.
+Browser-based tools built with the Web Audio API. All are single self-contained HTML files — no build step, no frameworks.
 
 ### Distortion Lab (`fuzzbox-lab.html`)
 
@@ -30,6 +30,63 @@ Interactive spectrogram editor. Displays a 2-second audio loop as a full spectro
 ### Digital Octavia (`fuzzbox-octavia.html`)
 
 Stage-by-stage simulation of the Roger Mayer Octavia octave fuzz (1967). Five visible signal chain stages — input buffer, fuzz, transformer, full-wave rectifier, output filter — each with its own oscilloscope showing before/after waveforms. Germanium vs silicon transistor and diode models. The rectifier stage demonstrates how `|x|` doubles frequency to produce an octave up.
+
+### Reverb Matching Lab (`fuzzbox-reverb.html`)
+
+Record a clap in a real room, then match its reverb with a synthetic impulse response engine. Seven-band Schroeder decay curves show how each octave band dies out over time. A/B comparison with match scoring.
+
+### Transfer Function Lab (`fuzzbox-transfer.html`)
+
+Draw your own waveshaper transfer function and hear the result in real time. The drawn curve maps input amplitude to output amplitude — any departure from a straight diagonal creates distortion. Presets for hard clip, soft clip, foldback, half rectify, staircase, and dead zone. See the [note on harmonics](#how-distortion-creates-harmonics) below.
+
+### Spectrograph (`fuzzbox-spectrograph.html`)
+
+Encode an image into sound. Upload a photo or take a selfie, map pixel brightness to spectral magnitudes, and synthesize audio via inverse FFT. The output spectrogram reveals your image — like the Aphex Twin face hidden in "Equation."
+
+### Spectral Average (`fuzzbox-average.html`)
+
+What does an entire piece of music sound like all at once? Computes the average spectrum of a recording — thousands of FFT frames collapsed into a single composite tone. Inspired by Jim Campbell's *Illuminated Averages*.
+
+### Name That Distortion (`fuzzbox-game.html`)
+
+Ear training game. A mystery distortion is applied to a signal — students use the waveform, spectrum, and their ears to identify which algorithm is active. Three difficulty levels, streak scoring, and the option to hide the visualizations for ears-only mode.
+
+### Exercises and Worksheets
+
+- `sculptor-exercise.html` — Building Timbre from Nothing (Spectral Sculptor exercise)
+- `transfer-exercise.html` — Waveform Distortion Worksheet (online version)
+- `worksheet-distortion.html` — Printable distortion worksheet for class
+
+## How Distortion Creates Harmonics
+
+No FFT is involved in creating harmonics — the FFT spectrum analyzer only reveals them after the fact. Distortion is a purely time-domain operation: the nonlinear transfer function reshapes the waveform sample by sample (`output[i] = f(input[i])`), and the reshaped waveform is mathematically equivalent to a sum of new sinusoidal components.
+
+The mechanism is the **power series expansion** of the transfer function:
+
+```
+f(x) = a₁x + a₂x² + a₃x³ + a₄x⁴ + ...
+```
+
+When you feed in a sine wave `sin(ωt)`, each power of x generates specific harmonics via trigonometric identities:
+
+- **x²** → sin²(ωt) = ½ − ½cos(2ωt) → DC + **2nd harmonic**
+- **x³** → sin³(ωt) = ¾sin(ωt) − ¼sin(3ωt) → fundamental + **3rd harmonic**
+- **x⁴** → DC + **2nd** + **4th** (even harmonics)
+- **x⁵** → fundamental + **3rd** + **5th** (odd harmonics)
+
+The pattern: **even powers produce even harmonics, odd powers produce odd harmonics.**
+
+### Symmetric → odd harmonics only
+
+A symmetric transfer function satisfies `f(−x) = −f(x)`. This forces all even-power coefficients (a₂, a₄, a₆...) to zero — only odd powers survive. Examples: `tanh(x)` = x − x³/3 + 2x⁵/15 − ..., hard clipping, foldback. All produce only odd harmonics (3rd, 5th, 7th...).
+
+### Asymmetric → even + odd harmonics
+
+An asymmetric function has `f(−x) ≠ −f(x)`, meaning the even-power coefficients are nonzero. The tube model in the labs demonstrates this: adding a DC bias (`x + 0.15`) shifts the sine wave off-center on the tanh curve, so positive peaks hit a different region of the S-curve than negative peaks. This breaks the symmetry and introduces even harmonics (2nd, 4th...) alongside the odd ones. Half-wave rectification is the extreme case — the Fourier series of a half-rectified sine explicitly contains the 2nd and 4th harmonics.
+
+### The intuition
+
+If you clip the top and bottom of a wave identically (symmetric), the top half still mirrors the bottom. That mirror symmetry cancels even harmonics. Break the mirror — clip the top harder than the bottom, or remove the bottom entirely — and the waveform requires even harmonics to describe its lopsided shape. This is why tube amps (biased asymmetrically) sound "warm" (even harmonics) while transistor hard clipping sounds "buzzy" (odd harmonics).
 
 ## Server (`server.js`)
 

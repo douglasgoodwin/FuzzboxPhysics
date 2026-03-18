@@ -73,15 +73,11 @@ const server = http.createServer((req, res) => {
   // Root → index
   if (pathname === '/') pathname = '/index.html';
 
-  // Resolve file path: try app/ first for HTML files, then project root
+  // Resolve file path: try app/ first, then project root
   let filePath;
-  if (pathname.endsWith('.html')) {
-    const appPath = path.join(APP_DIR, pathname);
-    const rootPath = path.join(ROOT, pathname);
-    filePath = fs.existsSync(appPath) ? appPath : rootPath;
-  } else {
-    filePath = path.join(ROOT, pathname);
-  }
+  const appPath = path.join(APP_DIR, pathname);
+  const rootPath = path.join(ROOT, pathname);
+  filePath = fs.existsSync(appPath) ? appPath : rootPath;
 
   // Prevent directory traversal
   if (!filePath.startsWith(ROOT)) {

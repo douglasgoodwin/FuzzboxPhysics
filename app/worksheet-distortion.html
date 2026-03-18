@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waveform Distortion Worksheet — Fuzzbox Physics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #111;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in 0;
+  }
+
+  @media print {
+    body { padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .part { break-inside: avoid; }
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #111;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .header-left h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header-left .course {
+    font-size: 8pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 2px;
+  }
+  .header-right {
+    text-align: right;
+  }
+  .name-line {
+    font-size: 9pt;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .name-blank {
+    display: inline-block;
+    width: 2in;
+    border-bottom: 1px solid #999;
+  }
+
+  /* ---- Sections ---- */
+  .part {
+    margin-bottom: 20px;
+  }
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  .part-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8pt;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    white-space: nowrap;
+  }
+  .part-title {
+    font-size: 13pt;
+    font-weight: 500;
+  }
+  .part-lab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    color: #999;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  p {
+    margin-bottom: 8px;
+    color: #333;
+  }
+
+  .step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 10pt;
+    min-width: 18px;
+    text-align: right;
+    color: #111;
+  }
+  .step-text {
+    color: #333;
+  }
+
+  .keyword {
+    font-weight: 500;
+    color: #111;
+  }
+
+  .listen {
+    font-style: italic;
+    color: #555;
+    margin: 4px 0 8px 26px;
+    padding-left: 10px;
+    border-left: 2px solid #ddd;
+    font-size: 10pt;
+  }
+
+  .hint {
+    font-size: 9.5pt;
+    color: #666;
+    background: #f5f5f5;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-left: 3px solid #ccc;
+  }
+
+  /* ---- Answer blanks ---- */
+  .answer-box {
+    border: 1px solid #bbb;
+    min-height: 1in;
+    margin: 8px 0 12px;
+    padding: 6px;
+    position: relative;
+  }
+  .answer-box.tall { min-height: 1.4in; }
+  .answer-box.short { min-height: 0.7in; }
+  .answer-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #999;
+    position: absolute;
+    top: 4px;
+    right: 6px;
+  }
+
+  /* ---- Draw grids ---- */
+  .grid-row {
+    display: flex;
+    gap: 16px;
+    margin: 8px 0 12px;
+  }
+  .draw-grid {
+    flex: 1;
+    position: relative;
+  }
+  .draw-grid canvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid #bbb;
+    display: block;
+  }
+  .draw-grid .grid-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #999;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ---- Table ---- */
+  .concept-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .concept-table th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    padding: 4px 8px;
+    border-bottom: 1px solid #aaa;
+  }
+  .concept-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top;
+  }
+  .concept-table td.mono {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5pt;
+  }
+
+  /* ---- Fill-in table ---- */
+  .fill-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .fill-table th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    padding: 4px 8px;
+    border-bottom: 1px solid #aaa;
+  }
+  .fill-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    height: 28px;
+  }
+  .fill-table td.given { color: #333; }
+  .fill-table td.blank { color: #ccc; }
+
+  .url-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8pt;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .footer {
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+  .print-btn:hover { background: #333; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">PRINT / PDF</button>
+
+<!-- ════════ PAGE 1 ════════ -->
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics &mdash; CalArts</div>
+    <h1>Waveform Distortion</h1>
+  </div>
+  <div class="header-right">
+    <div class="name-line">Name: <span class="name-blank"></span></div>
+    <div class="name-line">Date: <span class="name-blank"></span></div>
+  </div>
+</div>
+
+<p>Every distortion circuit reshapes the waveform. The shape of that reshaping determines which
+harmonics are created. Today you will connect three views of the same phenomenon: the
+<span class="keyword">transfer function</span> (input &rarr; output mapping), the
+<span class="keyword">waveform</span> (time domain), and the <span class="keyword">spectrum</span>
+(frequency domain).</p>
+
+<div class="url-note">Labs: localhost:3000/fuzzbox-lab.html &nbsp;&bull;&nbsp; localhost:3000/fuzzbox-transfer.html</div>
+
+<!-- ═══════ REFERENCE ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Reference</div>
+    <div class="part-title">Symmetric vs. Asymmetric</div>
+  </div>
+
+  <table class="concept-table">
+    <tr>
+      <th style="width:22%">Symmetry</th>
+      <th style="width:32%">What It Means</th>
+      <th style="width:24%">Harmonics Created</th>
+      <th>Examples</th>
+    </tr>
+    <tr>
+      <td class="mono">Symmetric</td>
+      <td>Positive and negative halves are shaped identically</td>
+      <td>Odd only (3rd, 5th, 7th&hellip;)</td>
+      <td>Hard clip, soft clip, foldback</td>
+    </tr>
+    <tr>
+      <td class="mono">Asymmetric</td>
+      <td>Positive and negative halves are shaped differently</td>
+      <td>Even + odd (2nd, 3rd, 4th&hellip;)</td>
+      <td>Tube bias, half-wave rectify</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ═══════ PART 1 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 1</div>
+    <div class="part-title">Counting Harmonics</div>
+    <div class="part-lab">Distortion Lab</div>
+  </div>
+
+  <p>Set the source to <span class="keyword">OSC TEST &rarr; SINE &rarr; 220 Hz</span>.
+  Wet/dry at 100%. Drive around 70%.</p>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      Select <span class="keyword">HARD</span> clip. Look at the output spectrum.
+      List the frequencies where you see harmonic peaks:
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th>Harmonic</th><th>Frequency</th><th>Odd or Even?</th><th>Visible? (Y/N)</th>
+    </tr>
+    <tr><td class="given">1st (fundamental)</td><td class="given">220 Hz</td><td class="given">—</td><td class="given">Y</td></tr>
+    <tr><td class="given">2nd</td><td class="given">440 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">3rd</td><td class="given">660 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">4th</td><td class="given">880 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">5th</td><td class="given">1100 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">6th</td><td class="given">1320 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">7th</td><td class="given">1540 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">8th</td><td class="given">1760 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      Now switch to <span class="keyword">HALF RECTIFY</span> and fill in the same table:
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th>Harmonic</th><th>Frequency</th><th>Odd or Even?</th><th>Visible? (Y/N)</th>
+    </tr>
+    <tr><td class="given">1st (fundamental)</td><td class="given">220 Hz</td><td class="given">—</td><td class="given">Y</td></tr>
+    <tr><td class="given">2nd</td><td class="given">440 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">3rd</td><td class="given">660 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">4th</td><td class="given">880 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">5th</td><td class="given">1100 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">6th</td><td class="given">1320 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">7th</td><td class="given">1540 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+    <tr><td class="given">8th</td><td class="given">1760 Hz</td><td class="blank"></td><td class="blank"></td></tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      Explain the difference. Why does hard clip produce a different harmonic pattern than half rectify?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 2 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 2</div>
+    <div class="part-title">Matching Sounds to Shapes</div>
+    <div class="part-lab">Transfer Function Lab</div>
+  </div>
+
+  <p>Open the Transfer Function Lab. Source: <span class="keyword">SINE 220 Hz</span>.
+  Click through each preset and observe the curve, waveform, and spectrum together.</p>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      For each preset, sketch the approximate transfer curve shape in the grid and describe what you hear.
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th style="width:18%">Preset</th>
+      <th style="width:34%">Sketch the Curve Shape</th>
+      <th style="width:48%">What Does It Sound Like?</th>
+    </tr>
+    <tr>
+      <td class="given">Hard Clip</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given">Soft Clip</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given">Foldback</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given">Half Rectify</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given">Staircase</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given">Dead Zone</td>
+      <td style="height:50px"></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      Which preset creates the <span class="keyword">most</span> harmonics? Which creates the <span class="keyword">fewest</span>?
+      Why?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- PAGE BREAK -->
+<div class="page-break"></div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics</div>
+    <h1>Waveform Distortion <span style="font-weight:300">(continued)</span></h1>
+  </div>
+</div>
+
+<!-- ═══════ PART 3 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 3</div>
+    <div class="part-title">Predict Before You Listen</div>
+    <div class="part-lab">Transfer Function Lab</div>
+  </div>
+
+  <p>For each transfer curve drawn below, <span class="keyword">predict</span> what will happen to a sine wave
+  before you try it in the lab. Then test your prediction.</p>
+
+  <table class="fill-table">
+    <tr>
+      <th style="width:18%">Curve</th>
+      <th style="width:41%">Your Prediction</th>
+      <th style="width:41%">What Actually Happened</th>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt; line-height:1.4">
+        Flat line at<br>output = 0<br>
+        <span style="color:#999; font-size:8pt">(horizontal through the middle)</span>
+      </td>
+      <td style="height:56px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt; line-height:1.4">
+        Inverted diagonal<br>
+        <span style="color:#999; font-size:8pt">(top-left to bottom-right)</span>
+      </td>
+      <td style="height:56px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt; line-height:1.4">
+        Only the right half rises<br>(left half stays at 0)
+        <span style="color:#999; font-size:8pt"><br>(half-wave rectify)</span>
+      </td>
+      <td style="height:56px"></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt; line-height:1.4">
+        V-shape<br>
+        <span style="color:#999; font-size:8pt">(both sides go up — full-wave rectify)</span>
+      </td>
+      <td style="height:56px"></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">Q.</div>
+    <div class="step-text">
+      The V-shape (full-wave rectify) is the heart of the Octavia pedal.
+      Why does it produce an octave-up effect? What happened to the fundamental frequency?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 4 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 4</div>
+    <div class="part-title">Draw Your Own Distortion</div>
+    <div class="part-lab">Transfer Function Lab</div>
+  </div>
+
+  <p>Reset to <span class="keyword">LINEAR</span>. Use the drawing tools to create
+  your own transfer function. Experiment freely, then answer:</p>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      Draw a curve in the lab that you think sounds <span class="keyword">musical</span>
+      (not just noise). Sketch it here:
+    </div>
+  </div>
+
+  <div style="border:1px solid #bbb; height:2.2in; margin:8px 0; position:relative;">
+    <div class="answer-label">Sketch your transfer curve</div>
+    <!-- Light axis cross for sketching -->
+    <svg width="100%" height="100%" style="position:absolute; top:0; left:0">
+      <line x1="10%" y1="50%" x2="90%" y2="50%" stroke="#ddd" stroke-width="1"/>
+      <line x1="50%" y1="8%" x2="50%" y2="92%" stroke="#ddd" stroke-width="1"/>
+      <line x1="10%" y1="92%" x2="90%" y2="8%" stroke="#eee" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="92%" y="53%" font-size="7pt" fill="#bbb" font-family="IBM Plex Mono">+1</text>
+      <text x="5%" y="53%" font-size="7pt" fill="#bbb" font-family="IBM Plex Mono">−1</text>
+      <text x="48%" y="7%" font-size="7pt" fill="#bbb" font-family="IBM Plex Mono">+1</text>
+      <text x="48%" y="98%" font-size="7pt" fill="#bbb" font-family="IBM Plex Mono">−1</text>
+      <text x="88%" y="98%" font-size="6pt" fill="#ccc" font-family="IBM Plex Mono">INPUT →</text>
+      <text x="1%" y="7%" font-size="6pt" fill="#ccc" font-family="IBM Plex Mono">↑ OUTPUT</text>
+    </svg>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      Describe what you drew and why it sounds the way it does. What features of the curve
+      correspond to what you hear?
+    </div>
+  </div>
+
+  <div class="answer-box tall">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      Is your curve symmetric or asymmetric? Based on that, predict whether the harmonics
+      are mostly odd, or a mix of even and odd. Then check the spectrum.
+      Were you right?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 5 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 5</div>
+    <div class="part-title">Real Sound</div>
+    <div class="part-lab">Either Lab</div>
+  </div>
+
+  <p>Switch to <span class="keyword">MIC IN</span> or load an audio file. Try your voice,
+  an instrument, a clap — anything.</p>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      Feed the sound through at least two different distortion types. For each, note
+      what happened:
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th style="width:18%">Distortion</th>
+      <th style="width:20%">Sound Source</th>
+      <th style="width:62%">How Did It Change the Sound?</th>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td style="height:44px"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td style="height:44px"></td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      Experiment with the <span class="keyword">wet/dry mix</span>. At what percentage
+      does distortion go from "warmth" to "destruction"? Why might a mixing engineer
+      use distortion at 10–20% wet instead of 100%?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ BIG QUESTION ═══════ -->
+<div class="part" style="border: 2px solid #111; padding: 16px;">
+  <div class="part-header" style="border-bottom:none; margin-bottom:2px">
+    <div class="part-title">Big Question</div>
+  </div>
+
+  <p>A guitar amp designer has two knobs on their desk: one that adjusts the
+  <span class="keyword">shape</span> of the clipping curve, and one that adjusts
+  the <span class="keyword">threshold</span> (how loud the signal needs to be before
+  clipping starts). Which knob changes the <em>character</em> of the distortion, and
+  which changes the <em>amount</em>? Explain using what you learned today.</p>
+
+  <div class="answer-box tall">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<div class="footer">
+  Doug Goodwin &mdash; CalArts 2026 &mdash; CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>

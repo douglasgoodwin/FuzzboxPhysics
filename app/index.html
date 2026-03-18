@@ -3,117 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUZZBOX PHYSICS</title>
+<title>Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --text: #8bba8b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
   body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  .container {
-    max-width: 640px;
-    width: 100%;
+    max-width: 720px;
+    padding: 60px 24px;
   }
 
   h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 3.5rem;
-    letter-spacing: 0.12em;
-    color: var(--phosphor);
-    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
-    line-height: 1;
-  }
-
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.2em;
-    margin-top: 4px;
+    font-size: 3.2rem;
   }
 
   .divider {
     border: none;
     border-top: 1px solid var(--border);
-    margin: 24px 0;
+    margin: 32px 0;
   }
 
   a.lab-link {
     display: block;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin-bottom: 12px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-light);
     text-decoration: none;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    color: inherit;
   }
 
-  a.lab-link::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
-    opacity: 0.5;
+  a.lab-link:first-of-type {
+    border-top: 1px solid var(--border-light);
   }
 
   a.lab-link:hover {
-    border-color: var(--phosphor);
-    box-shadow: 0 0 12px var(--phosphor-glow);
-  }
-
-  a.lab-link:hover .lab-title {
-    text-shadow: 0 0 10px var(--phosphor-glow);
+    padding-left: 8px;
   }
 
   .lab-num {
-    font-family: 'VT323', monospace;
-    font-size: 0.85rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
-    margin-bottom: 2px;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
   }
 
   .lab-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.6rem;
-    letter-spacing: 0.08em;
-    color: var(--phosphor);
-    line-height: 1.2;
-    transition: text-shadow 0.2s;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  a.lab-link:hover .lab-title {
+    color: var(--accent);
   }
 
   .lab-desc {
-    font-family: 'VT323', monospace;
-    font-size: 0.95rem;
-    color: var(--text);
-    line-height: 1.6;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.7;
     margin-top: 6px;
   }
 
@@ -125,154 +75,242 @@
   }
 
   .tag {
-    font-size: 0.58rem;
-    letter-spacing: 0.12em;
-    color: var(--phosphor-dim);
-    border: 1px solid var(--border);
-    padding: 2px 6px;
-    border-radius: 2px;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
     text-transform: uppercase;
   }
 
-  .footer {
-    font-size: 0.7rem;
-    color: var(--phosphor-dim);
-    margin-top: 20px;
-    line-height: 1.8;
-    text-align: center;
+  .tag::before {
+    content: '|  ';
   }
 
-  .footer a {
-    color: var(--phosphor-dim);
+  .exercise-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--accent);
     text-decoration: none;
-    transition: color 0.15s;
   }
-  .footer a:hover { color: var(--phosphor); }
+
+  .exercise-link:hover {
+    color: var(--accent-hover);
+  }
+
+  .footer {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 40px;
+    line-height: 1.8;
+  }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>FUZZBOX PHYSICS</h1>
-  <div class="subtitle">∿ CSCM 373-01 — CALARTS EXPERIMENTAL ANIMATION — WEB LABS</div>
+<header>
+  <div class="subtitle">CSCM 373-01 — CalArts</div>
+  <h1>Fuzzbox Physics</h1>
+</header>
 
-  <hr class="divider">
-
-  <a class="lab-link" href="fuzzbox-lab.html">
-    <div class="lab-num">LAB 01</div>
-    <div class="lab-title">Waveform Distortion Lab</div>
-    <div class="lab-desc">
-      Seven clipping algorithms with real-time oscilloscopes, spectrum analyzers, and scrolling spectrograms.
-      Feed in an oscillator, microphone, or audio file. Reverb chamber with five impulse responses.
-      See harmonics appear as you increase drive.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">hard clip</span>
-      <span class="tag">soft clip / tanh</span>
-      <span class="tag">asymmetric</span>
-      <span class="tag">foldback</span>
-      <span class="tag">bitcrush</span>
-      <span class="tag">tube</span>
-      <span class="tag">half-wave rectify</span>
-      <span class="tag">reverb</span>
-    </div>
-  </a>
-
-  <a class="lab-link" href="fuzzbox-sculptor.html">
-    <div class="lab-num">LAB 02</div>
-    <div class="lab-title">Spectral Sculptor</div>
-    <div class="lab-desc">
-      Interactive spectrogram editor. A 2-second loop is analyzed with STFT and displayed as a full spectrogram.
-      Click and drag to paint energy into the frequency domain. Audio resynthesizes via inverse FFT on release.
-      Start from silence and build a sound from nothing.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">STFT / ISTFT</span>
-      <span class="tag">frequency painting</span>
-      <span class="tag">radix-2 FFT</span>
-      <span class="tag">mic recording</span>
-    </div>
-    <div style="margin-top:8px; font-family:'VT323',monospace; font-size:0.8rem;">
-      <a href="sculptor-exercise.html" style="color:var(--amber); text-decoration:none;">Exercise: Building Timbre from Nothing</a>
-    </div>
-  </a>
-
-  <a class="lab-link" href="fuzzbox-octavia.html">
-    <div class="lab-num">LAB 03</div>
-    <div class="lab-title">Digital Octavia</div>
-    <div class="lab-desc">
-      Stage-by-stage simulation of the Roger Mayer Octavia octave fuzz (1967).
-      Five visible signal chain stages: input buffer, fuzz, transformer, full-wave rectifier, output filter.
-      Each stage has its own oscilloscope showing before and after. Watch |x| double the frequency.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">germanium / silicon</span>
-      <span class="tag">transformer saturation</span>
-      <span class="tag">full-wave rectify</span>
-      <span class="tag">octave up</span>
-      <span class="tag">diode model</span>
-    </div>
-  </a>
-
-  <a class="lab-link" href="fuzzbox-reverb.html">
-    <div class="lab-num">LAB 04</div>
-    <div class="lab-title">Reverb Matching Lab</div>
-    <div class="lab-desc">
-      Record a clap in a real room, then try to match its reverb with a synthetic engine.
-      Schroeder decay curves show how seven octave bands (125 Hz–8 kHz) die out over time.
-      See how carpet absorbs highs, tile reflects everything, and a cathedral rings for seconds.
-      A/B comparison with match scoring.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">impulse response</span>
-      <span class="tag">Schroeder integration</span>
-      <span class="tag">RT60</span>
-      <span class="tag">frequency-dependent decay</span>
-      <span class="tag">convolution reverb</span>
-      <span class="tag">room acoustics</span>
-    </div>
-  </a>
-
-  <a class="lab-link" href="fuzzbox-spectrograph.html">
-    <div class="lab-num">LAB 05</div>
-    <div class="lab-title">Spectrograph</div>
-    <div class="lab-desc">
-      Encode an image into sound. Upload a photo (or take a selfie), map pixel brightness to spectral magnitudes,
-      and synthesize audio via inverse FFT. The output spectrogram reveals your image — just like the Aphex Twin
-      face hidden in "Equation." Adjustable duration, frequency range, brightness curves, and Griffin-Lim phase reconstruction.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">image → sound</span>
-      <span class="tag">ISTFT</span>
-      <span class="tag">Griffin-Lim</span>
-      <span class="tag">spectrogram art</span>
-      <span class="tag">camera selfie</span>
-      <span class="tag">WAV export</span>
-    </div>
-  </a>
-
-  <a class="lab-link" href="fuzzbox-drift.html">
-    <div class="lab-num">SKETCH</div>
-    <div class="lab-title">Phase Drift</div>
-    <div class="lab-desc">
-      Generative phasing piece. Fourteen sine wave voices cycle at slightly different rates (23–30 seconds),
-      drifting in and out of alignment. Single notes, intervals, triads, and seventh chords from a D major palette.
-      The harmony is always consonant but never repeats.
-    </div>
-    <div class="lab-tags">
-      <span class="tag">generative</span>
-      <span class="tag">phasing</span>
-      <span class="tag">Steve Reich</span>
-      <span class="tag">Brian Eno</span>
-      <span class="tag">sine waves</span>
-      <span class="tag">ambient</span>
-    </div>
-  </a>
-
-  <div class="footer">
-    Doug Goodwin — CalArts 2026<br>
-    Drop audio files into <span style="color:var(--amber)">wavs/</span> and they appear in the labs automatically
+<a class="lab-link" href="fuzzbox-lab.html">
+  <div class="lab-num">Lab 01</div>
+  <div class="lab-title">Waveform Distortion Lab</div>
+  <div class="lab-desc">
+    Seven clipping algorithms with real-time oscilloscopes, spectrum analyzers, and scrolling spectrograms.
+    Feed in an oscillator, microphone, or audio file. Reverb chamber with five impulse responses.
+    See harmonics appear as you increase drive.
   </div>
+  <div class="lab-tags">
+    <span class="tag">hard clip</span>
+    <span class="tag">soft clip / tanh</span>
+    <span class="tag">asymmetric</span>
+    <span class="tag">foldback</span>
+    <span class="tag">bitcrush</span>
+    <span class="tag">tube</span>
+    <span class="tag">half-wave rectify</span>
+    <span class="tag">reverb</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-sculptor.html">
+  <div class="lab-num">Lab 02</div>
+  <div class="lab-title">Spectral Sculptor</div>
+  <div class="lab-desc">
+    Interactive spectrogram editor. A 2-second loop is analyzed with STFT and displayed as a full spectrogram.
+    Click and drag to paint energy into the frequency domain. Audio resynthesizes via inverse FFT on release.
+    Start from silence and build a sound from nothing.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">STFT / ISTFT</span>
+    <span class="tag">frequency painting</span>
+    <span class="tag">radix-2 FFT</span>
+    <span class="tag">mic recording</span>
+  </div>
+  <a href="sculptor-exercise.html" class="exercise-link" onclick="event.stopPropagation()">Exercise: Building Timbre from Nothing</a>
+</a>
+
+<a class="lab-link" href="fuzzbox-octavia.html">
+  <div class="lab-num">Lab 03</div>
+  <div class="lab-title">Digital Octavia</div>
+  <div class="lab-desc">
+    Stage-by-stage simulation of the Roger Mayer Octavia octave fuzz (1967).
+    Five visible signal chain stages: input buffer, fuzz, transformer, full-wave rectifier, output filter.
+    Each stage has its own oscilloscope showing before and after.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">germanium / silicon</span>
+    <span class="tag">transformer saturation</span>
+    <span class="tag">full-wave rectify</span>
+    <span class="tag">octave up</span>
+    <span class="tag">diode model</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-transfer.html">
+  <div class="lab-num">Lab 05</div>
+  <div class="lab-title">Transfer Function Lab</div>
+  <div class="lab-desc">
+    Draw your own waveshaper transfer function and hear the result in real time.
+    See how the shape of the input&rarr;output curve determines which harmonics are created.
+    Presets for hard clip, soft clip, foldback, rectify, staircase, and dead zone.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">transfer function</span>
+    <span class="tag">waveshaper</span>
+    <span class="tag">draw your own</span>
+    <span class="tag">harmonics</span>
+    <span class="tag">symmetric vs asymmetric</span>
+  </div>
+  <a href="transfer-exercise.html" class="exercise-link" onclick="event.stopPropagation()">Exercise: Waveform Distortion Worksheet</a>
+</a>
+
+<a class="lab-link" href="fuzzbox-game.html">
+  <div class="lab-num">Game</div>
+  <div class="lab-title">Name That Distortion</div>
+  <div class="lab-desc">
+    A mystery distortion is applied to the signal. Use your ears, the waveform shape, and the
+    harmonic spectrum to identify which algorithm is active. Three difficulty levels. Can you
+    get a perfect streak?
+  </div>
+  <div class="lab-tags">
+    <span class="tag">ear training</span>
+    <span class="tag">hard clip</span>
+    <span class="tag">soft clip</span>
+    <span class="tag">foldback</span>
+    <span class="tag">bitcrush</span>
+    <span class="tag">tube</span>
+    <span class="tag">rectify</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-reverb.html">
+  <div class="lab-num">Lab 06</div>
+  <div class="lab-title">Reverb Matching Lab</div>
+  <div class="lab-desc">
+    Record a clap in a real room, then try to match its reverb with a synthetic engine.
+    Schroeder decay curves show how seven octave bands die out over time.
+    A/B comparison with match scoring.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">impulse response</span>
+    <span class="tag">Schroeder integration</span>
+    <span class="tag">RT60</span>
+    <span class="tag">convolution reverb</span>
+    <span class="tag">room acoustics</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-spectrograph.html">
+  <div class="lab-num">Lab 07</div>
+  <div class="lab-title">Spectrograph</div>
+  <div class="lab-desc">
+    Encode an image into sound. Upload a photo or take a selfie, map pixel brightness to spectral magnitudes,
+    and synthesize audio via inverse FFT. The output spectrogram reveals your image — just like the Aphex Twin
+    face hidden in "Equation."
+  </div>
+  <div class="lab-tags">
+    <span class="tag">image to sound</span>
+    <span class="tag">ISTFT</span>
+    <span class="tag">Griffin-Lim</span>
+    <span class="tag">spectrogram art</span>
+    <span class="tag">camera selfie</span>
+    <span class="tag">WAV export</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-average.html">
+  <div class="lab-num">Lab 08</div>
+  <div class="lab-title">Spectral Average</div>
+  <div class="lab-desc">
+    What does an entire piece of music sound like all at once? Inspired by Jim Campbell's
+    Illuminated Averages, this tool computes the average spectrum of a recording — thousands
+    of FFT frames collapsed into a single composite tone.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">spectral averaging</span>
+    <span class="tag">STFT</span>
+    <span class="tag">peak enhancement</span>
+    <span class="tag">stereo</span>
+    <span class="tag">Jim Campbell</span>
+  </div>
+</a>
+
+<a class="lab-link" href="fuzzbox-drift.html">
+  <div class="lab-num">Sketch</div>
+  <div class="lab-title">Phase Drift</div>
+  <div class="lab-desc">
+    Generative phasing piece. Fourteen sine wave voices cycle at slightly different rates,
+    drifting in and out of alignment. The harmony is always consonant but never repeats.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">generative</span>
+    <span class="tag">phasing</span>
+    <span class="tag">Steve Reich</span>
+    <span class="tag">Brian Eno</span>
+    <span class="tag">sine waves</span>
+    <span class="tag">ambient</span>
+  </div>
+</a>
+
+<a class="lab-link" href="circuit-design.html">
+  <div class="lab-num">Reading</div>
+  <div class="lab-title">Distortion Circuit Design</div>
+  <div class="lab-desc">
+    How nonlinear transfer functions, bias points, and staged signal chains determine the
+    harmonic character of distortion. The conceptual framework for designing your own circuits:
+    curve shape + bias = harmonic recipe.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">transfer function</span>
+    <span class="tag">bias</span>
+    <span class="tag">symmetric vs asymmetric</span>
+    <span class="tag">power series</span>
+    <span class="tag">Fuzz Face</span>
+    <span class="tag">Octavia</span>
+  </div>
+</a>
+
+<a class="lab-link" href="4069ub-guide.html">
+  <div class="lab-num">Build Guide</div>
+  <div class="lab-title">4069UB Lab on a Chip</div>
+  <div class="lab-desc">
+    Six configurable gain/distortion stages in a $0.50 IC. Bias circuits, gain control,
+    multi-stage cascading, inter-stage filtering, oscillator waveform generation, and a
+    complete signal chain from Craig Anderton's "Tube Sound Fuzz" lineage.
+  </div>
+  <div class="lab-tags">
+    <span class="tag">4069UB</span>
+    <span class="tag">breadboard</span>
+    <span class="tag">CMOS</span>
+    <span class="tag">oscillator</span>
+    <span class="tag">40106</span>
+    <span class="tag">Craig Anderton</span>
+  </div>
+</a>
+
+<div class="footer">
+  Doug Goodwin — CalArts 2026<br>
+  Drop audio files into wavs/ and they appear in the labs automatically
 </div>
 
 </body>

@@ -4,166 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FUZZBOX PHYSICS — Reverb Matching Lab</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --amber-glow: rgba(255,149,0,0.3);
-    --text: #8bba8b;
-    --red: #ff4444;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    padding: 16px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  .wrap { max-width: 820px; margin: 0 auto; }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.2rem;
-    letter-spacing: 0.1em;
-    text-shadow: 0 0 15px var(--phosphor-glow);
-  }
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 0.9rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
-  }
-  .nav {
-    margin-top: 6px;
-    font-size: 0.7rem;
-    color: var(--phosphor-dim);
-  }
-  .nav a {
-    color: var(--phosphor-dim);
-    text-decoration: none;
-    margin-right: 10px;
-  }
-  .nav a:hover { color: var(--phosphor); }
-
-  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-
-  .section-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.08em;
-    color: var(--phosphor);
-    margin-bottom: 8px;
-  }
-
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .row-spread { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-
-  button {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    background: var(--panel);
-    color: var(--phosphor);
-    border: 1px solid var(--border);
-    padding: 5px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.05em;
-  }
-  button:hover {
-    border-color: var(--phosphor);
-    box-shadow: 0 0 6px var(--phosphor-glow);
-  }
-  button.active {
-    background: var(--phosphor);
-    color: var(--bg);
-    border-color: var(--phosphor);
-  }
-  button.amber { color: var(--amber); border-color: #4a3000; }
-  button.amber:hover { border-color: var(--amber); box-shadow: 0 0 6px var(--amber-glow); }
-  button.amber.active { background: var(--amber); color: var(--bg); }
-  button.red { color: var(--red); border-color: #4a1010; }
-  button.red:hover { border-color: var(--red); }
-  button.red.active { background: var(--red); color: #fff; animation: pulse-red 1s infinite; }
-
-  @keyframes pulse-red {
-    0%,100% { box-shadow: 0 0 4px rgba(255,68,68,0.3); }
-    50% { box-shadow: 0 0 12px rgba(255,68,68,0.6); }
-  }
 
   .knob-row { display: flex; gap: 14px; flex-wrap: wrap; }
-  .knob-group { display: flex; flex-direction: column; align-items: center; min-width: 100px; }
-  .knob-label {
-    font-family: 'VT323', monospace;
-    font-size: 0.7rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.1em;
-    margin-bottom: 2px;
-  }
-  .knob-value {
-    font-family: 'VT323', monospace;
-    font-size: 0.75rem;
-    color: var(--amber);
-    margin-top: 1px;
-  }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px; height: 12px;
-    background: var(--phosphor);
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  input[type="range"].amber::-webkit-slider-thumb { background: var(--amber); }
-
-  canvas {
-    display: block;
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: #030803;
-  }
-
-  .status {
-    font-family: 'VT323', monospace;
-    font-size: 0.8rem;
-    color: var(--text);
-    margin-top: 6px;
-    min-height: 1.2em;
-  }
 
   .legend {
-    font-family: 'VT323', monospace;
     font-size: 0.7rem;
-    color: var(--phosphor-dim);
+    color: var(--text-secondary);
     margin-top: 4px;
     display: flex;
     gap: 14px;
@@ -186,43 +35,39 @@
   .score-bar-bg {
     flex: 1;
     height: 14px;
-    background: #0a0f0a;
-    border: 1px solid var(--border);
-    border-radius: 2px;
+    background: var(--border-light);
+    border: 1px solid var(--border-light);
     overflow: hidden;
   }
   .score-bar-fill {
     height: 100%;
     width: 0%;
     transition: width 0.4s, background 0.4s;
-    border-radius: 1px;
   }
   .score-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    color: var(--phosphor-dim);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
     min-width: 54px;
   }
   .score-pct {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.05em;
-    color: var(--phosphor);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text);
     min-width: 40px;
     text-align: right;
   }
 
   .warn {
-    font-family: 'VT323', monospace;
     font-size: 0.72rem;
-    color: var(--amber);
+    color: var(--accent);
     margin-top: 4px;
   }
 
   .footer {
     font-size: 0.65rem;
-    color: var(--phosphor-dim);
+    color: var(--text-tertiary);
     text-align: center;
     margin-top: 18px;
   }
@@ -230,67 +75,69 @@
   #wav-buttons { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
 
   .hidden { display: none !important; }
+
+  button.red { color: var(--red); border-color: var(--red); }
+  button.red:hover { background: var(--red); color: var(--bg); }
+  button.red.active { background: var(--red); color: #fff; animation: rec-blink 0.5s infinite alternate; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <h1>REVERB MATCHING LAB</h1>
-  <div class="subtitle">LAB 04 — FUZZBOX PHYSICS</div>
-  <div class="nav">
-    <a href="index.html">INDEX</a>
-    <a href="fuzzbox-lab.html">LAB 01</a>
-    <a href="fuzzbox-sculptor.html">LAB 02</a>
-    <a href="fuzzbox-octavia.html">LAB 03</a>
-  </div>
-
-  <hr>
+  <header>
+    <div class="top-bar">
+      <div class="subtitle">Fuzzbox Physics</div>
+      <a href="/" class="nav-link">All Labs</a>
+    </div>
+    <h1>Reverb Matching Lab</h1>
+  </header>
 
   <!-- TARGET IR -->
-  <div class="panel">
-    <div class="section-label">TARGET IMPULSE RESPONSE</div>
+  <div class="section">
+    <div class="section-label">Target Impulse Response</div>
     <div class="row">
-      <button onclick="document.getElementById('ir-file').click()">LOAD FILE</button>
+      <button onclick="document.getElementById('ir-file').click()">Load File</button>
       <input type="file" id="ir-file" accept="audio/*" class="hidden" onchange="loadTargetFile(this.files[0])">
-      <button id="btn-rec" class="red" onclick="toggleRecording()">RECORD CLAP</button>
-      <span style="color:var(--phosphor-dim); font-size:0.7rem; margin: 0 4px;">PRESETS:</span>
-      <button class="amber" onclick="loadTargetPreset('bathroom')">Bathroom</button>
-      <button class="amber" onclick="loadTargetPreset('stairwell')">Stairwell</button>
-      <button class="amber" onclick="loadTargetPreset('hall')">Hall</button>
-      <button class="amber" onclick="loadTargetPreset('cathedral')">Cathedral</button>
+      <button id="btn-rec" class="red" onclick="toggleRecording()">Record Clap</button>
+      <span class="knob-label" style="margin: 0 4px;">PRESETS:</span>
+      <button class="amber-btn" onclick="loadTargetPreset('bathroom')">Bathroom</button>
+      <button class="amber-btn" onclick="loadTargetPreset('stairwell')">Stairwell</button>
+      <button class="amber-btn" onclick="loadTargetPreset('hall')">Hall</button>
+      <button class="amber-btn" onclick="loadTargetPreset('cathedral')">Cathedral</button>
     </div>
-    <div class="status" id="target-status">No target loaded — load a file, record a clap, or choose a preset</div>
+    <div class="stats" id="target-status">No target loaded -- load a file, record a clap, or choose a preset</div>
   </div>
 
+  <hr class="section-rule">
+
   <!-- SYNTHETIC CONTROLS -->
-  <div class="panel">
-    <div class="section-label">SYNTHETIC MATCH</div>
+  <div class="section">
+    <div class="section-label">Synthetic Match</div>
     <div class="knob-row">
-      <div class="knob-group" title="Time before first reflection — larger rooms = longer pre-delay">
+      <div class="knob-group" title="Time before first reflection -- larger rooms = longer pre-delay">
         <div class="knob-label">PRE-DELAY</div>
         <input type="range" id="syn-predelay" class="amber" min="0" max="100" value="10" step="1"
           oninput="updateSynthParam()">
         <div class="knob-value" id="val-predelay">10 ms</div>
       </div>
-      <div class="knob-group" title="Time for sound to decay 60 dB — room volume and absorption">
+      <div class="knob-group" title="Time for sound to decay 60 dB -- room volume and absorption">
         <div class="knob-label">RT60</div>
         <input type="range" id="syn-rt60" class="amber" min="0.1" max="6.0" value="1.0" step="0.1"
           oninput="updateSynthParam()">
         <div class="knob-value" id="val-rt60">1.0 s</div>
       </div>
-      <div class="knob-group" title="High-frequency absorption — carpet and curtains = more damping">
+      <div class="knob-group" title="High-frequency absorption -- carpet and curtains = more damping">
         <div class="knob-label">DAMPING</div>
         <input type="range" id="syn-damping" class="amber" min="0" max="100" value="40" step="1"
           oninput="updateSynthParam()">
         <div class="knob-value" id="val-damping">40%</div>
       </div>
-      <div class="knob-group" title="Early reflection spacing — physical room dimensions">
+      <div class="knob-group" title="Early reflection spacing -- physical room dimensions">
         <div class="knob-label">SIZE</div>
         <input type="range" id="syn-size" class="amber" min="0" max="100" value="50" step="1"
           oninput="updateSynthParam()">
         <div class="knob-value" id="val-size">50%</div>
       </div>
-      <div class="knob-group" title="Late reflection density — irregular surfaces increase density">
+      <div class="knob-group" title="Late reflection density -- irregular surfaces increase density">
         <div class="knob-label">DENSITY</div>
         <input type="range" id="syn-density" class="amber" min="0" max="100" value="70" step="1"
           oninput="updateSynthParam()">
@@ -298,7 +145,7 @@
       </div>
     </div>
     <div class="row" style="margin-top:10px">
-      <span style="color:var(--phosphor-dim); font-size:0.7rem;">PRESETS:</span>
+      <span class="knob-label">PRESETS:</span>
       <button onclick="loadSynthPreset('bathroom')">Bathroom</button>
       <button onclick="loadSynthPreset('living')">Living Room</button>
       <button onclick="loadSynthPreset('hall')">Concert Hall</button>
@@ -308,33 +155,39 @@
     </div>
   </div>
 
+  <hr class="section-rule">
+
   <!-- DECAY ANALYSIS -->
-  <div class="panel">
-    <div class="section-label">DECAY ANALYSIS — SCHROEDER CURVES BY OCTAVE BAND</div>
+  <div class="section">
+    <div class="section-label">Decay Analysis -- Schroeder Curves by Octave Band</div>
     <canvas id="decay-canvas" width="780" height="340"></canvas>
     <div class="legend" id="band-legend"></div>
     <div class="score-wrap">
       <div class="score-label">MATCH</div>
       <div class="score-bar-bg"><div class="score-bar-fill" id="score-fill"></div></div>
-      <div class="score-pct" id="score-pct">—</div>
+      <div class="score-pct" id="score-pct">--</div>
     </div>
   </div>
+
+  <hr class="section-rule">
 
   <!-- IR WAVEFORM -->
-  <div class="panel">
-    <div class="section-label">IMPULSE RESPONSE WAVEFORM</div>
+  <div class="section">
+    <div class="section-label">Impulse Response Waveform</div>
     <canvas id="wave-canvas" width="780" height="130"></canvas>
     <div class="legend">
-      <span><span class="legend-swatch" style="background:var(--phosphor)"></span> TARGET</span>
-      <span><span class="legend-swatch" style="background:var(--amber)"></span> SYNTHETIC</span>
+      <span><span class="legend-swatch" style="background:rgba(255,255,255,0.8)"></span> Target</span>
+      <span><span class="legend-swatch" style="background:var(--accent)"></span> Synthetic</span>
     </div>
   </div>
 
+  <hr class="section-rule">
+
   <!-- PLAYBACK -->
-  <div class="panel">
-    <div class="section-label">LISTEN & COMPARE</div>
+  <div class="section">
+    <div class="section-label">Listen &amp; Compare</div>
     <div class="row" style="margin-bottom:8px">
-      <span style="color:var(--phosphor-dim); font-size:0.7rem;">SOURCE:</span>
+      <span class="knob-label">SOURCE:</span>
       <button id="src-click" class="active" onclick="setTestSource('click')">Click</button>
       <button id="src-clap" onclick="setTestSource('clap')">Clap</button>
       <button id="src-snare" onclick="setTestSource('snare')">Snare</button>
@@ -343,23 +196,22 @@
       <input type="file" id="test-file" accept="audio/*" class="hidden" onchange="loadTestFile(this.files[0])">
     </div>
     <div class="row">
-      <button style="font-size:0.8rem; padding:7px 16px;" onclick="playThrough('target')">&#9654; TARGET</button>
-      <button class="amber" style="font-size:0.8rem; padding:7px 16px;" onclick="playThrough('match')">&#9654; MATCH</button>
-      <button style="font-size:0.8rem; padding:7px 16px; color:var(--text);" onclick="playThrough('dry')">&#9654; DRY</button>
+      <button onclick="playThrough('target')">&#9654; Target</button>
+      <button class="amber-btn" onclick="playThrough('match')">&#9654; Match</button>
+      <button onclick="playThrough('dry')">&#9654; Dry</button>
       <span style="width:20px"></span>
-      <button id="btn-mic" onclick="toggleLiveMic()">MIC → MATCH REVERB</button>
+      <button id="btn-mic" onclick="toggleLiveMic()">Mic &rarr; Match Reverb</button>
     </div>
     <div class="warn" id="mic-warn" style="display:none">Use headphones to avoid feedback</div>
     <div id="wav-buttons"></div>
   </div>
 
-  <div class="footer">Doug Goodwin — CalArts 2026</div>
-</div>
+  <div class="footer">Doug Goodwin -- CalArts 2026</div>
 
 <script>
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  GLOBALS
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 let audioCtx;
 let targetIR = null;        // Float32Array
@@ -380,13 +232,13 @@ let liveMicSource = null;
 let liveMicConvolver = null;
 
 const BANDS = [
-  { fc: 125,  label: '125',  color: '#ff4466' },
-  { fc: 250,  label: '250',  color: '#ff8844' },
-  { fc: 500,  label: '500',  color: '#ffcc22' },
-  { fc: 1000, label: '1k',   color: '#44ff66' },
-  { fc: 2000, label: '2k',   color: '#22ddff' },
-  { fc: 4000, label: '4k',   color: '#4488ff' },
-  { fc: 8000, label: '8k',   color: '#cc44ff' },
+  { fc: 125,  label: '125',  color: '#7a8fa8' },
+  { fc: 250,  label: '250',  color: '#9aa4b0' },
+  { fc: 500,  label: '500',  color: '#a89a7a' },
+  { fc: 1000, label: '1k',   color: '#888888' },
+  { fc: 2000, label: '2k',   color: '#6b8caa' },
+  { fc: 4000, label: '4k',   color: '#a07868' },
+  { fc: 8000, label: '8k',   color: '#7878a0' },
 ];
 
 const SYNTH_PRESETS = {
@@ -407,9 +259,9 @@ const TARGET_PRESETS = {
 };
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  INIT
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function init() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -425,14 +277,14 @@ function buildLegend() {
   el.innerHTML = BANDS.map(b =>
     `<span><span class="legend-swatch" style="background:${b.color}"></span>${b.label} Hz</span>`
   ).join('') +
-  ' &nbsp; <span style="color:var(--phosphor)">— target</span>' +
-  ' &nbsp; <span style="color:var(--amber)">┈┈ match</span>';
+  ' &nbsp; <span style="color:var(--text)">-- target</span>' +
+  ' &nbsp; <span style="color:var(--accent)">-- match</span>';
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  DSP UTILITIES
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function biquadBandpass(signal, fc, sr, Q) {
   const w0 = 2 * Math.PI * fc / sr;
@@ -510,9 +362,9 @@ function estimateRT60(irData, sr) {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  TARGET IR
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 async function loadTargetFile(file) {
   if (!file) return;
@@ -530,7 +382,7 @@ function setTargetIR(data, sr, name) {
   targetBands = analyzeBands(data, audioCtx.sampleRate);
   const rt60 = estimateRT60(data, audioCtx.sampleRate);
   document.getElementById('target-status').textContent =
-    `"${name}" loaded — ${(data.length / audioCtx.sampleRate).toFixed(2)}s duration, ~${rt60}s estimated RT60`;
+    `"${name}" loaded -- ${(data.length / audioCtx.sampleRate).toFixed(2)}s duration, ~${rt60}s estimated RT60`;
   drawDecay();
   drawWaveform();
   updateScore();
@@ -605,9 +457,9 @@ function loadTargetPreset(name) {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  SYNTHETIC IR GENERATION
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function readSynthParams() {
   return {
@@ -712,9 +564,9 @@ function loadSynthPreset(name) {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  MATCH SCORE
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function computeMatchScore() {
   if (!targetBands || !synthBands) return -1;
@@ -741,11 +593,11 @@ function updateScore() {
   const pct = document.getElementById('score-pct');
   if (score < 0) {
     fill.style.width = '0%';
-    pct.textContent = '—';
+    pct.textContent = '--';
     return;
   }
   fill.style.width = score + '%';
-  // Color: red → yellow → green
+  // Color: red -> yellow -> green
   const r = score < 50 ? 255 : Math.round(255 - (score - 50) * 5.1);
   const g = score < 50 ? Math.round(score * 5.1) : 255;
   fill.style.background = `rgb(${r},${g},40)`;
@@ -754,16 +606,16 @@ function updateScore() {
 }
 
 
-// ═══════════════════════════════════════════════════════
-//  VISUALIZATION — DECAY CURVES
-// ═══════════════════════════════════════════════════════
+// ===================================================================
+//  VISUALIZATION -- DECAY CURVES
+// ===================================================================
 
 function drawDecay() {
   const canvas = document.getElementById('decay-canvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
-  ctx.fillStyle = '#030803';
+  ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, W, H);
 
   const margin = { left: 44, right: 20, top: 16, bottom: 28 };
@@ -777,9 +629,9 @@ function drawDecay() {
   maxTime = Math.min(maxTime, 8);
 
   // Grid
-  ctx.strokeStyle = '#0f1a0f';
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
   ctx.lineWidth = 0.5;
-  ctx.font = '10px "Share Tech Mono"';
+  ctx.font = '10px "IBM Plex Mono"';
 
   // Horizontal dB lines
   for (let db = 0; db >= -60; db -= 10) {
@@ -788,7 +640,7 @@ function drawDecay() {
     ctx.moveTo(margin.left, y);
     ctx.lineTo(margin.left + pW, y);
     ctx.stroke();
-    ctx.fillStyle = '#1a7a08';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.textAlign = 'right';
     ctx.fillText(db + '', margin.left - 4, y + 3);
   }
@@ -801,13 +653,13 @@ function drawDecay() {
     ctx.moveTo(x, margin.top);
     ctx.lineTo(x, margin.top + pH);
     ctx.stroke();
-    ctx.fillStyle = '#1a7a08';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.textAlign = 'center';
     ctx.fillText(t.toFixed(t < 1 ? 2 : 1) + 's', x, H - margin.bottom + 14);
   }
 
   // Axis labels
-  ctx.fillStyle = '#1a7a08';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.textAlign = 'center';
   ctx.fillText('dB', 14, margin.top + pH / 2);
 
@@ -822,10 +674,10 @@ function drawDecay() {
   }
 
   // "no data" messages
-  ctx.font = '14px "VT323"';
+  ctx.font = '13px "IBM Plex Mono"';
   ctx.textAlign = 'center';
   if (!targetBands && !synthBands) {
-    ctx.fillStyle = '#1a7a08';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.fillText('Load a target IR and adjust synthetic parameters to see decay comparison', W/2, H/2);
   }
 }
@@ -836,8 +688,6 @@ function drawBandCurves(ctx, bands, margin, pW, pH, maxTime, dashed) {
     ctx.strokeStyle = dashed ? adjustAlpha(band.color, 0.8) : band.color;
     ctx.lineWidth = dashed ? 1.5 : 2;
     ctx.setLineDash(dashed ? [6, 4] : []);
-    ctx.shadowColor = band.color;
-    ctx.shadowBlur = dashed ? 0 : 3;
 
     ctx.beginPath();
     let started = false;
@@ -852,7 +702,6 @@ function drawBandCurves(ctx, bands, margin, pW, pH, maxTime, dashed) {
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
   ctx.setLineDash([]);
 }
@@ -866,20 +715,20 @@ function adjustAlpha(hex, alpha) {
 }
 
 
-// ═══════════════════════════════════════════════════════
-//  VISUALIZATION — WAVEFORM
-// ═══════════════════════════════════════════════════════
+// ===================================================================
+//  VISUALIZATION -- WAVEFORM
+// ===================================================================
 
 function drawWaveform() {
   const canvas = document.getElementById('wave-canvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
-  ctx.fillStyle = '#030803';
+  ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, W, H);
 
   // Center line
-  ctx.strokeStyle = '#0f1a0f';
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
   ctx.lineWidth = 0.5;
   ctx.beginPath();
   ctx.moveTo(0, H/2);
@@ -887,8 +736,8 @@ function drawWaveform() {
   ctx.stroke();
 
   if (!targetIR && !synthIR) {
-    ctx.fillStyle = '#1a7a08';
-    ctx.font = '14px "VT323"';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '13px "IBM Plex Mono"';
     ctx.textAlign = 'center';
     ctx.fillText('Impulse response waveforms will appear here', W/2, H/2);
     return;
@@ -899,10 +748,10 @@ function drawWaveform() {
 
   // Draw synth first (under target)
   if (synthIR) {
-    drawWave(ctx, synthIR, W, H, maxLen, step, 'rgba(255,149,0,0.5)', 1.5);
+    drawWave(ctx, synthIR, W, H, maxLen, step, 'rgba(68,68,204,0.5)', 1.5);
   }
   if (targetIR) {
-    drawWave(ctx, targetIR, W, H, maxLen, step, 'rgba(57,255,20,0.7)', 1.5);
+    drawWave(ctx, targetIR, W, H, maxLen, step, 'rgba(255,255,255,0.7)', 1.5);
   }
 }
 
@@ -927,9 +776,9 @@ function drawWave(ctx, data, W, H, maxLen, step, color, lw) {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  PLAYBACK
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function setTestSource(type) {
   testSource = type;
@@ -1087,9 +936,9 @@ function updateLiveMicConvolver() {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  WAV FILES FROM SERVER
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 function loadWavList() {
   fetch('/api/wavs')
@@ -1097,7 +946,7 @@ function loadWavList() {
     .then(data => {
       if (!data.files || data.files.length === 0) return;
       const container = document.getElementById('wav-buttons');
-      container.innerHTML = '<span style="color:var(--phosphor-dim); font-size:0.65rem; margin-right:4px;">WAVS:</span>';
+      container.innerHTML = '<span class="knob-label" style="margin-right:4px;">WAVS:</span>';
       data.files.forEach(f => {
         const btn = document.createElement('button');
         btn.textContent = f.replace(/\.[^.]+$/, '');
@@ -1122,9 +971,9 @@ async function loadWavFromServer(filename) {
 }
 
 
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 //  INIT ON CLICK
-// ═══════════════════════════════════════════════════════
+// ===================================================================
 
 document.addEventListener('click', () => { if (!audioCtx) init(); }, { once: true });
 

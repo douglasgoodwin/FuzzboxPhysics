@@ -4,255 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FUZZBOX PHYSICS — Waveform Distortion Lab</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --red: #ff3030;
-    --blue: #00cfff;
-    --text: #8bba8b;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    padding: 16px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.8rem;
-    letter-spacing: 0.12em;
-    color: var(--phosphor);
-    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
-    line-height: 1;
-  }
-
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.2em;
-    margin-top: 2px;
-  }
-
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .status-bar {
-    font-size: 0.72rem;
-    color: var(--phosphor-dim);
-    text-align: right;
-    line-height: 1.8;
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--red);
-    margin-right: 6px;
-    box-shadow: 0 0 6px var(--red);
-    transition: all 0.3s;
-  }
-  .status-dot.active { background: var(--phosphor); box-shadow: 0 0 8px var(--phosphor); }
+  /* Page-specific styles */
+  canvas { height: 160px; cursor: crosshair; image-rendering: pixelated; }
 
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-bottom: 12px;
-  }
-
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
-    opacity: 0.5;
-  }
-
-  .panel-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    color: var(--phosphor-dim);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .panel-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  canvas {
-    width: 100%;
-    height: 160px;
-    display: block;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    background: #020502;
-    cursor: crosshair;
-    image-rendering: pixelated;
-  }
-
-  canvas.scope-large {
-    height: 200px;
-  }
-
-  .controls-row {
-    display: flex;
-    gap: 12px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-  }
-
-  .knob-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 64px;
-  }
-
-  .knob-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    color: var(--text);
-    text-align: center;
-  }
-
-  .knob-value {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--phosphor);
-    min-width: 48px;
-    text-align: center;
-    background: #020a02;
-    border: 1px solid var(--border);
-    padding: 1px 4px;
-    border-radius: 2px;
-  }
-
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-    max-width: 120px;
-  }
-
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-    cursor: pointer;
-    transition: box-shadow 0.1s;
-  }
-
-  input[type=range]:hover::-webkit-slider-thumb {
-    box-shadow: 0 0 14px var(--phosphor);
-  }
-
-  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
-  input[type=range].blue::-webkit-slider-thumb { background: var(--blue); box-shadow: 0 0 8px rgba(0,207,255,0.5); }
-  input[type=range].red-slider::-webkit-slider-thumb { background: var(--red); box-shadow: 0 0 8px rgba(255,48,48,0.5); }
-
-  input[type=range].amber { background: var(--border); }
-
-  button {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    background: transparent;
-    border: 1px solid var(--phosphor-dim);
-    color: var(--text);
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.15s;
-    text-transform: uppercase;
-  }
-
-  button:hover {
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-  }
-
-  button.active {
-    background: rgba(57,255,20,0.1);
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 10px var(--phosphor-glow);
-  }
-
-  button.amber-btn {
-    border-color: rgba(255,149,0,0.5);
-    color: var(--amber);
-  }
-  button.amber-btn:hover, button.amber-btn.active {
-    background: rgba(255,149,0,0.1);
-    border-color: var(--amber);
-    box-shadow: 0 0 8px rgba(255,149,0,0.4);
-  }
-
-  button.blue-btn {
-    border-color: rgba(0,207,255,0.4);
-    color: var(--blue);
-  }
-  button.blue-btn:hover, button.blue-btn.active {
-    background: rgba(0,207,255,0.08);
-    border-color: var(--blue);
-    box-shadow: 0 0 8px rgba(0,207,255,0.3);
-  }
-
-  .btn-group {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
   }
 
   .full-width { grid-column: 1 / -1; }
@@ -277,7 +38,7 @@
 
   .meter-bar {
     height: 6px;
-    background: var(--border);
+    background: var(--border-light);
     border-radius: 3px;
     overflow: hidden;
     margin-top: 4px;
@@ -286,18 +47,16 @@
   .meter-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--phosphor-dim), var(--phosphor), var(--amber), var(--red));
+    background: linear-gradient(90deg, var(--text-tertiary), var(--text), var(--accent), var(--red));
     border-radius: 3px;
     transition: width 0.05s;
   }
 
   .algo-info {
-    font-size: 0.65rem;
-    color: var(--phosphor-dim);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     margin-top: 8px;
     line-height: 1.6;
-    font-family: 'VT323', monospace;
-    font-size: 0.85rem;
   }
 
   .three-col {
@@ -309,27 +68,24 @@
 
   .section-divider {
     border: none;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-light);
     margin: 14px 0 10px;
     opacity: 0.5;
   }
 
   select {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     font-size: 0.72rem;
-    background: #020a02;
-    border: 1px solid var(--phosphor-dim);
-    color: var(--phosphor);
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
     padding: 5px 8px;
-    border-radius: 2px;
     cursor: pointer;
     outline: none;
   }
 
-  select option { background: #050a04; }
-
   .warning {
-    color: var(--amber);
+    color: var(--red);
     font-size: 0.7rem;
     margin-top: 6px;
   }
@@ -343,7 +99,7 @@
   .vu-seg {
     flex: 1;
     height: 8px;
-    background: var(--border);
+    background: var(--border-light);
     border-radius: 1px;
     transition: background 0.05s;
   }
@@ -357,26 +113,21 @@
 <body>
 
 <header>
-  <div>
-    <h1>FUZZBOX PHYSICS</h1>
-    <div class="subtitle">∿ WAVEFORM DISTORTION &amp; FERMENTATION LAB — CALARTS EXPERIMENTAL ANIMATION</div>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
   </div>
-  <div class="status-bar">
-    <div><a href="fuzzbox-sculptor.html" style="color:var(--phosphor-dim); text-decoration:none; font-size:0.72rem; letter-spacing:0.1em; transition:color 0.15s" onmouseover="this.style.color='var(--phosphor)'" onmouseout="this.style.color='var(--phosphor-dim)'">SPECTRAL SCULPTOR →</a></div>
-    <div><a href="fuzzbox-octavia.html" style="color:var(--phosphor-dim); text-decoration:none; font-size:0.72rem; letter-spacing:0.1em; transition:color 0.15s" onmouseover="this.style.color='var(--phosphor)'" onmouseout="this.style.color='var(--phosphor-dim)'">DIGITAL OCTAVIA →</a></div>
-    <div><span class="status-dot" id="mic-dot"></span><span id="mic-status">AUDIO OFFLINE</span></div>
-    <div><span style="color:var(--phosphor-dim)">SR:</span> <span id="sr-display">—</span> Hz &nbsp; <span style="color:var(--phosphor-dim)">BUF:</span> <span id="buf-display">—</span></div>
-  </div>
+  <h1>Waveform Distortion Lab</h1>
 </header>
 
 <!-- SOURCE CONTROLS -->
 <div class="three-col">
   <div class="panel">
-    <div class="panel-label">⬡ Signal Source</div>
+    <div class="section-label">Signal Source</div>
     <div class="btn-group" style="margin-bottom:10px">
-      <button id="btn-mic" class="amber-btn" onclick="setSource('mic')">🎙 MIC IN</button>
+      <button id="btn-mic" class="amber-btn" onclick="setSource('mic')">MIC IN</button>
       <button id="btn-osc" onclick="setSource('osc')" class="active">OSC TEST</button>
-      <button id="btn-wav-pick" class="amber-btn" onclick="document.getElementById('wav-file-input').click()">📂 LOAD FILE</button>
+      <button id="btn-wav-pick" class="amber-btn" onclick="document.getElementById('wav-file-input').click()">LOAD FILE</button>
     </div>
     <div class="btn-group" id="wav-btns-lab" style="margin-bottom:6px"></div>
     <input type="file" id="wav-file-input" accept="audio/*" style="display:none" onchange="loadWavFile(this)">
@@ -401,11 +152,11 @@
         <div class="knob-value" id="input-gain-val">80%</div>
       </div>
     </div>
-    <p class="warning" id="mic-warning" style="display:none">⚠ Use headphones to avoid feedback</p>
+    <p class="warning" id="mic-warning" style="display:none">Use headphones to avoid feedback</p>
   </div>
 
   <div class="panel">
-    <div class="panel-label">⬡ Clipping Algorithm</div>
+    <div class="section-label">Clipping Algorithm</div>
     <div class="btn-group" id="clip-btns">
       <button onclick="setClip('hard')" class="active" id="clip-hard">HARD</button>
       <button onclick="setClip('soft')" id="clip-soft">SOFT (tanh)</button>
@@ -416,16 +167,16 @@
       <button onclick="setClip('rectify')" id="clip-rect">HALF RECTIFY</button>
     </div>
     <div class="algo-info" id="algo-info">
-      Hard clip: f(x) = clamp(x, −T, +T) — abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.
+      Hard clip: f(x) = clamp(x, -T, +T) -- abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-label">⬡ Drive &amp; Mix</div>
+    <div class="section-label">Drive &amp; Mix</div>
     <div class="controls-row" style="flex-direction:column; gap:10px; margin-top:0">
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
         <div class="knob-label">DRIVE / THRESHOLD</div>
-        <input type="range" id="drive" min="0.01" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="red-slider" oninput="updateDrive(); updateDisplay('drive-val', Math.round((1-this.value)*100)+'%')">
+        <input type="range" id="drive" min="0.01" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" oninput="updateDrive(); updateDisplay('drive-val', Math.round((1-this.value)*100)+'%')">
         <div class="knob-value" id="drive-val">50%</div>
       </div>
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
@@ -435,32 +186,38 @@
       </div>
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
         <div class="knob-label">WET / DRY MIX</div>
-        <input type="range" id="wet-dry" min="0" max="1" value="1" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="updateGains(); updateDisplay('wetdry-val', Math.round(this.value*100)+'% W')">
+        <input type="range" id="wet-dry" min="0" max="1" value="1" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="updateGains(); updateDisplay('wetdry-val', Math.round(this.value*100)+'% W')">
         <div class="knob-value" id="wetdry-val">100% W</div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- STATUS -->
+<div class="stats" style="margin-bottom:12px">
+  <span class="status-dot" id="mic-dot"></span><span id="mic-status">AUDIO OFFLINE</span>
+  &nbsp;&nbsp; SR: <span id="sr-display">--</span> Hz &nbsp; BUF: <span id="buf-display">--</span>
+</div>
+
 <!-- OSCILLOSCOPE DISPLAYS -->
 <div class="grid">
   <div class="panel">
-    <div class="panel-label">⬡ Input Waveform (Dry)</div>
+    <div class="section-label">Input Waveform (Dry)</div>
     <canvas id="scope-in" class="scope-large"></canvas>
     <div class="vu-row" id="vu-in"></div>
   </div>
   <div class="panel">
-    <div class="panel-label">⬡ Output Waveform (Post-Distortion)</div>
+    <div class="section-label">Output Waveform (Post-Distortion)</div>
     <canvas id="scope-out" class="scope-large"></canvas>
     <div class="vu-row" id="vu-out"></div>
     <div class="legend">
       <div class="legend-item">
-        <div class="legend-line" style="background:var(--phosphor)"></div>
-        <span style="color:var(--phosphor); font-size:0.65rem">WET OUT</span>
+        <div class="legend-line" style="background:#ffffff"></div>
+        <span style="color:var(--text); font-size:0.65rem">WET OUT</span>
       </div>
       <div class="legend-item">
-        <div class="legend-line" style="background:rgba(57,255,20,0.25); border-top: 1px dashed rgba(57,255,20,0.4)"></div>
-        <span style="color:var(--phosphor-dim); font-size:0.65rem">DRY REF (overlay)</span>
+        <div class="legend-line" style="background:rgba(255,255,255,0.25); border-top: 1px dashed rgba(255,255,255,0.4)"></div>
+        <span style="color:var(--text-secondary); font-size:0.65rem">DRY REF (overlay)</span>
       </div>
       <div class="legend-item">
         <div class="legend-line" style="background:var(--red)"></div>
@@ -473,11 +230,11 @@
 <!-- SPECTRUM -->
 <div class="grid" style="margin-bottom:12px">
   <div class="panel">
-    <div class="panel-label">⬡ Frequency Spectrum — Input</div>
+    <div class="section-label">Frequency Spectrum -- Input</div>
     <canvas id="fft-in" height="120"></canvas>
   </div>
   <div class="panel">
-    <div class="panel-label">⬡ Frequency Spectrum — Output (distortion creates harmonics)</div>
+    <div class="section-label">Frequency Spectrum -- Output (distortion creates harmonics)</div>
     <canvas id="fft-out" height="120"></canvas>
   </div>
 </div>
@@ -485,49 +242,49 @@
 <!-- SPECTROGRAM -->
 <div class="grid" style="margin-bottom:12px">
   <div class="panel">
-    <div class="panel-label">⬡ Spectrogram — Input (time → frequency → amplitude)</div>
+    <div class="section-label">Spectrogram -- Input (time / frequency / amplitude)</div>
     <canvas id="sgram-in" class="scope-large"></canvas>
   </div>
   <div class="panel">
-    <div class="panel-label">⬡ Spectrogram — Output (watch harmonics appear)</div>
+    <div class="section-label">Spectrogram -- Output (watch harmonics appear)</div>
     <canvas id="sgram-out" class="scope-large"></canvas>
   </div>
 </div>
 
 <!-- REVERB CHAMBER -->
 <div class="panel full-width" style="margin-bottom:12px">
-  <div class="panel-label">⬡ Reverb Chamber — Acoustic Space Simulation</div>
+  <div class="section-label">Reverb Chamber -- Acoustic Space Simulation</div>
   <div style="display:grid; grid-template-columns: auto 1fr 1fr 1fr 1fr; gap:16px; align-items:start">
     <div>
       <div style="margin-bottom:8px">
-        <button id="btn-reverb" class="blue-btn" onclick="toggleReverb()">REVERB OFF</button>
+        <button id="btn-reverb" class="amber-btn" onclick="toggleReverb()">REVERB OFF</button>
       </div>
       <div class="btn-group" id="ir-btns" style="flex-direction:column; gap:4px">
-        <button class="blue-btn active" id="ir-room" onclick="setIR('room')">ROOM</button>
-        <button class="blue-btn" id="ir-hall" onclick="setIR('hall')">CONCERT HALL</button>
-        <button class="blue-btn" id="ir-plate" onclick="setIR('plate')">PLATE</button>
-        <button class="blue-btn" id="ir-cave" onclick="setIR('cave')">CAVE / TUNNEL</button>
-        <button class="blue-btn" id="ir-spring" onclick="setIR('spring')">SPRING</button>
+        <button class="amber-btn active" id="ir-room" onclick="setIR('room')">ROOM</button>
+        <button class="amber-btn" id="ir-hall" onclick="setIR('hall')">CONCERT HALL</button>
+        <button class="amber-btn" id="ir-plate" onclick="setIR('plate')">PLATE</button>
+        <button class="amber-btn" id="ir-cave" onclick="setIR('cave')">CAVE / TUNNEL</button>
+        <button class="amber-btn" id="ir-spring" onclick="setIR('spring')">SPRING</button>
       </div>
     </div>
     <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
       <div class="knob-label">DECAY TIME (s)</div>
-      <input type="range" id="rev-decay" min="0.1" max="8" value="1.5" step="0.1" style="max-width:100%; width:100%" class="blue" oninput="buildIR(); updateDisplay('rev-decay-val', this.value+'s')">
+      <input type="range" id="rev-decay" min="0.1" max="8" value="1.5" step="0.1" style="max-width:100%; width:100%" class="amber" oninput="buildIR(); updateDisplay('rev-decay-val', this.value+'s')">
       <div class="knob-value" id="rev-decay-val">1.5s</div>
     </div>
     <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
       <div class="knob-label">ROOM CHARACTER</div>
-      <input type="range" id="rev-density" min="0" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="buildIR(); updateDisplay('rev-density-val', Math.round(this.value*100)+'%')">
+      <input type="range" id="rev-density" min="0" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="buildIR(); updateDisplay('rev-density-val', Math.round(this.value*100)+'%')">
       <div class="knob-value" id="rev-density-val">50%</div>
     </div>
     <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
       <div class="knob-label">REV WET/DRY</div>
-      <input type="range" id="rev-wet" min="0" max="1" value="0.4" step="0.01" style="max-width:100%; width:100%" class="blue" oninput="updateReverbMix(); updateDisplay('rev-wet-val', Math.round(this.value*100)+'% W')">
+      <input type="range" id="rev-wet" min="0" max="1" value="0.4" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="updateReverbMix(); updateDisplay('rev-wet-val', Math.round(this.value*100)+'% W')">
       <div class="knob-value" id="rev-wet-val">40% W</div>
     </div>
     <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
       <div class="knob-label">PRE-DELAY (ms)</div>
-      <input type="range" id="rev-predelay" min="0" max="100" value="10" step="1" style="max-width:100%; width:100%" class="blue" oninput="updatePreDelay(); updateDisplay('rev-predelay-val', this.value+'ms')">
+      <input type="range" id="rev-predelay" min="0" max="100" value="10" step="1" style="max-width:100%; width:100%" class="amber" oninput="updatePreDelay(); updateDisplay('rev-predelay-val', this.value+'ms')">
       <div class="knob-value" id="rev-predelay-val">10ms</div>
     </div>
   </div>
@@ -535,14 +292,14 @@
 
 <!-- MASTER OUTPUT -->
 <div class="panel">
-  <div class="panel-label">⬡ Master Output</div>
+  <div class="section-label">Master Output</div>
   <div class="controls-row" style="align-items:center">
     <div class="knob-group">
       <div class="knob-label">OUTPUT VOLUME</div>
       <input type="range" id="out-vol" min="0" max="1" value="0.7" step="0.01" oninput="updateGains(); updateDisplay('out-vol-val', Math.round(this.value*100)+'%')">
       <div class="knob-value" id="out-vol-val">70%</div>
     </div>
-    <button onclick="togglePlay()" id="play-btn" class="active" style="font-size:1rem; padding:8px 20px">▶ PLAYING</button>
+    <button onclick="togglePlay()" id="play-btn" class="active" style="font-size:1rem; padding:8px 20px">PLAYING</button>
     <div style="flex:1; min-width:120px">
       <div class="knob-label" style="margin-bottom:4px">OUTPUT LEVEL</div>
       <div class="vu-row" id="vu-master"></div>
@@ -601,9 +358,9 @@ async function initAudio() {
   buildIR();
 
   // Signal flow:
-  // src → inputGain → analyserIn
-  //   → distortionNode → analyserOut
-  //     → dryGain + wetGain → outputGain → speakers
+  // src -> inputGain -> analyserIn
+  //   -> distortionNode -> analyserOut
+  //     -> dryGain + wetGain -> outputGain -> speakers
   // (reverb is inserted in wet path when enabled)
 
   updateGains();
@@ -622,10 +379,10 @@ function updateReverbRouting() {
   outputGain.connect(ctx.destination);
 
   if (reverbEnabled) {
-    // analyserOut → revDryGain → outputGain
+    // analyserOut -> revDryGain -> outputGain
     analyserOut.connect(revDryGain);
     revDryGain.connect(outputGain);
-    // analyserOut → preDelay → reverb → revWetGain → outputGain
+    // analyserOut -> preDelay -> reverb -> revWetGain -> outputGain
     analyserOut.connect(preDelayNode);
     preDelayNode.connect(reverbNode);
     reverbNode.connect(revWetGain);
@@ -660,7 +417,7 @@ function generateIR(sampleRate, decay, density, type) {
           env = (t < 0.02 ? t / 0.02 : 1) * Math.exp(-t * (3 / decay));
           break;
         case 'plate':
-          // Dense, metallic — lots of early reflections
+          // Dense, metallic -- lots of early reflections
           env = Math.exp(-t * (5 / decay));
           break;
         case 'cave':
@@ -715,12 +472,12 @@ function processDistortion(e) {
         break;
 
       case 'soft':
-        // tanh saturation — smooth, musical
+        // tanh saturation -- smooth, musical
         wet = Math.tanh(drive * x) / Math.tanh(drive);
         break;
 
       case 'asymmetric':
-        // Different clipping on positive vs negative → even harmonics
+        // Different clipping on positive vs negative -> even harmonics
         if (x >= 0) {
           wet = Math.min(x, threshold) / threshold;
         } else {
@@ -731,7 +488,7 @@ function processDistortion(e) {
         break;
 
       case 'foldback':
-        // Mirror signal back when it exceeds threshold — extreme harmonic density
+        // Mirror signal back when it exceeds threshold -- extreme harmonic density
         let val = x;
         while (Math.abs(val) > threshold) {
           if (val > threshold) val = 2 * threshold - val;
@@ -748,7 +505,7 @@ function processDistortion(e) {
         break;
 
       case 'tube':
-        // Tube-like: asymmetric tanh — emphasizes even harmonics like a triode
+        // Tube-like: asymmetric tanh -- emphasizes even harmonics like a triode
         const bias = 0.15;
         wet = Math.tanh(drive * (x + bias)) - Math.tanh(drive * bias);
         // normalize approx
@@ -756,7 +513,7 @@ function processDistortion(e) {
         break;
 
       case 'rectify':
-        // Half-wave rectifier: negative half removed → strong even harmonics
+        // Half-wave rectifier: negative half removed -> strong even harmonics
         wet = x > 0 ? x : 0;
         // AC restore
         wet = wet * 2 - 0.5;
@@ -786,7 +543,7 @@ async function startOsc() {
   distortionNode.connect(analyserOut);
   oscNode.start();
   playing = true;
-  document.getElementById('play-btn').textContent = '▶ PLAYING';
+  document.getElementById('play-btn').textContent = 'PLAYING';
   document.getElementById('play-btn').classList.add('active');
   updateMicStatus(false);
 }
@@ -874,23 +631,15 @@ function setIR(type) {
 }
 
 const algoInfo = {
-  hard: 'Hard clip: f(x) = clamp(x, −T, +T) — abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.',
-  soft: 'Soft clip: f(x) = tanh(D·x) / tanh(D) — smooth saturation, musical warmth. Vintage tube-amp character.',
-  asymmetric: 'Asymmetric: different thresholds on +/− halves → even-order harmonics (2nd, 4th). Transistor bias distortion.',
+  hard: 'Hard clip: f(x) = clamp(x, -T, +T) -- abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.',
+  soft: 'Soft clip: f(x) = tanh(D*x) / tanh(D) -- smooth saturation, musical warmth. Vintage tube-amp character.',
+  asymmetric: 'Asymmetric: different thresholds on +/- halves -> even-order harmonics (2nd, 4th). Transistor bias distortion.',
   foldback: 'Foldback / wavefold: signal mirrors back past threshold. Extreme density, metallic texture. Buchla-style.',
-  bitcrush: 'Bit Crush: quantize to N bits = reduce amplitude resolution → harsh quantization noise / aliasing.',
-  tube: 'Tube (triode bias): tanh with DC offset → even harmonics dominate. Warm, complex saturation.',
-  rectify: 'Half-Wave Rectify: strips negative half → strong even harmonics. Like a simple diode clipper.'
+  bitcrush: 'Bit Crush: quantize to N bits = reduce amplitude resolution -> harsh quantization noise / aliasing.',
+  tube: 'Tube (triode bias): tanh with DC offset -> even harmonics dominate. Warm, complex saturation.',
+  rectify: 'Half-Wave Rectify: strips negative half -> strong even harmonics. Like a simple diode clipper.'
 };
 
-function setClip(mode) {
-  clipMode = mode;
-  document.querySelectorAll('#clip-btns button').forEach(b => b.classList.remove('active'));
-  document.getElementById('clip-' + mode.replace('crush','bit').replace('metric','asym').replace('back','fold').replace('tify','rect').replace('tube','tube')).classList.add('active');
-  document.getElementById('algo-info').textContent = algoInfo[mode] || '';
-}
-
-// Fix button IDs for setClip
 const clipIdMap = { hard:'clip-hard', soft:'clip-soft', asymmetric:'clip-asym', foldback:'clip-fold', bitcrush:'clip-bit', tube:'clip-tube', rectify:'clip-rect' };
 function setClip(mode) {
   clipMode = mode;
@@ -907,7 +656,7 @@ async function togglePlay() {
   if (playing) {
     oscNode.stop();
     playing = false;
-    document.getElementById('play-btn').textContent = '▶ PLAY';
+    document.getElementById('play-btn').textContent = 'PLAY';
     document.getElementById('play-btn').classList.remove('active');
   } else {
     await startOsc();
@@ -927,11 +676,11 @@ function updateDisplay(id, val) {
 // ============================================================
 // VISUALIZATION
 // ============================================================
-const SCOPE_COLOR_DRY = 'rgba(57,255,20,0.3)';
-const SCOPE_COLOR_WET = '#39ff14';
-const SCOPE_COLOR_CLIP = '#ff3030';
-const SPEC_COLOR_IN = '#ff9500';
-const SPEC_COLOR_OUT = '#39ff14';
+const SCOPE_COLOR_DRY = 'rgba(255,255,255,0.3)';
+const SCOPE_COLOR_WET = '#ffffff';
+const SCOPE_COLOR_CLIP = '#cc3333';
+const SPEC_COLOR_IN = 'rgba(68,68,204,0.9)';
+const SPEC_COLOR_OUT = '#ffffff';
 
 function drawScope(canvas, analyser, showDryRef, analyserDry) {
   const ctx2 = canvas.getContext('2d');
@@ -941,11 +690,11 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
   ctx2.clearRect(0, 0, W, H);
 
   // Background
-  ctx2.fillStyle = '#020502';
+  ctx2.fillStyle = '#111111';
   ctx2.fillRect(0, 0, W, H);
 
   // Grid
-  ctx2.strokeStyle = 'rgba(57,255,20,0.07)';
+  ctx2.strokeStyle = 'rgba(255,255,255,0.07)';
   ctx2.lineWidth = 1;
   for (let i = 0; i <= 8; i++) {
     const x = W * i / 8;
@@ -957,7 +706,7 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
   }
 
   // Zero line
-  ctx2.strokeStyle = 'rgba(57,255,20,0.18)';
+  ctx2.strokeStyle = 'rgba(255,255,255,0.18)';
   ctx2.setLineDash([4, 4]);
   ctx2.beginPath(); ctx2.moveTo(0, H/2); ctx2.lineTo(W, H/2); ctx2.stroke();
   ctx2.setLineDash([]);
@@ -994,7 +743,7 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
   if (clipMode !== 'bitcrush') {
     const clampY = ((1 - drive) / 2) * H;
     const clampYN = ((1 + drive) / 2) * H;
-    ctx2.strokeStyle = 'rgba(255,48,48,0.5)';
+    ctx2.strokeStyle = 'rgba(204,51,51,0.5)';
     ctx2.lineWidth = 1;
     ctx2.setLineDash([6, 3]);
     ctx2.beginPath(); ctx2.moveTo(0, clampY); ctx2.lineTo(W, clampY); ctx2.stroke();
@@ -1004,10 +753,9 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
 
   // Draw main waveform
   const drawLen = Math.min(W * 2, buffer.length - start);
-  ctx2.strokeStyle = analyserDry ? SCOPE_COLOR_WET : SCOPE_COLOR_WET;
+  ctx2.strokeStyle = SCOPE_COLOR_WET;
   ctx2.lineWidth = 2;
-  ctx2.shadowBlur = 6;
-  ctx2.shadowColor = 'rgba(57,255,20,0.4)';
+  ctx2.shadowBlur = 0;
   ctx2.beginPath();
   for (let i = 0; i < W; i++) {
     const idx = Math.floor(i / W * drawLen);
@@ -1025,11 +773,11 @@ function drawSpectrum(canvas, analyser, color) {
   const H = canvas.height;
 
   ctx2.clearRect(0, 0, W, H);
-  ctx2.fillStyle = '#020502';
+  ctx2.fillStyle = '#111111';
   ctx2.fillRect(0, 0, W, H);
 
   // Grid lines
-  ctx2.strokeStyle = 'rgba(57,255,20,0.05)';
+  ctx2.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx2.lineWidth = 1;
   for (let i = 0; i <= 8; i++) {
     const x = W * i / 8;
@@ -1044,7 +792,9 @@ function drawSpectrum(canvas, analyser, color) {
 
   // Log-scale spectrum
   const gradient = ctx2.createLinearGradient(0, H, 0, 0);
-  gradient.addColorStop(0, color + '99');
+  // Use 60% opacity version for gradient base
+  const fadeColor = color.startsWith('rgba') ? color.replace(/[\d.]+\)$/, '0.6)') : color + '99';
+  gradient.addColorStop(0, fadeColor);
   gradient.addColorStop(1, color);
   ctx2.fillStyle = gradient;
 
@@ -1064,8 +814,7 @@ function drawSpectrum(canvas, analyser, color) {
   // Bright top line
   ctx2.strokeStyle = color;
   ctx2.lineWidth = 1.5;
-  ctx2.shadowBlur = 4;
-  ctx2.shadowColor = color + '80';
+  ctx2.shadowBlur = 0;
   ctx2.beginPath();
   for (let i = 0; i < W; i++) {
     const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
@@ -1098,20 +847,16 @@ function updateVU(containerId, rms) {
   const level = Math.min(1, rms * 4);
   const lit = Math.floor(level * VU_COUNT);
   for (let i = 0; i < VU_COUNT; i++) {
-    let color = 'var(--border)';
+    let color = 'var(--border-light)';
     if (i < lit) {
       const t = i / VU_COUNT;
-      if (t < 0.6) color = 'var(--phosphor-dim)';
-      else if (t < 0.8) color = 'var(--phosphor)';
-      else if (t < 0.92) color = 'var(--amber)';
+      if (t < 0.6) color = 'var(--text-tertiary)';
+      else if (t < 0.8) color = 'var(--text)';
+      else if (t < 0.92) color = 'var(--accent)';
       else color = 'var(--red)';
     }
     segs[i].style.background = color;
-    if (i < lit && i > VU_COUNT * 0.6) {
-      segs[i].style.boxShadow = `0 0 4px ${color}`;
-    } else {
-      segs[i].style.boxShadow = 'none';
-    }
+    segs[i].style.boxShadow = 'none';
   }
 }
 
@@ -1136,11 +881,11 @@ function initSgram(canvasId) {
   const H = c.height;
   const ctx2 = c.getContext('2d');
   const imageData = ctx2.createImageData(W, H);
-  // Fill with near-black
+  // Fill with dark background
   for (let i = 0; i < imageData.data.length; i += 4) {
-    imageData.data[i] = 2;
-    imageData.data[i+1] = 5;
-    imageData.data[i+2] = 2;
+    imageData.data[i] = 17;
+    imageData.data[i+1] = 17;
+    imageData.data[i+2] = 17;
     imageData.data[i+3] = 255;
   }
   sgramState[canvasId] = { imageData, width: W, height: H };
@@ -1185,32 +930,32 @@ function drawSpectrogram(canvasId, analyser) {
       const v = freqData[Math.min(logIdx, bufLen - 1)];
       const norm = v / 255;
 
-      // Color: black → dark green → bright green → amber → red/white for hot
+      // Color: dark -> deep blue -> blue-purple -> white for hot
       let r, g, b;
       if (norm < 0.25) {
-        // black to dark green
+        // dark to deep blue
         const s = norm / 0.25;
-        r = 2;
-        g = Math.floor(5 + s * 117); // 5 → 122
-        b = 2;
+        r = Math.floor(17 + s * 10);
+        g = Math.floor(17 + s * 10);
+        b = Math.floor(17 + s * 80);
       } else if (norm < 0.55) {
-        // dark green to bright phosphor green
+        // deep blue to blue-purple
         const s = (norm - 0.25) / 0.3;
-        r = Math.floor(s * 57);
-        g = Math.floor(122 + s * 133); // 122 → 255
-        b = Math.floor(s * 20);
+        r = Math.floor(27 + s * 41);  // -> 68
+        g = Math.floor(27 + s * 41);  // -> 68
+        b = Math.floor(97 + s * 107); // -> 204
       } else if (norm < 0.8) {
-        // phosphor green to amber
+        // blue-purple to warm white
         const s = (norm - 0.55) / 0.25;
-        r = Math.floor(57 + s * 198); // 57 → 255
-        g = Math.floor(255 - s * 106); // 255 → 149
-        b = Math.floor(20 - s * 20);
+        r = Math.floor(68 + s * 187);  // -> 255
+        g = Math.floor(68 + s * 147);  // -> 215
+        b = Math.floor(204 + s * 51);  // -> 255
       } else {
-        // amber to hot red-white
+        // warm white to bright white
         const s = (norm - 0.8) / 0.2;
         r = 255;
-        g = Math.floor(149 + s * 106); // 149 → 255
-        b = Math.floor(s * 200);
+        g = Math.floor(215 + s * 40); // -> 255
+        b = 255;
       }
 
       const idx = (y * W + (W - 1)) * 4;
@@ -1219,20 +964,20 @@ function drawSpectrogram(canvasId, analyser) {
       img.data[idx + 2] = b;
     }
   } else {
-    // No analyser — paint black column
+    // No analyser -- paint dark column
     for (let y = 0; y < H; y++) {
       const idx = (y * W + (W - 1)) * 4;
-      img.data[idx]     = 2;
-      img.data[idx + 1] = 5;
-      img.data[idx + 2] = 2;
+      img.data[idx]     = 17;
+      img.data[idx + 1] = 17;
+      img.data[idx + 2] = 17;
     }
   }
 
   ctx2.putImageData(img, 0, 0);
 
   // Frequency axis labels (sparse, redrawn each frame over the image)
-  ctx2.fillStyle = 'rgba(57,255,20,0.4)';
-  ctx2.font = '9px "Share Tech Mono", monospace';
+  ctx2.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx2.font = '9px "IBM Plex Mono", monospace';
   const sr = ctx ? ctx.sampleRate : 44100;
   const nyquist = sr / 2;
   const freqMarks = [100, 500, 1000, 2000, 5000, 10000];
@@ -1265,13 +1010,13 @@ function render() {
   animFrame = requestAnimationFrame(render);
   if (!ctx) return;
 
-  drawScope(document.getElementById('scope-in'), analyserIn, false, null);
-  drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn);
-  drawSpectrum(document.getElementById('fft-in'), analyserIn, '#ff9500');
-  drawSpectrum(document.getElementById('fft-out'), analyserOut, '#39ff14');
+  try { drawScope(document.getElementById('scope-in'), analyserIn, false, null); } catch(e) { console.error('scope-in', e); }
+  try { drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn); } catch(e) { console.error('scope-out', e); }
+  try { drawSpectrum(document.getElementById('fft-in'), analyserIn, 'rgba(68,68,204,0.9)'); } catch(e) { console.error('fft-in', e); }
+  try { drawSpectrum(document.getElementById('fft-out'), analyserOut, '#ffffff'); } catch(e) { console.error('fft-out', e); }
 
-  drawSpectrogram('sgram-in', analyserIn);
-  drawSpectrogram('sgram-out', analyserOut);
+  try { drawSpectrogram('sgram-in', analyserIn); } catch(e) { console.error('sgram-in', e); }
+  try { drawSpectrogram('sgram-out', analyserOut); } catch(e) { console.error('sgram-out', e); }
 
   updateVU('vu-in', getRMS(analyserIn));
   updateVU('vu-out', getRMS(analyserOut));
@@ -1295,7 +1040,7 @@ async function startWavSource(audioBuffer) {
   distortionNode.connect(analyserOut);
   wavSourceNode.start();
   playing = true;
-  document.getElementById('play-btn').textContent = '▶ PLAYING';
+  document.getElementById('play-btn').textContent = 'PLAYING';
   document.getElementById('play-btn').classList.add('active');
   document.getElementById('btn-mic').classList.remove('active');
   document.getElementById('btn-osc').classList.remove('active');
@@ -1346,7 +1091,7 @@ async function loadWavListLab() {
       container.appendChild(btn);
     });
   } catch(e) {
-    // Not running via server — that's fine, file picker still works
+    // Not running via server -- that's fine, file picker still works
   }
 }
 loadWavListLab();

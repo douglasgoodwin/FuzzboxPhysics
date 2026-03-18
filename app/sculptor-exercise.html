@@ -3,98 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUZZBOX PHYSICS — Spectral Sculptor Exercise</title>
+<title>Building Timbre from Nothing — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --text: #8bba8b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
-    padding: 24px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  .wrap { max-width: 700px; margin: 0 auto; }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.2rem;
-    letter-spacing: 0.1em;
-    color: var(--phosphor);
-    text-shadow: 0 0 15px var(--phosphor-glow);
-  }
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 0.9rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
-  }
-  .nav {
-    margin-top: 6px;
-    font-size: 0.7rem;
-  }
-  .nav a {
-    color: var(--phosphor-dim);
-    text-decoration: none;
-    margin-right: 10px;
-  }
-  .nav a:hover { color: var(--phosphor); }
-
-  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  hr { border: none; border-top: 1px solid var(--border-light); margin: 24px 0; }
 
   .part {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    border: 1px solid var(--border-light);
     padding: 20px 22px;
     margin-bottom: 16px;
-    position: relative;
-  }
-  .part::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
-    opacity: 0.4;
   }
 
   .part-num {
-    font-family: 'VT323', monospace;
-    font-size: 0.8rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
     margin-bottom: 2px;
   }
   .part-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.5rem;
-    letter-spacing: 0.06em;
-    color: var(--phosphor);
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--text);
     line-height: 1.2;
     margin-bottom: 10px;
   }
 
   p {
-    font-family: 'VT323', monospace;
-    font-size: 1.05rem;
-    color: var(--text);
-    line-height: 1.7;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
     margin-bottom: 10px;
   }
 
@@ -105,111 +44,107 @@
     align-items: flex-start;
   }
   .step-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    color: var(--amber);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent);
     min-width: 22px;
     text-align: right;
     padding-top: 2px;
   }
   .step-text {
-    font-family: 'VT323', monospace;
-    font-size: 1.05rem;
-    color: var(--text);
-    line-height: 1.7;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
   }
 
   .listen {
-    font-family: 'VT323', monospace;
-    font-size: 0.95rem;
-    color: var(--amber);
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    color: var(--accent);
     margin: 6px 0 6px 32px;
-    line-height: 1.6;
+    line-height: 1.7;
+    font-style: italic;
   }
 
   .hint {
-    font-family: 'VT323', monospace;
-    font-size: 0.9rem;
-    color: var(--phosphor-dim);
-    border-left: 2px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    border-left: 2px solid var(--border-light);
     padding-left: 12px;
     margin: 10px 0 6px 32px;
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   .freq-table {
     margin: 10px 0 10px 32px;
     border-collapse: collapse;
-    font-family: 'VT323', monospace;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
   }
   .freq-table th {
-    color: var(--phosphor-dim);
+    color: var(--text-tertiary);
     text-align: left;
     padding: 2px 14px 2px 0;
     font-weight: normal;
     letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
   }
   .freq-table td {
-    color: var(--amber);
+    color: var(--accent);
     padding: 2px 14px 2px 0;
   }
-  .freq-table td.dim { color: var(--phosphor-dim); }
+  .freq-table td.dim { color: var(--text-tertiary); }
 
   .deliverable {
-    background: rgba(255, 149, 0, 0.06);
-    border: 1px solid rgba(255, 149, 0, 0.2);
-    border-radius: 3px;
+    background: rgba(68,68,204,0.03);
+    border: 1px solid rgba(68,68,204,0.15);
     padding: 10px 14px;
     margin-top: 12px;
   }
   .deliverable-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    color: var(--amber);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
     margin-bottom: 4px;
   }
   .deliverable p {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     margin-bottom: 0;
   }
 
   .open-link {
     display: inline-block;
-    font-family: 'Share Tech Mono', monospace;
     font-size: 0.8rem;
-    color: var(--phosphor);
-    border: 1px solid var(--phosphor-dim);
-    padding: 6px 14px;
-    border-radius: 3px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 8px 16px;
     text-decoration: none;
     margin: 10px 0;
     transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .open-link:hover {
-    border-color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
+    background: var(--accent);
+    color: var(--bg);
   }
 
-  .keyword {
-    color: var(--phosphor);
-  }
-  .freq {
-    color: var(--amber);
-  }
+  .keyword { color: var(--text); font-weight: 400; }
+  .freq { color: var(--accent); }
 
   .intro {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
     line-height: 1.8;
     margin-bottom: 6px;
   }
 
   .footer {
-    font-size: 0.65rem;
-    color: var(--phosphor-dim);
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
     text-align: center;
     margin-top: 24px;
     line-height: 1.8;
@@ -217,19 +152,14 @@
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <h1>BUILDING TIMBRE FROM NOTHING</h1>
-  <div class="subtitle">SPECTRAL SCULPTOR EXERCISE — FUZZBOX PHYSICS</div>
-  <div class="nav">
-    <a href="index.html">INDEX</a>
-    <a href="fuzzbox-sculptor.html">OPEN SCULPTOR</a>
-    <a href="fuzzbox-lab.html">LAB 01</a>
-    <a href="fuzzbox-octavia.html">LAB 03</a>
-    <a href="fuzzbox-reverb.html">LAB 04</a>
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
   </div>
-
-  <hr>
+  <h1>Building Timbre from Nothing</h1>
+</header>
 
   <p class="intro">
     A spectrogram is a complete picture of a sound. Every sound you have ever heard could
@@ -243,7 +173,7 @@
   <hr>
 
   <!-- ═══════ TOOLS ═══════ -->
-  <div class="part" style="border-color: var(--phosphor-dim);">
+  <div class="part" style="border-color: var(--border);">
     <div class="part-num">TOOLS REFERENCE</div>
     <div class="part-title">The Brush and the Rake</div>
 
@@ -649,7 +579,7 @@
 
   <hr>
 
-  <div class="part" style="background:transparent; border-color: var(--phosphor-dim);">
+  <div class="part" style="border-color: var(--border);">
     <div class="part-title" style="font-size:1.2rem;">What to Turn In</div>
     <p>Five screenshots with short written responses as described above. Submit as a single PDF or a series of images.
     There are no wrong sounds — the goal is to understand the relationship between what you see in the spectrogram
@@ -658,9 +588,8 @@
 
   <div class="footer">
     Doug Goodwin — CalArts 2026 — CSCM 373-01 Fuzzbox Physics<br>
-    <a href="fuzzbox-sculptor.html" style="color:var(--phosphor-dim); text-decoration:none;">Open Spectral Sculptor</a>
+    <a href="fuzzbox-sculptor.html" style="color:var(--text-tertiary); text-decoration:none;">Open Spectral Sculptor</a>
   </div>
 
-</div>
 </body>
 </html>

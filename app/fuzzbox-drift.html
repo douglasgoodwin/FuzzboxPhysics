@@ -3,70 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUZZBOX PHYSICS — Phase Drift</title>
+<title>Phase Drift — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --text: #8bba8b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  .wrap { max-width: 720px; width: 100%; }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.6rem;
-    letter-spacing: 0.12em;
-    text-shadow: 0 0 20px var(--phosphor-glow);
-    line-height: 1;
-  }
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
-    margin-top: 4px;
-  }
-  .nav {
-    margin-top: 6px;
-    font-size: 0.7rem;
-  }
-  .nav a {
-    color: var(--phosphor-dim);
-    text-decoration: none;
-    margin-right: 10px;
-  }
-  .nav a:hover { color: var(--phosphor); }
-
-  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
-
   .desc {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--text);
-    line-height: 1.7;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.8;
     margin-bottom: 14px;
   }
 
@@ -77,44 +22,7 @@
     margin-bottom: 14px;
   }
 
-  button {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
-    background: var(--panel);
-    color: var(--phosphor);
-    border: 1px solid var(--border);
-    padding: 8px 20px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.08em;
-  }
-  button:hover {
-    border-color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-  }
-  button.active {
-    background: var(--phosphor);
-    color: var(--bg);
-  }
-
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-
-  canvas {
-    display: block;
-    width: 100%;
-    border-radius: 3px;
-    background: #030803;
-  }
-
   #scope {
-    border: 1px solid var(--border);
     margin-bottom: 14px;
   }
 
@@ -135,34 +43,31 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #0a1a0a;
-    border: 1px solid var(--border);
+    background: var(--border-light);
+    border: 1px solid var(--border-light);
     transition: all 0.3s;
     flex-shrink: 0;
   }
   .voice-dot.on {
-    background: var(--phosphor);
-    border-color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
+    background: var(--text);
+    border-color: var(--text);
   }
 
   .voice-notes {
-    font-family: 'VT323', monospace;
-    font-size: 0.85rem;
-    color: var(--text);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     min-width: 110px;
   }
 
   .voice-period {
-    font-family: 'VT323', monospace;
-    font-size: 0.75rem;
-    color: var(--phosphor-dim);
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
   }
 
   .voice-bar-bg {
     flex: 1;
-    height: 3px;
-    background: #0a1a0a;
+    height: 2px;
+    background: var(--border-light);
     border-radius: 1px;
     overflow: hidden;
     min-width: 40px;
@@ -170,52 +75,36 @@
   .voice-bar {
     height: 100%;
     width: 0%;
-    background: var(--phosphor-dim);
+    background: var(--border-light);
     border-radius: 1px;
     transition: width 0.1s linear;
   }
   .voice-bar.on {
-    background: var(--phosphor);
-    box-shadow: 0 0 4px var(--phosphor-glow);
-  }
-
-  .section-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.08em;
-    color: var(--phosphor);
-    margin-bottom: 8px;
+    background: var(--text);
   }
 
   .elapsed {
-    font-family: 'VT323', monospace;
     font-size: 0.8rem;
-    color: var(--phosphor-dim);
+    color: var(--text-tertiary);
     margin-left: auto;
   }
 
   .footer {
-    font-size: 0.65rem;
-    color: var(--phosphor-dim);
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
     text-align: center;
-    margin-top: 18px;
+    margin-top: 24px;
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <h1>PHASE DRIFT</h1>
-  <div class="subtitle">GENERATIVE PHASING PIECE — FUZZBOX PHYSICS</div>
-  <div class="nav">
-    <a href="index.html">INDEX</a>
-    <a href="fuzzbox-lab.html">LAB 01</a>
-    <a href="fuzzbox-sculptor.html">LAB 02</a>
-    <a href="fuzzbox-octavia.html">LAB 03</a>
-    <a href="fuzzbox-reverb.html">LAB 04</a>
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
   </div>
-
-  <hr>
+  <h1>Phase Drift</h1>
+</header>
 
   <div class="desc">
     Fourteen sine wave voices cycle at slightly different rates (23–30 seconds each),
@@ -238,7 +127,6 @@
   </div>
 
   <div class="footer">Doug Goodwin — CalArts 2026</div>
-</div>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -462,11 +350,11 @@ function drawScope() {
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
-  ctx.fillStyle = '#030803';
+  ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, W, H);
 
   // Center line
-  ctx.strokeStyle = '#0a1a0a';
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
   ctx.lineWidth = 0.5;
   ctx.beginPath();
   ctx.moveTo(0, H/2);
@@ -478,9 +366,7 @@ function drawScope() {
   const buf = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(buf);
 
-  ctx.strokeStyle = 'rgba(57,255,20,0.7)';
-  ctx.shadowColor = '#39ff14';
-  ctx.shadowBlur = 4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
 
@@ -492,7 +378,6 @@ function drawScope() {
     else ctx.lineTo(px, y);
   }
   ctx.stroke();
-  ctx.shadowBlur = 0;
 }
 
 function updateVoiceIndicators() {

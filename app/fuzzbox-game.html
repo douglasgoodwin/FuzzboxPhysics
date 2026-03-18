@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Name That Distortion</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  canvas { height: 160px; cursor: crosshair; image-rendering: pixelated; }
+
+  .game-area {
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .round-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .prompt {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .choice-btn {
+    font-size: 0.85rem;
+    padding: 12px 20px;
+    min-width: 140px;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .choice-btn:disabled {
+    cursor: default;
+  }
+
+  .choice-btn.correct {
+    background: rgba(57, 255, 20, 0.15);
+    border-color: #39ff14;
+    color: #39ff14;
+  }
+
+  .choice-btn.wrong {
+    background: rgba(204, 51, 51, 0.15);
+    border-color: var(--red);
+    color: var(--red);
+    text-decoration: line-through;
+  }
+
+  .choice-btn.reveal {
+    border-color: #39ff14;
+    color: #39ff14;
+  }
+
+  .feedback {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    min-height: 2em;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+
+  .feedback .correct-text { color: #39ff14; }
+  .feedback .wrong-text { color: var(--red); }
+  .feedback .hint-text { color: var(--text-secondary); font-size: 0.9rem; }
+
+  .scoreboard {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-num {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .score-num.green { color: #39ff14; }
+  .score-num.red { color: var(--red); }
+
+  .score-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .streak {
+    font-size: 0.85rem;
+    color: var(--accent);
+    min-height: 1.2em;
+    margin-bottom: 8px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .controls-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .mode-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-line {
+    width: 20px; height: 2px;
+  }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .choices { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>Name That Distortion</h1>
+</header>
+
+<div class="explanation" style="margin-bottom:20px">
+  A mystery distortion is applied to the signal. Use your ears and the visualizations
+  to identify which algorithm is active. The waveform shape, the harmonic pattern,
+  and the sound itself are all clues.
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-bar">
+  <div>
+    <div class="mode-label">Difficulty</div>
+    <select id="difficulty" onchange="resetGame()">
+      <option value="easy">EASY (4 choices)</option>
+      <option value="medium" selected>MEDIUM (5 choices)</option>
+      <option value="hard">HARD (7 choices)</option>
+    </select>
+  </div>
+  <div>
+    <div class="mode-label">Source</div>
+    <select id="source-type" onchange="changeSource()">
+      <option value="sine" selected>SINE 220 Hz</option>
+      <option value="sawtooth">SAWTOOTH 220 Hz</option>
+      <option value="square">SQUARE 220 Hz</option>
+      <option value="triangle">TRIANGLE 220 Hz</option>
+      <option value="" disabled hidden>SAMPLE ▸</option>
+    </select>
+  </div>
+  <div>
+    <div class="mode-label">Sample</div>
+    <div class="btn-group" id="wav-btns" style="gap:4px"></div>
+    <button class="amber-btn" onclick="document.getElementById('wav-file-input').click()" style="font-size:0.6rem; padding:4px 8px">LOAD FILE</button>
+    <input type="file" id="wav-file-input" accept="audio/*" style="display:none" onchange="loadLocalFile(this)">
+  </div>
+  <div>
+    <div class="mode-label">Show Scopes</div>
+    <select id="show-viz" onchange="toggleViz()">
+      <option value="yes" selected>YES (training)</option>
+      <option value="no">NO (ears only)</option>
+    </select>
+  </div>
+  <div style="margin-left:auto">
+    <button class="amber-btn" onclick="resetGame()" style="font-size:0.7rem; padding:6px 12px">RESET SCORE</button>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div class="scoreboard">
+  <div class="score-item">
+    <div class="score-num green" id="score-correct">0</div>
+    <div class="score-label">Correct</div>
+  </div>
+  <div class="score-item">
+    <div class="score-num red" id="score-wrong">0</div>
+    <div class="score-label">Wrong</div>
+  </div>
+  <div class="score-item">
+    <div class="score-num" id="score-pct">—</div>
+    <div class="score-label">Accuracy</div>
+  </div>
+</div>
+<div class="streak" id="streak"></div>
+
+<!-- GAME AREA -->
+<div class="game-area" id="game-area">
+  <div class="round-label" id="round-label">Click to start</div>
+  <div class="prompt" id="game-prompt">What distortion is this?</div>
+  <div class="choices" id="choices"></div>
+  <div class="feedback" id="feedback"></div>
+  <button id="next-btn" class="amber-btn" onclick="nextRound()" style="display:none; margin:0 auto">NEXT ROUND</button>
+  <button id="start-btn" class="amber-btn" onclick="startGame()" style="font-size:1rem; padding:12px 32px">START GAME</button>
+</div>
+
+<!-- VISUALIZATIONS -->
+<div id="viz-area">
+  <div class="grid">
+    <div class="panel">
+      <div class="section-label">Input Waveform (Dry)</div>
+      <canvas id="scope-in" class="scope-large"></canvas>
+    </div>
+    <div class="panel">
+      <div class="section-label">Output Waveform (Mystery Distortion)</div>
+      <canvas id="scope-out" class="scope-large"></canvas>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-line" style="background:#ffffff"></div>
+          <span style="color:var(--text); font-size:0.65rem">DISTORTED</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:rgba(255,255,255,0.25); border-top: 1px dashed rgba(255,255,255,0.4)"></div>
+          <span style="color:var(--text-secondary); font-size:0.65rem">DRY REF</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="section-label">Spectrum — Input</div>
+      <canvas id="fft-in" height="120"></canvas>
+    </div>
+    <div class="panel">
+      <div class="section-label">Spectrum — Output (count the harmonics)</div>
+      <canvas id="fft-out" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- MASTER OUTPUT -->
+<div class="panel">
+  <div class="controls-row" style="align-items:center">
+    <div class="knob-group">
+      <div class="knob-label">VOLUME</div>
+      <input type="range" id="out-vol" min="0" max="1" value="0.5" step="0.01" oninput="updateVolume()">
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+const ALL_ALGOS = [
+  { id: 'hard',       name: 'HARD CLIP',       hint: 'Flat ceiling — odd harmonics, buzzy crunch' },
+  { id: 'soft',       name: 'SOFT CLIP (tanh)', hint: 'Smooth S-curve — odd harmonics, warm saturation' },
+  { id: 'asymmetric', name: 'ASYMMETRIC',       hint: 'Lopsided clipping — even + odd harmonics' },
+  { id: 'foldback',   name: 'FOLDBACK',         hint: 'Signal mirrors back — extreme harmonic density, metallic' },
+  { id: 'bitcrush',   name: 'BIT CRUSH',        hint: 'Staircase quantization — grainy, lo-fi, noisy' },
+  { id: 'tube',       name: 'TUBE (even harm)', hint: 'Biased tanh — warm, even harmonics dominate' },
+  { id: 'rectify',    name: 'HALF RECTIFY',     hint: 'Negative half removed — strong 2nd harmonic, octave-up' },
+];
+
+const DIFFICULTY = {
+  easy:   ['hard', 'soft', 'foldback', 'rectify'],
+  medium: ['hard', 'soft', 'foldback', 'rectify', 'bitcrush'],
+  hard:   ['hard', 'soft', 'asymmetric', 'foldback', 'bitcrush', 'tube', 'rectify'],
+};
+
+let currentAnswer = null;
+let roundNum = 0;
+let correct = 0;
+let wrong = 0;
+let streakCount = 0;
+let bestStreak = 0;
+let answered = false;
+let gameStarted = false;
+
+// ============================================================
+// DISTORTION ALGORITHMS
+// ============================================================
+let clipMode = 'hard';
+const THRESHOLD = 0.35;
+const DRIVE = (1 - THRESHOLD) * 10 + 1;
+const BITS = 6;
+
+function applyDistortion(x) {
+  switch (clipMode) {
+    case 'hard':
+      return Math.max(-THRESHOLD, Math.min(THRESHOLD, x)) / THRESHOLD;
+    case 'soft':
+      return Math.tanh(DRIVE * x) / Math.tanh(DRIVE);
+    case 'asymmetric':
+      if (x >= 0) return Math.min(x, THRESHOLD) / THRESHOLD;
+      else return Math.max(x, -THRESHOLD * 0.6) / (THRESHOLD * 0.6) * 0.8;
+    case 'foldback': {
+      let val = x;
+      let iters = 0;
+      while (Math.abs(val) > THRESHOLD && iters < 20) {
+        if (val > THRESHOLD) val = 2 * THRESHOLD - val;
+        else if (val < -THRESHOLD) val = -2 * THRESHOLD - val;
+        iters++;
+      }
+      return val / THRESHOLD;
+    }
+    case 'bitcrush': {
+      const steps = Math.pow(2, BITS - 1);
+      return Math.max(-1, Math.min(1, Math.round(x * steps) / steps));
+    }
+    case 'tube': {
+      const bias = 0.15;
+      const wet = Math.tanh(DRIVE * (x + bias)) - Math.tanh(DRIVE * bias);
+      return wet / (1 + Math.tanh(DRIVE * bias));
+    }
+    case 'rectify': {
+      let wet = x > 0 ? x : 0;
+      wet = wet * 2 - 0.5;
+      return Math.max(-1, Math.min(1, wet));
+    }
+    default: return x;
+  }
+}
+
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let ctx, oscNode, wavSourceNode, inputGain, outputGain, distortionNode;
+let analyserIn, analyserOut;
+let currentSourceType = 'osc'; // 'osc' or 'wav'
+const BUFFER_SIZE = 4096;
+
+async function initAudio() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  inputGain = ctx.createGain();
+  inputGain.gain.value = 0.8;
+  outputGain = ctx.createGain();
+  outputGain.gain.value = parseFloat(document.getElementById('out-vol').value);
+
+  distortionNode = ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+  distortionNode.onaudioprocess = function(e) {
+    const input = e.inputBuffer.getChannelData(0);
+    const output = e.outputBuffer.getChannelData(0);
+    for (let i = 0; i < input.length; i++) {
+      output[i] = applyDistortion(input[i]);
+    }
+  };
+
+  analyserIn = ctx.createAnalyser();
+  analyserIn.fftSize = 2048;
+  analyserOut = ctx.createAnalyser();
+  analyserOut.fftSize = 2048;
+
+  startOsc();
+}
+
+function disconnectAll() {
+  try { if (oscNode) { oscNode.stop(); oscNode.disconnect(); } } catch(e) {}
+  try { if (wavSourceNode) { wavSourceNode.stop(); wavSourceNode.disconnect(); } } catch(e) {}
+  try { inputGain.disconnect(); } catch(e) {}
+  try { distortionNode.disconnect(); } catch(e) {}
+  try { analyserOut.disconnect(); } catch(e) {}
+  try { outputGain.disconnect(); } catch(e) {}
+  oscNode = null;
+  wavSourceNode = null;
+}
+
+function connectChain(sourceNode) {
+  sourceNode.connect(inputGain);
+  inputGain.connect(analyserIn);
+  inputGain.connect(distortionNode);
+  distortionNode.connect(analyserOut);
+  analyserOut.connect(outputGain);
+  outputGain.connect(ctx.destination);
+}
+
+function startOsc() {
+  disconnectAll();
+  currentSourceType = 'osc';
+  oscNode = ctx.createOscillator();
+  oscNode.type = document.getElementById('source-type').value;
+  oscNode.frequency.value = 220;
+  connectChain(oscNode);
+  oscNode.start();
+}
+
+function startWavSource(audioBuffer) {
+  disconnectAll();
+  currentSourceType = 'wav';
+  wavSourceNode = ctx.createBufferSource();
+  wavSourceNode.buffer = audioBuffer;
+  wavSourceNode.loop = true;
+  connectChain(wavSourceNode);
+  wavSourceNode.start();
+}
+
+async function loadWavFromServer(filename) {
+  await initAudio();
+  try {
+    const resp = await fetch('wavs/' + filename);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+    // Deselect osc dropdown
+    document.getElementById('source-type').value = '';
+  } catch(err) {
+    alert('Could not load wavs/' + filename);
+  }
+}
+
+async function loadLocalFile(input) {
+  if (!input.files.length) return;
+  await initAudio();
+  try {
+    const buf = await input.files[0].arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(buf);
+    startWavSource(audioBuffer);
+    document.getElementById('source-type').value = '';
+  } catch(err) {
+    alert('Could not decode audio: ' + err.message);
+  }
+}
+
+function updateVolume() {
+  if (outputGain) outputGain.gain.value = parseFloat(document.getElementById('out-vol').value);
+}
+
+function changeSource() {
+  if (!ctx) return;
+  if (document.getElementById('source-type').value) startOsc();
+}
+
+// Load wav buttons from server API
+async function loadWavList() {
+  const container = document.getElementById('wav-btns');
+  try {
+    const resp = await fetch('/api/wavs');
+    if (!resp.ok) throw new Error('no api');
+    const data = await resp.json();
+    if (!data.files.length) return;
+    data.files.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'amber-btn';
+      btn.style.fontSize = '0.6rem';
+      btn.style.padding = '4px 8px';
+      btn.textContent = f.replace(/\.[^.]+$/, '').replace(/_/g, ' ').toUpperCase();
+      btn.onclick = () => loadWavFromServer(f);
+      container.appendChild(btn);
+    });
+  } catch(e) {}
+}
+loadWavList();
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function getDifficultyPool() {
+  return DIFFICULTY[document.getElementById('difficulty').value] || DIFFICULTY.medium;
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function startGame() {
+  await initAudio();
+  document.getElementById('start-btn').style.display = 'none';
+  resetGame();
+  nextRound();
+}
+
+function resetGame() {
+  roundNum = 0;
+  correct = 0;
+  wrong = 0;
+  streakCount = 0;
+  bestStreak = 0;
+  updateScoreboard();
+  document.getElementById('streak').textContent = '';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('round-label').textContent = 'Ready';
+  document.getElementById('game-prompt').textContent = 'What distortion is this?';
+  document.getElementById('next-btn').style.display = 'none';
+  if (gameStarted) nextRound();
+}
+
+function nextRound() {
+  gameStarted = true;
+  answered = false;
+  roundNum++;
+
+  const pool = getDifficultyPool();
+  const answerId = pickRandom(pool);
+  currentAnswer = answerId;
+  clipMode = answerId;
+
+  // Update UI
+  document.getElementById('round-label').textContent = 'ROUND ' + roundNum;
+  document.getElementById('game-prompt').textContent = 'What distortion is this?';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('next-btn').style.display = 'none';
+
+  // Build choice buttons
+  const choicesEl = document.getElementById('choices');
+  const choices = shuffle(pool);
+  choicesEl.innerHTML = '';
+  choices.forEach(id => {
+    const algo = ALL_ALGOS.find(a => a.id === id);
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = algo.name;
+    btn.onclick = () => makeGuess(id, btn);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function makeGuess(guessId, btn) {
+  if (answered) return;
+  answered = true;
+
+  const answer = ALL_ALGOS.find(a => a.id === currentAnswer);
+  const feedbackEl = document.getElementById('feedback');
+
+  // Disable all buttons
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  if (guessId === currentAnswer) {
+    correct++;
+    streakCount++;
+    if (streakCount > bestStreak) bestStreak = streakCount;
+    btn.classList.add('correct');
+    feedbackEl.innerHTML = '<span class="correct-text">Correct!</span><br><span class="hint-text">' + answer.hint + '</span>';
+  } else {
+    wrong++;
+    streakCount = 0;
+    btn.classList.add('wrong');
+    // Highlight the correct answer
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (b.textContent === answer.name) b.classList.add('reveal');
+    });
+    feedbackEl.innerHTML = '<span class="wrong-text">Not quite.</span> It was <span class="correct-text">' + answer.name + '</span><br><span class="hint-text">' + answer.hint + '</span>';
+  }
+
+  updateScoreboard();
+  document.getElementById('next-btn').style.display = 'inline-block';
+}
+
+function updateScoreboard() {
+  document.getElementById('score-correct').textContent = correct;
+  document.getElementById('score-wrong').textContent = wrong;
+  const total = correct + wrong;
+  document.getElementById('score-pct').textContent = total > 0 ? Math.round(correct / total * 100) + '%' : '—';
+
+  const streakEl = document.getElementById('streak');
+  if (streakCount >= 3) {
+    streakEl.textContent = streakCount + ' in a row!';
+  } else if (bestStreak >= 3) {
+    streakEl.textContent = 'Best streak: ' + bestStreak;
+  } else {
+    streakEl.textContent = '';
+  }
+}
+
+// ============================================================
+// VISUALIZATION
+// ============================================================
+function drawScope(canvas, analyser, showDryRef, analyserDry) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = '#111111';
+  ctx2.fillRect(0, 0, W, H);
+
+  ctx2.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+  for (let j = 0; j <= 4; j++) {
+    const y = H * j / 4;
+    ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke();
+  }
+
+  ctx2.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx2.setLineDash([4, 4]);
+  ctx2.beginPath(); ctx2.moveTo(0, H/2); ctx2.lineTo(W, H/2); ctx2.stroke();
+  ctx2.setLineDash([]);
+
+  if (!analyser) return;
+
+  const buffer = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buffer);
+
+  let start = 0;
+  for (let i = 1; i < buffer.length / 2; i++) {
+    if (buffer[i - 1] < 0 && buffer[i] >= 0) { start = i; break; }
+  }
+
+  if (showDryRef && analyserDry) {
+    const dryBuf = new Float32Array(analyserDry.fftSize);
+    analyserDry.getFloatTimeDomainData(dryBuf);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx2.lineWidth = 1.5;
+    ctx2.beginPath();
+    const dLen = Math.min(W, buffer.length - start);
+    for (let i = 0; i < dLen; i++) {
+      const x = (i / dLen) * W;
+      const y = ((1 - dryBuf[start + i]) / 2) * H;
+      i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+    }
+    ctx2.stroke();
+  }
+
+  const drawLen = Math.min(W * 2, buffer.length - start);
+  ctx2.strokeStyle = '#ffffff';
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const idx = Math.floor(i / W * drawLen);
+    const y = ((1 - buffer[start + idx]) / 2) * H;
+    i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
+  }
+  ctx2.stroke();
+}
+
+function drawSpectrum(canvas, analyser, color) {
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = '#111111';
+  ctx2.fillRect(0, 0, W, H);
+
+  ctx2.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx2.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const x = W * i / 8;
+    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke();
+  }
+
+  if (!analyser) return;
+
+  const bufLen = analyser.frequencyBinCount;
+  const freqData = new Uint8Array(bufLen);
+  analyser.getByteFrequencyData(freqData);
+
+  const gradient = ctx2.createLinearGradient(0, H, 0, 0);
+  const fadeColor = color.startsWith('rgba') ? color.replace(/[\d.]+\)$/, '0.6)') : color + '99';
+  gradient.addColorStop(0, fadeColor);
+  gradient.addColorStop(1, color);
+  ctx2.fillStyle = gradient;
+
+  ctx2.beginPath();
+  ctx2.moveTo(0, H);
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    ctx2.lineTo(i, H - (freqData[Math.min(logIdx, bufLen - 1)] / 255) * H);
+  }
+  ctx2.lineTo(W, H);
+  ctx2.closePath();
+  ctx2.fill();
+
+  ctx2.strokeStyle = color;
+  ctx2.lineWidth = 1.5;
+  ctx2.beginPath();
+  for (let i = 0; i < W; i++) {
+    const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
+    const y = H - (freqData[Math.min(logIdx, bufLen - 1)] / 255) * H;
+    i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
+  }
+  ctx2.stroke();
+}
+
+function resizeCanvases() {
+  ['scope-in', 'scope-out', 'fft-in', 'fft-out'].forEach(id => {
+    const c = document.getElementById(id);
+    const rect = c.getBoundingClientRect();
+    c.width = Math.floor(rect.width) || 600;
+    c.height = Math.floor(rect.height) || 160;
+  });
+}
+window.addEventListener('resize', resizeCanvases);
+setTimeout(resizeCanvases, 100);
+
+function toggleViz() {
+  const show = document.getElementById('show-viz').value === 'yes';
+  document.getElementById('viz-area').style.display = show ? 'block' : 'none';
+}
+
+function render() {
+  requestAnimationFrame(render);
+  if (!ctx) return;
+  try { drawScope(document.getElementById('scope-in'), analyserIn, false, null); } catch(e) {}
+  try { drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn); } catch(e) {}
+  try { drawSpectrum(document.getElementById('fft-in'), analyserIn, 'rgba(68,68,204,0.9)'); } catch(e) {}
+  try { drawSpectrum(document.getElementById('fft-out'), analyserOut, '#ffffff'); } catch(e) {}
+}
+render();
+
+window.addEventListener('DOMContentLoaded', () => setTimeout(resizeCanvases, 200));
+</script>
+</body>
+</html>

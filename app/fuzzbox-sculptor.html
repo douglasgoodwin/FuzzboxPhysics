@@ -4,231 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FUZZBOX PHYSICS — Spectral Sculptor</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --red: #ff3030;
-    --blue: #00cfff;
-    --text: #8bba8b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    padding: 16px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.8rem;
-    letter-spacing: 0.12em;
-    color: var(--phosphor);
-    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
-    line-height: 1;
-  }
-
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.2em;
-    margin-top: 2px;
-  }
-
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
-    opacity: 0.5;
-  }
-
-  .panel-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    color: var(--phosphor-dim);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .panel-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  canvas {
-    width: 100%;
+  canvas#sgram {
     height: 380px;
-    display: block;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    background: #020502;
     cursor: crosshair;
   }
-
-  .knob-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 64px;
-  }
-
-  .knob-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    color: var(--text);
-    text-align: center;
-  }
-
-  .knob-value {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--phosphor);
-    min-width: 48px;
-    text-align: center;
-    background: #020a02;
-    border: 1px solid var(--border);
-    padding: 1px 4px;
-    border-radius: 2px;
-  }
-
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-    max-width: 140px;
-  }
-
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-    cursor: pointer;
-  }
-
-  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
-
-  button {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    background: transparent;
-    border: 1px solid var(--phosphor-dim);
-    color: var(--text);
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.15s;
-    text-transform: uppercase;
-  }
-
-  button:hover {
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-  }
-
-  button.active {
-    background: rgba(57,255,20,0.1);
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 10px var(--phosphor-glow);
-  }
-
-  button.amber-btn {
-    border-color: rgba(255,149,0,0.5);
-    color: var(--amber);
-  }
-  button.amber-btn:hover, button.amber-btn.active {
-    background: rgba(255,149,0,0.1);
-    border-color: var(--amber);
-    box-shadow: 0 0 8px rgba(255,149,0,0.4);
-  }
-
-  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
-
-  a.nav-link {
-    color: var(--phosphor-dim);
-    text-decoration: none;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    transition: color 0.15s;
-  }
-  a.nav-link:hover { color: var(--phosphor); }
-
-  .recording { animation: rec-blink 0.5s infinite alternate; }
-  @keyframes rec-blink {
-    from { border-color: var(--red); color: var(--red); box-shadow: 0 0 8px rgba(255,48,48,0.4); }
-    to { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 4px rgba(255,149,0,0.2); }
-  }
-
   @media (max-width: 700px) {
-    canvas { height: 260px; }
+    canvas#sgram { height: 260px; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1>SPECTRAL SCULPTOR</h1>
-    <div class="subtitle">∿ FUZZBOX PHYSICS — PAINT SOUND IN THE FREQUENCY DOMAIN</div>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
   </div>
-  <div>
-    <a href="fuzzbox-lab.html" class="nav-link">← DISTORTION LAB</a>
-  </div>
+  <h1>Spectral Sculptor</h1>
 </header>
 
 <!-- SOURCE + TRANSPORT -->
-<div class="panel" style="margin-bottom:12px">
-  <div class="panel-label">⬡ Signal Source</div>
+<div class="section">
+  <div class="section-label">Signal Source</div>
   <div class="btn-group" id="source-btns">
     <button onclick="loadSource('pluck')" class="active" id="src-pluck">PLUCK</button>
     <button onclick="loadSource('drone')" id="src-drone">DRONE</button>
@@ -244,20 +43,20 @@
   <div style="display:flex; gap:12px; margin-top:10px; align-items:center; flex-wrap:wrap">
     <button onclick="togglePlay()" id="btn-play" style="font-size:1rem; padding:8px 20px">▶ PLAY</button>
     <button onclick="resetToOriginal()">RESET</button>
-    <div id="readout" style="font-family:'VT323',monospace; font-size:0.95rem; color:var(--phosphor-dim); margin-left:auto">
+    <div id="readout" style="font-size:0.8rem; color:var(--text-secondary); margin-left:auto">
       FREQ: — &nbsp; TIME: — &nbsp; MAG: —
     </div>
   </div>
 </div>
 
 <!-- SPECTROGRAM -->
-<div class="panel" style="margin-bottom:12px; padding:10px">
-  <div class="panel-label">⬡ Spectrogram — Click &amp; Drag to Sculpt Sound</div>
+<div class="section">
+  <div class="section-label">Spectrogram — Click &amp; Drag to Sculpt Sound</div>
   <canvas id="sgram"></canvas>
 </div>
 
 <!-- BRUSH CONTROLS -->
-<div class="panel">
+<div class="section">
   <div style="display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap">
     <div class="knob-group" style="align-items:flex-start; min-width:unset">
       <div class="knob-label">BRUSH SIZE</div>
@@ -282,10 +81,10 @@
       <button onclick="setBrushMode('erase')" id="mode-erase">ERASE (−)</button>
       <button onclick="toggleRakeOdd()" id="btn-rake-odd" title="Odd harmonics only (clarinet)">ODD ONLY</button>
     </div>
-    <div style="font-size:0.65rem; color:var(--phosphor-dim); line-height:1.7; margin-left:auto; max-width:420px; font-family:'VT323',monospace; font-size:0.85rem">
+    <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.7; margin-left:auto; max-width:420px">
       Paint energy into the frequency spectrum. Vertical = frequency (log scale), horizontal = time.
       Changes are heard when you release the mouse.
-      <span style="color:var(--amber)">SHIFT+click to erase without switching modes.</span>
+      <span style="color:var(--accent)">SHIFT+click to erase without switching modes.</span>
     </div>
   </div>
 </div>
@@ -651,16 +450,16 @@ function magToColor(mag) {
   let r, g, b;
   if (norm < 0.15) {
     const s = norm / 0.15;
-    r = 2; g = Math.floor(5 + s * 25); b = 2;
+    r = Math.floor(8 * s); g = Math.floor(8 * s); b = Math.floor(20 * s);
   } else if (norm < 0.4) {
     const s = (norm - 0.15) / 0.25;
-    r = Math.floor(s * 57); g = Math.floor(30 + s * 225); b = Math.floor(s * 20);
+    r = Math.floor(8 + s * 32); g = Math.floor(8 + s * 52); b = Math.floor(20 + s * 140);
   } else if (norm < 0.7) {
     const s = (norm - 0.4) / 0.3;
-    r = Math.floor(57 + s * 198); g = Math.floor(255 - s * 106); b = Math.floor(20 - s * 20);
+    r = Math.floor(40 + s * 160); g = Math.floor(60 + s * 140); b = Math.floor(160 + s * 95);
   } else {
     const s = (norm - 0.7) / 0.3;
-    r = 255; g = Math.floor(149 + s * 106); b = Math.floor(s * 220);
+    r = Math.floor(200 + s * 55); g = Math.floor(200 + s * 55); b = Math.floor(255 - s * 15);
   }
   return (r << 16) | (g << 8) | b;
 }
@@ -897,13 +696,13 @@ function drawFrame() {
   if (sgramImage && sgramImage.width === W && sgramImage.height === H) {
     ctx2.putImageData(sgramImage, 0, 0);
   } else {
-    ctx2.fillStyle = '#020502';
+    ctx2.fillStyle = '#111';
     ctx2.fillRect(0, 0, W, H);
   }
 
   // Frequency axis labels
-  ctx2.fillStyle = 'rgba(57,255,20,0.5)';
-  ctx2.font = '10px "Share Tech Mono", monospace';
+  ctx2.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx2.font = '10px "IBM Plex Mono", monospace';
   const logMin = Math.log(20);
   const logMax = Math.log(sampleRate / 2);
   for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000]) {
@@ -922,9 +721,9 @@ function drawFrame() {
     const totalTime = loopLength / sampleRate;
     for (let t = 0.25; t < totalTime; t += 0.25) {
       const x = (t / totalTime) * W;
-      ctx2.fillStyle = 'rgba(57,255,20,0.25)';
+      ctx2.fillStyle = 'rgba(255,255,255,0.25)';
       ctx2.fillRect(x, 0, 0.5, H);
-      ctx2.fillStyle = 'rgba(57,255,20,0.5)';
+      ctx2.fillStyle = 'rgba(255,255,255,0.5)';
       ctx2.fillText(t.toFixed(2) + 's', x + 3, H - 4);
     }
   }
@@ -946,7 +745,7 @@ function drawFrame() {
   // Brush cursor
   if (hoverX >= 0 && hoverY >= 0) {
     const r = parseInt(document.getElementById('brush-size').value);
-    ctx2.strokeStyle = brushMode === 'erase' ? 'rgba(255,48,48,0.6)' : 'rgba(57,255,20,0.6)';
+    ctx2.strokeStyle = brushMode === 'erase' ? 'rgba(204,51,51,0.6)' : 'rgba(255,255,255,0.6)';
     ctx2.lineWidth = 1;
     ctx2.beginPath();
     ctx2.arc(hoverX, hoverY, r, 0, 2 * Math.PI);

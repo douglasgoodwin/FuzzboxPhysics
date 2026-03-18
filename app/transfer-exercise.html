@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waveform Distortion Worksheet — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  hr { border: none; border-top: 1px solid var(--border-light); margin: 24px 0; }
+
+  .part {
+    border: 1px solid var(--border-light);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+
+  .part-num {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .part-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 10px;
+  }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 22px;
+    text-align: right;
+    padding-top: 2px;
+  }
+  .step-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+
+  .listen {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin: 6px 0 6px 32px;
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    border-left: 2px solid var(--border-light);
+    padding-left: 12px;
+    margin: 10px 0 6px 32px;
+    line-height: 1.7;
+  }
+
+  .deliverable {
+    background: rgba(68,68,204,0.03);
+    border: 1px solid rgba(68,68,204,0.15);
+    padding: 10px 14px;
+    margin-top: 12px;
+  }
+  .deliverable-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .deliverable p {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+  }
+
+  .open-link {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 8px 16px;
+    text-decoration: none;
+    margin: 6px 6px 6px 0;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .open-link:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .keyword { color: var(--text); font-weight: 400; }
+  .freq { color: var(--accent); }
+
+  .intro {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 6px;
+  }
+
+  .footer {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.8;
+  }
+
+  .concept-table {
+    margin: 10px 0 10px 32px;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .concept-table th {
+    color: var(--text-tertiary);
+    text-align: left;
+    padding: 4px 14px 4px 0;
+    font-weight: normal;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+  }
+  .concept-table td {
+    color: var(--text-secondary);
+    padding: 4px 14px 4px 0;
+    line-height: 1.6;
+  }
+  .concept-table td.accent { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>Waveform Distortion Worksheet</h1>
+</header>
+
+  <p class="intro">
+    Every distortion circuit — from a $5 guitar pedal to a $50,000 Neve console — does the same
+    fundamental thing: it reshapes the waveform. The shape of that reshaping determines which
+    harmonics are created, and the harmonics determine the timbre. Today you will see this
+    relationship directly by experimenting with clipping algorithms and drawing your own
+    transfer functions.
+  </p>
+
+  <a class="open-link" href="fuzzbox-lab.html" target="_blank">Open Distortion Lab</a>
+  <a class="open-link" href="fuzzbox-transfer.html" target="_blank">Open Transfer Function Lab</a>
+
+  <hr>
+
+  <!-- ═══════ CONCEPTS ═══════ -->
+  <div class="part" style="border-color: var(--border);">
+    <div class="part-num">KEY CONCEPTS</div>
+    <div class="part-title">What You Need to Know</div>
+
+    <p>A <span class="keyword">transfer function</span> is a graph where the x-axis is the input
+    amplitude and the y-axis is the output amplitude. A straight diagonal line (input = output)
+    means the signal passes through unchanged — no distortion.</p>
+
+    <p>Any departure from that straight line <span class="keyword">reshapes the waveform</span>,
+    which adds frequencies that weren't in the original signal. These new frequencies are
+    called <span class="keyword">harmonics</span>.</p>
+
+    <table class="concept-table">
+      <tr><th>SYMMETRY</th><th>HARMONICS</th><th>EXAMPLES</th></tr>
+      <tr>
+        <td class="accent">Symmetric</td>
+        <td>Odd harmonics (3rd, 5th, 7th...)</td>
+        <td>Hard clip, soft clip, foldback</td>
+      </tr>
+      <tr>
+        <td class="accent">Asymmetric</td>
+        <td>Even + odd harmonics (2nd, 3rd, 4th...)</td>
+        <td>Tube bias, half-wave rectify</td>
+      </tr>
+    </table>
+
+    <p><span class="keyword">Symmetric</span> means the curve looks the same if you flip it
+    around the center point (the origin). The positive and negative halves of the wave get
+    the same treatment. <span class="keyword">Asymmetric</span> means the positive and negative
+    halves are shaped differently — this breaks the symmetry of the waveform and introduces
+    even-numbered harmonics.</p>
+
+    <div class="hint" style="margin-left:0">
+      A pure sine wave has one frequency. After distortion, the spectrum shows the
+      fundamental plus new harmonic peaks. The number and strength of those peaks tells
+      you exactly what the distortion did to the waveform. The oscilloscope shows you
+      the shape change; the spectrum shows you the harmonic consequence.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ═══════ PART 1 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 1 — DISTORTION LAB</div>
+    <div class="part-title">Counting Harmonics</div>
+
+    <p>Open the <span class="keyword">Waveform Distortion Lab</span>. Set the source to
+    <span class="freq">OSC TEST</span> with a <span class="freq">SINE</span> wave at
+    <span class="freq">220 Hz</span>. Set <span class="freq">WET/DRY</span> to 100% wet.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Select <span class="keyword">HARD</span> clipping. Set the drive to about
+        <span class="freq">70%</span>. Look at the output oscilloscope — the top and bottom
+        of the sine wave are flattened. Now look at the output spectrum. You should see new
+        peaks above the fundamental.
+      </div>
+    </div>
+
+    <div class="listen">
+      Count the harmonic peaks. Hard clipping a sine wave creates odd harmonics — you should
+      see peaks at 660 Hz (3rd), 1100 Hz (5th), 1540 Hz (7th), etc. The even slots (440, 880)
+      should be empty or nearly so.
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Now switch to <span class="keyword">SOFT (tanh)</span>. Same frequency, same drive.
+        Compare the spectrum to hard clip. The harmonics should still be odd-only, but they
+        roll off faster — fewer bright peaks, more warmth.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Switch to <span class="keyword">HALF RECTIFY</span>. This is asymmetric — the negative
+        half of the wave is removed entirely. Look at the spectrum now.
+      </div>
+    </div>
+
+    <div class="listen">
+      Both even and odd harmonics appear: 440 Hz (2nd), 660 Hz (3rd), 880 Hz (4th), etc.
+      Asymmetric reshaping creates even harmonics because the positive and negative halves
+      of the wave are no longer mirror images of each other.
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Try <span class="keyword">FOLDBACK</span> at high drive. Watch the oscilloscope — the
+        waveform folds back on itself, creating complex zigzag shapes. The spectrum should show
+        many strong harmonics extending far up.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">
+        Finally, try each algorithm with a <span class="freq">SAWTOOTH</span> wave instead of sine.
+        A sawtooth already has all harmonics present. Notice how distortion redistributes
+        the energy — it doesn't just add harmonics, it changes their relative strengths.
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">RESPONSE 1</div>
+      <p>Screenshot the output spectrum for (a) Hard Clip on a sine and (b) Half Rectify on a sine,
+      both at the same drive setting. In 2–3 sentences, explain why the harmonic patterns differ.
+      Use the words "symmetric" and "asymmetric."</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 2 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 2 — DISTORTION LAB</div>
+    <div class="part-title">The Octavia Effect</div>
+
+    <p>The Roger Mayer Octavia (1967) was the first octave-up fuzz, famously used by Hendrix.
+    Its secret: a full-wave rectifier that folds the negative half of the wave onto the positive,
+    doubling the frequency.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        In the Distortion Lab, set a <span class="freq">SINE</span> at <span class="freq">220 Hz</span>.
+        Select <span class="keyword">HALF RECTIFY</span>. Look at the spectrum — you should see
+        a strong peak at <span class="freq">440 Hz</span> (one octave up).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Now mentally predict: if you full-wave rectified (flipped the negative half instead of
+        removing it), which harmonics would appear? Would the fundamental survive?
+      </div>
+    </div>
+
+    <div class="hint">
+      Full-wave rectification makes the waveform perfectly symmetric at double speed.
+      The fundamental vanishes — the new "fundamental" is at 2&times; the original.
+      That's why the Octavia sounds an octave up.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">RESPONSE 2</div>
+      <p>In 2–3 sentences: why does full-wave rectification produce an octave-up effect?
+      Why does half-wave rectification not sound as cleanly "one octave up"?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 3 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 3 — TRANSFER FUNCTION LAB</div>
+    <div class="part-title">Seeing the Curve</div>
+
+    <p>Open the <span class="keyword">Transfer Function Lab</span>. The orange curve in the
+    center canvas is the transfer function — it maps input amplitude (x-axis) to output
+    amplitude (y-axis). Start with a <span class="freq">SINE</span> at <span class="freq">220 Hz</span>.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click through each <span class="keyword">preset</span> (Linear, Hard Clip, Soft Clip,
+        Foldback, Half Rectify, Staircase, Dead Zone). For each one, observe three things
+        simultaneously: the shape of the transfer curve, the output waveform on the oscilloscope,
+        and the harmonic pattern on the spectrum.
+      </div>
+    </div>
+
+    <div class="listen">
+      Notice the correspondence: flat regions on the transfer curve create clipping on the
+      waveform. Bends create smooth saturation. Steps create staircase quantization.
+      Each shape has a distinct sonic character.
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Select <span class="keyword">Hard Clip</span>. The curve has flat horizontal sections
+        at the top and bottom — these are the clipping ceilings. The middle section is a straight
+        diagonal — signals below the threshold pass through unchanged.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Now select <span class="keyword">Soft Clip</span>. The curve is an S-shape — it bends
+        gradually instead of going flat abruptly. This is why tanh saturation sounds warmer:
+        the waveform is rounded, not chopped, so the high harmonics are weaker.
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">RESPONSE 3</div>
+      <p>Screenshot the Transfer Function Lab showing the <span class="keyword">Foldback</span>
+      preset with its transfer curve, output waveform, and spectrum all visible.
+      In 1–2 sentences: why does the zigzag shape of the foldback curve create so many harmonics?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 4 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 4 — TRANSFER FUNCTION LAB</div>
+    <div class="part-title">Draw Your Own Distortion</div>
+
+    <p>Now it's your turn. You are going to draw custom transfer functions and hear what they
+    sound like. Keep the source on <span class="freq">SINE 220 Hz</span>.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click <span class="keyword">LINEAR</span> to reset the curve. Now use the
+        <span class="keyword">DRAW</span> tool to bend the curve by hand. Try making a gentle
+        S-curve — pull the top half slightly right and the bottom half slightly left.
+        Listen as you draw.
+      </div>
+    </div>
+
+    <div class="listen">
+      Even small bends add harmonics. You should hear the tone brighten or change character
+      as you deform the curve. The spectrum updates in real time.
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Reset to <span class="keyword">LINEAR</span>. Now draw something asymmetric — make the
+        top half of the curve flat (clipped) but leave the bottom half linear (untouched).
+        Check the spectrum: even harmonics should appear because the positive and negative
+        halves are being treated differently.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Reset again. Try to draw a <span class="keyword">staircase</span> by hand — a series
+        of flat horizontal steps. Use the <span class="keyword">LINE</span> tool: click at the
+        start of a step, then click at the end. Build 6–8 steps. Compare with the
+        <span class="freq">STAIRCASE</span> preset.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Now get creative. Draw the weirdest, most extreme transfer function you can think of.
+        Zigzags, spirals, random scribbles. Switch to <span class="freq">SAWTOOTH</span> and
+        <span class="freq">SQUARE</span> inputs and hear how your custom distortion sounds
+        on different waveforms.
+      </div>
+    </div>
+
+    <div class="hint">
+      The crazier the curve, the more harmonics are generated — but at some point the sound
+      becomes pure noise. There's a sweet spot between clean and chaos where interesting
+      timbres live. That sweet spot is what circuit designers spend their careers searching for.
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">RESPONSE 4</div>
+      <p>Draw a transfer function that you think sounds interesting or musical (not just noise).
+      Screenshot the curve, waveform, and spectrum together. In 2–3 sentences: describe what you
+      drew and why it sounds the way it does. What features of the curve correspond to what
+      you hear?</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PART 5 ═══════ -->
+  <div class="part">
+    <div class="part-num">PART 5 — BOTH LABS</div>
+    <div class="part-title">Real Sound</div>
+
+    <p>Distortion on a test oscillator is educational. Distortion on real sound is where
+    things get interesting.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        In either lab, switch the source to <span class="keyword">MIC IN</span> or load
+        an audio file. Try speaking, singing, clapping, or playing an instrument through your
+        custom transfer function.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        In the Transfer Function Lab, start with <span class="keyword">LINEAR</span> (clean)
+        and slowly deform the curve while listening. Find the threshold where the sound goes
+        from "clean" to "warm" to "dirty" to "destroyed."
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Compare the <span class="keyword">WET/DRY</span> mix. At 50%, you hear the original
+        and distorted signal blended. Many guitar amps and mixing engineers use partial
+        distortion (called <span class="keyword">parallel saturation</span>) to add warmth
+        without losing clarity.
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="deliverable-label">RESPONSE 5</div>
+      <p>Feed a sound you like (voice, instrument, audio file) through a distortion of your
+      choice. Screenshot the before/after spectrogram. In 2–3 sentences: what happened to the
+      spectrum? Where did new energy appear? Did the distortion make the sound more or less
+      complex?</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="part" style="border-color: var(--border);">
+    <div class="part-title" style="font-size:1.2rem;">What to Turn In</div>
+    <p>Five responses with screenshots and short written explanations as described above.
+    Submit as a PDF or series of images. Focus on connecting what you see (waveform shape,
+    spectrum pattern, transfer curve) to what you hear.</p>
+  </div>
+
+  <div class="footer">
+    Doug Goodwin — CalArts 2026 — CSCM 373-01 Fuzzbox Physics<br>
+    <a href="fuzzbox-lab.html" style="color:var(--text-tertiary); text-decoration:none;">Distortion Lab</a> &nbsp;|&nbsp;
+    <a href="fuzzbox-transfer.html" style="color:var(--text-tertiary); text-decoration:none;">Transfer Function Lab</a>
+  </div>
+
+</body>
+</html>

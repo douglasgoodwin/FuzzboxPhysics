@@ -3,239 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUZZBOX PHYSICS — Spectrograph</title>
+<title>Spectrograph — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap');
-
-  :root {
-    --phosphor: #39ff14;
-    --phosphor-dim: #1a7a08;
-    --phosphor-glow: rgba(57,255,20,0.4);
-    --bg: #050a04;
-    --panel: #0a110a;
-    --border: #1c2e1c;
-    --amber: #ff9500;
-    --red: #ff3030;
-    --blue: #00cfff;
-    --text: #8bba8b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--phosphor);
-    font-family: 'Share Tech Mono', monospace;
-    min-height: 100vh;
-    padding: 16px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
-  }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.8rem;
-    letter-spacing: 0.12em;
-    color: var(--phosphor);
-    text-shadow: 0 0 20px var(--phosphor-glow), 0 0 40px rgba(57,255,20,0.15);
-    line-height: 1;
-  }
-
-  .subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 1.1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.2em;
-    margin-top: 2px;
-  }
-
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
-    opacity: 0.5;
-  }
-
-  .panel-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    color: var(--phosphor-dim);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .panel-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  canvas {
-    width: 100%;
-    display: block;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    background: #020502;
-  }
-
-  .knob-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 64px;
-  }
-
-  .knob-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    color: var(--text);
-    text-align: center;
-  }
-
-  .knob-value {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--phosphor);
-    min-width: 48px;
-    text-align: center;
-    background: #020a02;
-    border: 1px solid var(--border);
-    padding: 1px 4px;
-    border-radius: 2px;
-  }
-
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-    max-width: 140px;
-  }
-
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-    cursor: pointer;
-  }
-
-  input[type=range].amber::-webkit-slider-thumb { background: var(--amber); box-shadow: 0 0 8px rgba(255,149,0,0.5); }
-
-  button {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    background: transparent;
-    border: 1px solid var(--phosphor-dim);
-    color: var(--text);
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.15s;
-    text-transform: uppercase;
-  }
-
-  button:hover {
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 8px var(--phosphor-glow);
-  }
-
-  button.active {
-    background: rgba(57,255,20,0.1);
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-    box-shadow: 0 0 10px var(--phosphor-glow);
-  }
-
-  button.amber-btn {
-    border-color: rgba(255,149,0,0.5);
-    color: var(--amber);
-  }
-  button.amber-btn:hover, button.amber-btn.active {
-    background: rgba(255,149,0,0.1);
-    border-color: var(--amber);
-    box-shadow: 0 0 8px rgba(255,149,0,0.4);
-  }
-
-  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
-
-  a.nav-link {
-    color: var(--phosphor-dim);
-    text-decoration: none;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    transition: color 0.15s;
-  }
-  a.nav-link:hover { color: var(--phosphor); }
-
-  /* Upload drop zone */
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 4px;
-    padding: 32px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 120px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .drop-zone.dragover {
-    border-color: var(--phosphor);
-    background: rgba(57,255,20,0.05);
-    box-shadow: inset 0 0 20px var(--phosphor-glow);
-  }
-
-  .drop-zone .drop-text {
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
-  }
-
-  .drop-zone .drop-hint {
-    font-size: 0.6rem;
-    color: var(--text);
-    opacity: 0.6;
-  }
-
   /* Two-up canvas layout */
   .canvas-row {
     display: grid;
@@ -249,54 +19,60 @@
   .canvas-wrap .canvas-label {
     position: absolute;
     top: 6px; left: 8px;
-    font-family: 'VT323', monospace;
-    font-size: 0.8rem;
-    color: var(--phosphor-dim);
-    letter-spacing: 0.15em;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
     z-index: 1;
     pointer-events: none;
     text-shadow: 0 0 4px rgba(0,0,0,0.8);
   }
 
-  /* Camera video hidden */
-  #camera-video { display: none; }
-
-  /* Status bar */
-  .status-bar {
-    font-family: 'VT323', monospace;
-    font-size: 0.9rem;
-    color: var(--phosphor-dim);
-    padding: 6px 0;
-    min-height: 1.5em;
+  /* Drop zone overrides */
+  .drop-zone {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
 
-  .status-bar .active-status { color: var(--phosphor); }
+  .drop-zone .drop-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.08em;
+  }
+
+  .drop-zone .drop-hint {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+  }
+
+  /* Camera video hidden */
+  #camera-video { display: none; }
 
   /* Responsive */
   @media (max-width: 700px) {
     .canvas-row { grid-template-columns: 1fr; }
-    canvas { height: 220px; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1>SPECTROGRAPH</h1>
-    <div class="subtitle">∿ FUZZBOX PHYSICS — ENCODE AN IMAGE INTO SOUND</div>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
   </div>
-  <div style="display:flex; gap:12px;">
-    <a href="fuzzbox-sculptor.html" class="nav-link">SPECTRAL SCULPTOR</a>
-    <a href="fuzzbox-lab.html" class="nav-link">DISTORTION LAB</a>
-  </div>
+  <h1>Spectrograph</h1>
 </header>
 
 <!-- UPLOAD + CONTROLS -->
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
   <!-- Left: upload -->
   <div class="panel">
-    <div class="panel-label">&#x2B21; Image Source</div>
+    <div class="section-label">Image Source</div>
     <div class="drop-zone" id="drop-zone">
       <div class="drop-text">DROP IMAGE HERE</div>
       <div class="drop-hint">or click to choose file &middot; paste from clipboard</div>
@@ -317,7 +93,7 @@
 
   <!-- Right: controls -->
   <div class="panel">
-    <div class="panel-label">&#x2B21; Synthesis Controls</div>
+    <div class="section-label">Synthesis Controls</div>
     <div style="display:flex; flex-direction:column; gap:12px">
       <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
         <div class="knob-group" style="align-items:flex-start; min-width:unset">
@@ -738,7 +514,7 @@ function drawSourceImage() {
   const ctx = sourceCtx;
   const W = c.width, H = c.height;
 
-  ctx.fillStyle = '#020502';
+  ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, W, H);
 
   // Draw image scaled to fill canvas, maintaining aspect ratio
@@ -756,8 +532,8 @@ function drawFreqAxis(ctx, W, H) {
   const freqMax = parseFloat(document.getElementById('freq-max').value);
   const logMin = Math.log(20);
   const logMax = Math.log(freqMax);
-  ctx.fillStyle = 'rgba(57,255,20,0.45)';
-  ctx.font = '10px "Share Tech Mono", monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '10px "IBM Plex Mono", monospace';
   for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000, 20000]) {
     if (f > freqMax) continue;
     const t = (Math.log(f) - logMin) / (logMax - logMin);
@@ -981,18 +757,22 @@ function magToColor(mag, peak) {
   const db = 20 * Math.log10(mag / peak + 1e-10);
   const norm = Math.max(0, Math.min(1, (db + 80) / 80));
   let r, g, b;
-  if (norm < 0.15) {
-    const s = norm / 0.15;
-    r = 2; g = Math.floor(5 + s * 25); b = 2;
-  } else if (norm < 0.4) {
-    const s = (norm - 0.15) / 0.25;
-    r = Math.floor(s * 57); g = Math.floor(30 + s * 225); b = Math.floor(s * 20);
-  } else if (norm < 0.7) {
-    const s = (norm - 0.4) / 0.3;
-    r = Math.floor(57 + s * 198); g = Math.floor(255 - s * 106); b = Math.floor(20 - s * 20);
+  if (norm < 0.2) {
+    // Dark to dark blue
+    const s = norm / 0.2;
+    r = Math.floor(s * 10); g = Math.floor(s * 10); b = Math.floor(17 + s * 40);
+  } else if (norm < 0.5) {
+    // Dark blue to medium blue
+    const s = (norm - 0.2) / 0.3;
+    r = Math.floor(10 + s * 30); g = Math.floor(10 + s * 60); b = Math.floor(57 + s * 147);
+  } else if (norm < 0.8) {
+    // Medium blue to light blue/white
+    const s = (norm - 0.5) / 0.3;
+    r = Math.floor(40 + s * 175); g = Math.floor(70 + s * 165); b = Math.floor(204 + s * 51);
   } else {
-    const s = (norm - 0.7) / 0.3;
-    r = 255; g = Math.floor(149 + s * 106); b = Math.floor(s * 220);
+    // Light blue to white
+    const s = (norm - 0.8) / 0.2;
+    r = Math.floor(215 + s * 40); g = Math.floor(235 + s * 20); b = 255;
   }
   return (r << 16) | (g << 8) | b;
 }
@@ -1117,13 +897,10 @@ function drawFrame() {
     const cx = getPlayPos() * W;
     ctx.strokeStyle = 'rgba(255,255,255,0.7)';
     ctx.lineWidth = 1.5;
-    ctx.shadowBlur = 6;
-    ctx.shadowColor = 'rgba(255,255,255,0.5)';
     ctx.beginPath();
     ctx.moveTo(cx, 0);
     ctx.lineTo(cx, H);
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
 }
 
