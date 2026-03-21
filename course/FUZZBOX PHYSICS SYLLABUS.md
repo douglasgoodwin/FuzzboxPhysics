@@ -25,7 +25,7 @@ This course traces the path from physical energy (air, motion, vibration) to ele
 |9|**MODULE 3: EFFECTS & SPACE**|Mechanical Reverb|Handmade: Oscillators & Filters<br>**Optional:** Sound-AU Spring Reverb|Dick Dale — "Misirlou" spring splash<br>Fender amp recordings (Deluxe/Twin Reverb)<br>Dub reggae spring (King Tubby, Lee Scratch Perry)<br>**What to listen for:** Spring reverb "splash"; metallic "boing"; pre-delay; mechanical vs room reverb|**Pairs/groups:** Build spring reverb (Collins' Slinky method: speaker cone → Slinky → contact mic); compare to your Week 1 room recordings<br>**Web Lab:** [Reverb Matching Lab](https://fuzzbox.cairn.com/fuzzbox-reverb.html) — record a clap in the room, then try to match its decay with the synthetic reverb engine. Compare Schroeder curves.|Audio comparison + reverb match screenshot|
 |10||Analog Synthesis|Handmade: Oscillators & Filters|Raymond Scott, BBC Radiophonic Workshop<br>Steve Reich "Pendulum Music"<br>Jimi Hendrix controlled feedback<br>Electrical hum, fluorescent lights, mechanical oscillations<br>**What to listen for:** Sustained oscillation; self-sustaining tones; feedback as oscillator; boundary between signal and feedback|**Demo + optional individual:** Build Victorian Synth (speaker + battery oscillator)|Synth demo|
 |11|**MODULE 4: CIRCUITS & DISTORTION**|Amplifier Circuits|Handmade: Amplifiers & Speakers<br>**Optional:** Electrosmash Fuzz Face analysis|Link Wray "Rumble" — amp strain as attitude<br>Little Walter — harmonica through overdriven amp<br>B.B. King — edge of breakup<br>Hendrix "Voodoo Child" — clean vs overdriven<br>**What to listen for:** Amp and speaker strain; headroom exhaustion; moment when "louder" becomes "different"|**Individual:** Build small power amplifier (LM386)<br>**Note:** Observe how hard clipping begins to resemble on/off switching|Amplifier test|
-|12||Distortion Circuits|Handmade: Stompboxes<br>**Optional:** Muzique tone shaping|Jimi Hendrix fuzz — "Foxy Lady", "Little Wing" cleanup<br>Rolling Stones "(I Can't Get No) Satisfaction"<br>Stevie Ray Vaughan overdrive vs Hendrix fuzz<br>**What to listen for:** Cleanup & sustain; fuzz vs overdrive character; guitar volume as tone control; filtering shaping distortion|**Individual:** Build overdrive and fuzz circuits; compare<br>**Notice:** How hard clipping starts to look like digital on/off behavior<br>**Web Lab:** [Digital Octavia](https://fuzzbox.cairn.com/fuzzbox-octavia.html) — explore the 5 signal chain stages of the Roger Mayer Octavia; watch how full-wave rectification doubles frequency|**Project proposal due**|
+|12||Distortion Circuits|Handmade: Stompboxes<br>**Optional:** Muzique tone shaping<br>**Critical:** Hamilton, *Just around Midnight* (excerpts)|Jimi Hendrix fuzz — "Foxy Lady", "Little Wing" cleanup<br>Rolling Stones "(I Can't Get No) Satisfaction"<br>Stevie Ray Vaughan overdrive vs Hendrix fuzz<br>**Paired listening:** Black artist + white artist using comparable distortion (video if possible)<br>**What to listen for:** Cleanup & sustain; fuzz vs overdrive character; guitar volume as tone control; how the same signal chain reads differently across bodies and genres|**Individual:** Build overdrive and fuzz circuits; compare<br>**Notice:** How hard clipping starts to look like digital on/off behavior<br>**Web Lab:** [Digital Octavia](https://fuzzbox.cairn.com/fuzzbox-octavia.html) — explore the 5 signal chain stages of the Roger Mayer Octavia; watch how full-wave rectification doubles frequency<br>**Discussion:** Politics of distortion — who gets to sound "dirty"?|**Project proposal due**|
 |13|**MODULE 5: PROJECTS**|Logic & Discrete Sound|**Required:** Look Mum No Computer "How to make sound from CMOS chips": https://www.youtube.com/watch?v=JyiB0CQ2ifw<br>**Reference:** CD4069UB datasheet|Octave fuzz (Hendrix "Purple Haze", Green Ringer)<br>Gated/glitch textures (Sonic Youth, Merzbow, Autechre)<br>Bit-crushed sounds, chiptune, early video games<br>Square wave synths (Kraftwerk, NES soundtracks)<br>**What to listen for:** Abrupt on/off behavior; gating and chatter; hard digital edges; threshold-based switching|**Demo + optional individual:** Build CD4069 distortion (this becomes your project seed)<br>**Optional:** Build CD4013 octave divider<br>Articulate what you're hearing; begin integrating into final project|Project work begins|
 |14||Capstone Presentations|**Reference:** Muzique Lab index|Student-chosen inspiration reference|Present final project (air → circuit)|**Final presentation**|
 
@@ -63,6 +63,18 @@ The final project should demonstrate an understanding of **at least one stage** 
 - Demonstrate your project (live performance, recording, or documentation)
 - Include 1-2 sentences explicitly connecting your project to one earlier lab: **What did you steal from Week X? How did that earlier experiment inform your final system?**
 
+**Critical reflection (500–750 words), submitted with the final project:**
+
+Your reflection should address three things:
+
+1. **Describe** your sound as a listener. Not just "warm" or "fuzzy" — use sensory detail. What does it do to transients? Where does it sit between control and loss of control? What does your body do when you play through it?
+
+2. **Situate** it in lineages. Drawing on the Week 12 paired listening, who do you sound "next to"? What genre bin would a streaming algorithm file you under, and why? What does that sorting reveal about how distortion is racialized?
+
+3. **Interrogate** safety and access. Would your sound be heard as "safely rebellious classic rock," "dangerous noise," "DIY art school experimental," something else? What kinds of bodies and spaces does it seem built for? How does the fact that you built it cheaply, from parts and errors, change how you understand the "whiteness" or "safety" of distortion technologies?
+
+Reference at least one critical text on race and sound (Hamilton, Waksman, Mahon, Weheliye, Baraka, or Brooks).
+
 ---
 
 ## Assessment
@@ -82,6 +94,16 @@ Individual vs. collaborative work:
 - Mike Goldsmith, _Sound: A Very Short Introduction_
 - Ian Johnston, _Measured Tones: The Interplay of Physics and Music_
 - Nicolas Collins, _Handmade Electronic Music: The Art of Hardware Hacking_ (2nd Edition)
+
+## Critical Texts on Race, Sound, and Technology
+
+- Jack Hamilton, *Just around Midnight: Rock and Roll and the Racial Imagination* (2016) — how "rock" became white and sonic signifiers were central to the split
+- Steve Waksman, *Instruments of Desire: The Electric Guitar and the Shaping of Musical Experience* (1999) — cultural politics of the electric guitar's "dirty" sound
+- Maureen Mahon, *Right to Rock: The Black Rock Coalition and the Cultural Politics of Race* (2004) — Black musicians reclaiming distorted guitar music
+- Karl Hagstrom Miller, *Segregating Sound* (2010) — how the music industry constructed racial categories around timbre and genre
+- Amiri Baraka (LeRoi Jones), *Blues People* (1963) — foundational text on white American music's relationship to Black musical expression
+- Alexander Weheliye, *Phonographies: Grooves in Sonic Afro-Modernity* (2005) — sonic technologies of Blackness
+- Daphne Brooks, *Liner Notes for the Revolution* (2021) — Black feminist listening and the politics of popular music
 
 ## Optional/Reference Resources
 
