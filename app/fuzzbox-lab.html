@@ -109,6 +109,7 @@
     .three-col { grid-template-columns: 1fr; }
   }
 </style>
+<script src="recorder.js"></script>
 </head>
 <body>
 
@@ -498,9 +499,10 @@ function processDistortion(e) {
         break;
 
       case 'bitcrush':
-        // Quantize to N bits
-        const steps = Math.pow(2, bits - 1);
-        wet = Math.round(x * steps) / steps;
+        // Quantize to N bits (2^bits total levels spanning [-1, 1])
+        const levels = Math.pow(2, bits);
+        const step = 2 / levels;
+        wet = Math.floor((x + 1) / step) * step - 1 + step * 0.5;
         wet = Math.max(-1, Math.min(1, wet));
         break;
 

@@ -561,11 +561,15 @@ const MODULES = {
       sp.onaudioprocess = (e) => {
         const inp = e.inputBuffer.getChannelData(0);
         const out = e.outputBuffer.getChannelData(0);
-        const lvl = Math.pow(2, sp._bits);
+        const levels = Math.pow(2, sp._bits);
+        const step = 2 / levels;
         const ds = Math.max(1, Math.round(sp._ds));
         let held = 0;
         for (let i = 0; i < inp.length; i++) {
-          if (i % ds === 0) held = Math.round(inp[i] * lvl) / lvl;
+          if (i % ds === 0) {
+            held = Math.floor((inp[i] + 1) / step) * step - 1 + step * 0.5;
+            held = Math.max(-1, Math.min(1, held));
+          }
           out[i] = held;
         }
       };

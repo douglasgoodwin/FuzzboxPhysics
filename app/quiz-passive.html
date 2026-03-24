@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Passive Components Quiz</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  body { max-width: 760px; }
+
+  .q {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .q-num {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .q-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .q-diagram {
+    margin: 12px 0;
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    background: var(--canvas-bg);
+  }
+
+  .q-diagram svg {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .choice:hover { border-color: var(--text-tertiary); }
+
+  .choice.selected {
+    border-color: var(--accent);
+    background: rgba(232,128,58,0.08);
+  }
+
+  .choice.correct {
+    border-color: #4a4;
+    background: rgba(68,170,68,0.1);
+  }
+
+  .choice.wrong {
+    border-color: var(--red);
+    background: rgba(204,51,51,0.08);
+  }
+
+  .choice-letter {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    min-width: 18px;
+  }
+
+  /* Matching question */
+  .match-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .match-item {
+    padding: 10px;
+    border: 1px solid var(--border-light);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .match-item .knob-label { margin-bottom: 4px; }
+
+  .match-item select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    padding: 4px 8px;
+    width: 100%;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* Tracing question */
+  .trace-instruction {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .trace-btn-group {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+
+  .feedback.correct-fb {
+    border-left: 3px solid #4a4;
+    color: #8d8;
+  }
+
+  .feedback.wrong-fb {
+    border-left: 3px solid var(--red);
+    color: var(--text-secondary);
+  }
+
+  /* Score */
+  .score-bar {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .score-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .score-text span { color: var(--text); font-weight: 400; }
+
+  .formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    padding: 6px 10px;
+    border: 1px solid var(--border-light);
+    background: var(--canvas-bg);
+    display: inline-block;
+    margin: 4px 0;
+  }
+
+  .reference-box {
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    margin: 24px 0;
+    background: rgba(232,128,58,0.04);
+  }
+
+  .reference-box h3 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .reference-box p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 8px;
+  }
+
+  .reference-box p:last-child { margin-bottom: 0; }
+
+  .reference-box strong { color: var(--text); font-weight: 500; }
+
+  .reference-box .formula { font-size: 0.95rem; margin: 8px 0; display: block; width: fit-content; }
+
+  @media (max-width: 700px) {
+    .match-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>Passive Components Quiz</h1>
+</header>
+
+<div class="score-bar">
+  <div class="score-text">Score: <span id="score">0</span> / <span id="total">0</span></div>
+  <button onclick="resetQuiz()" style="font-size:0.7rem; padding:5px 12px">RESET</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q1: IDENTIFY THE COMPONENT -->
+<!-- ============================================================ -->
+<div class="q" id="q1">
+  <div class="q-num">Question 1 — Identify the component</div>
+  <div class="q-text">
+    Which of these schematic symbols represents a component that <strong>stores charge</strong>
+    and <strong>passes high frequencies more easily</strong> than low frequencies?
+  </div>
+  <div class="q-diagram">
+    <svg viewBox="0 0 500 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- A: Resistor -->
+      <text x="60" y="16" fill="#6e6e73" font-size="11" font-family="IBM Plex Mono" text-anchor="middle">A</text>
+      <line x1="20" y1="50" x2="35" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <path d="M35,50 l5,-12 l10,24 l10,-24 l10,24 l10,-24 l5,12" fill="none" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="85" y1="50" x2="100" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="60" y="85" fill="#86868b" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">R</text>
+
+      <!-- B: Capacitor -->
+      <text x="230" y="16" fill="#6e6e73" font-size="11" font-family="IBM Plex Mono" text-anchor="middle">B</text>
+      <line x1="190" y1="50" x2="222" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="222" y1="32" x2="222" y2="68" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="238" y1="32" x2="238" y2="68" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="238" y1="50" x2="270" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="230" y="85" fill="#86868b" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">C</text>
+
+      <!-- C: Potentiometer -->
+      <text x="400" y="16" fill="#6e6e73" font-size="11" font-family="IBM Plex Mono" text-anchor="middle">C</text>
+      <line x1="360" y1="50" x2="375" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <path d="M375,50 l5,-12 l10,24 l10,-24 l10,24 l10,-24 l5,12" fill="none" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="425" y1="50" x2="440" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="400" y1="30" x2="400" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <polygon points="394,40 406,40 400,46" fill="#f5f5f7"/>
+      <text x="400" y="85" fill="#86868b" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">POT</text>
+    </svg>
+  </div>
+  <div class="choices" data-q="q1" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Resistor — opposes current flow equally at all frequencies</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Capacitor — stores charge, impedance decreases at higher frequencies</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>Potentiometer — variable resistor with a wiper, controls level</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q1"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q2: WHERE IS THE FILTER? -->
+<!-- ============================================================ -->
+<div class="q" id="q2">
+  <div class="q-num">Question 2 — Where is the filter?</div>
+  <div class="q-text">
+    This is an RC low-pass filter. When you play a bright guitar signal through it,
+    does the output sound <strong>"brightened"</strong> or <strong>"darkened"</strong>?
+  </div>
+  <div class="q-diagram">
+    <svg viewBox="0 0 400 130" xmlns="http://www.w3.org/2000/svg">
+      <text x="10" y="20" fill="#86868b" font-size="10" font-family="IBM Plex Mono">IN</text>
+      <line x1="30" y1="50" x2="60" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Resistor -->
+      <path d="M60,50 l5,-12 l10,24 l10,-24 l10,24 l10,-24 l5,12" fill="none" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="85" y="35" fill="#e8803a" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">R</text>
+      <line x1="110" y1="50" x2="160" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Junction dot -->
+      <circle cx="160" cy="50" r="3" fill="#f5f5f7"/>
+      <!-- Capacitor to ground -->
+      <line x1="160" y1="50" x2="160" y2="70" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="148" y1="72" x2="172" y2="72" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="148" y1="80" x2="172" y2="80" stroke="#f5f5f7" stroke-width="2"/>
+      <text x="180" y="79" fill="#e8803a" font-size="10" font-family="IBM Plex Mono">C</text>
+      <line x1="160" y1="82" x2="160" y2="95" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Ground -->
+      <line x1="148" y1="95" x2="172" y2="95" stroke="#86868b" stroke-width="1.5"/>
+      <line x1="152" y1="100" x2="168" y2="100" stroke="#86868b" stroke-width="1.2"/>
+      <line x1="156" y1="105" x2="164" y2="105" stroke="#86868b" stroke-width="0.8"/>
+      <!-- Output -->
+      <line x1="160" y1="50" x2="250" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="255" y="20" fill="#86868b" font-size="10" font-family="IBM Plex Mono">OUT</text>
+      <!-- Label -->
+      <text x="120" y="120" fill="#6e6e73" font-size="9" font-family="IBM Plex Mono">R in series, C to ground = low-pass</text>
+    </svg>
+  </div>
+  <div class="choices" data-q="q2" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Brightened — the filter boosts high frequencies</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Darkened — it passes lows and cuts highs (low-pass)</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q2"></div>
+</div>
+
+<!-- REFERENCE: How capacitance relates to cutoff frequency -->
+<div class="reference-box">
+  <h3>How Capacitance Controls the Filter</h3>
+  <p>
+    The cutoff frequency of a first-order RC filter is:
+  </p>
+  <span class="formula">fc = 1 / (2&pi;RC)</span>
+  <p>
+    <strong>Larger C = lower cutoff. Smaller C = higher cutoff.</strong>
+    Capacitance sets how quickly the capacitor can charge and discharge relative to the waveform.
+    A bigger capacitor can follow slower (lower-frequency) wiggles, so it starts treating lower
+    frequencies as "high" and routing them along its preferred path.
+  </p>
+  <p>
+    <strong>In a low-pass</strong> (cap to ground): high frequencies see a low-impedance path
+    through the capacitor and get shunted to ground, while lows barely move charge on the cap
+    and pass to the output. A bigger C gives that low-impedance path at lower frequencies too,
+    so it absorbs a wider band of highs and upper-mids &mdash; the sound gets <strong>darker</strong>.
+  </p>
+  <p>
+    <strong>In a high-pass</strong> (cap in series): low frequencies see a large capacitive impedance
+    and are blocked, while highs see a small impedance and pass through. A bigger C reduces
+    that impedance at any given frequency, so more bass gets through and the cutoff moves
+    <strong>downward</strong>. A smaller C pushes the cutoff up, absorbing more bass.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q3: SERIES VS SHUNT -->
+<!-- ============================================================ -->
+<div class="q" id="q3">
+  <div class="q-num">Question 3 — Series vs. shunt</div>
+  <div class="q-text">
+    In the RC low-pass filter above, the capacitor C shunts high frequencies to ground.
+    If you <strong>decrease the capacitor value</strong> (smaller C), does the filter
+    cut highs <strong>more</strong> or <strong>less</strong>?
+  </div>
+  <div style="margin: 8px 0">
+    <span class="formula">fc = 1 / (2&pi;RC)</span>
+    <span style="font-size:0.8rem; color:var(--text-secondary); margin-left:8px">
+      &larr; smaller C = higher cutoff frequency
+    </span>
+  </div>
+  <div class="choices" data-q="q3" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>More — smaller cap filters more aggressively</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Less — cutoff frequency goes up, so more treble passes through</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q3"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q3b: BIGGER CAP IN LOW-PASS -->
+<!-- ============================================================ -->
+<div class="q" id="q3b">
+  <div class="q-num">Question 3b — Bigger cap, darker sound?</div>
+  <div class="q-text">
+    You're building a low-pass tone control for a guitar pedal. The current cap is 1nF
+    and the tone is too bright. You want to <strong>darken the sound</strong> (cut more treble).
+    Should you <strong>increase</strong> or <strong>decrease</strong> the capacitor value?
+  </div>
+  <div class="choices" data-q="q3b" data-answer="a">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Increase it (e.g., to 10nF) &mdash; bigger C lowers the cutoff, absorbing more treble</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Decrease it (e.g., to 100pF) &mdash; smaller C means less charge, less brightness</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q3b"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q3c: HIGH-PASS CAP SIZE -->
+<!-- ============================================================ -->
+<div class="q" id="q3c">
+  <div class="q-num">Question 3c — Coupling cap and bass loss</div>
+  <div class="q-text">
+    A coupling capacitor sits <strong>in series</strong> between your guitar pickup and the first
+    gain stage (acting as a high-pass filter). You notice the sound is <strong>too thin</strong>
+    &mdash; not enough bass. Should you use a <strong>larger</strong> or <strong>smaller</strong>
+    coupling cap to let more bass through?
+  </div>
+  <div class="choices" data-q="q3c" data-answer="a">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Larger &mdash; bigger C lowers the HPF cutoff, letting more bass pass through</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Smaller &mdash; smaller C has less impedance so more signal gets through</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q3c"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q4: SIGNAL PATH TRACING -->
+<!-- ============================================================ -->
+<div class="q" id="q4">
+  <div class="q-num">Question 4 — Signal path tracing</div>
+  <div class="q-text">
+    Here is a simplified true-bypass pedal wiring diagram. The footswitch toggles between
+    two states. When the pedal is <strong>bypassed</strong> (off), what happens to the audio signal?
+  </div>
+  <div class="q-diagram">
+    <svg viewBox="0 0 460 180" xmlns="http://www.w3.org/2000/svg">
+      <!-- Input jack -->
+      <rect x="10" y="60" width="50" height="30" rx="2" fill="none" stroke="#86868b" stroke-width="1"/>
+      <text x="35" y="79" fill="#86868b" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">INPUT</text>
+
+      <!-- Output jack -->
+      <rect x="400" y="60" width="50" height="30" rx="2" fill="none" stroke="#86868b" stroke-width="1"/>
+      <text x="425" y="79" fill="#86868b" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">OUTPUT</text>
+
+      <!-- Circuit block -->
+      <rect x="170" y="100" width="120" height="40" rx="2" fill="none" stroke="#e8803a" stroke-width="1"/>
+      <text x="230" y="124" fill="#e8803a" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">PEDAL CIRCUIT</text>
+
+      <!-- Footswitch -->
+      <rect x="150" y="30" width="160" height="30" rx="2" fill="none" stroke="#f5f5f7" stroke-width="1" stroke-dasharray="4,2"/>
+      <text x="230" y="49" fill="#f5f5f7" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">FOOTSWITCH (3PDT)</text>
+
+      <!-- Bypass path (direct) -->
+      <line x1="60" y1="75" x2="150" y2="75" stroke="#4a4" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <line x1="150" y1="75" x2="150" y2="45" stroke="#4a4" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <line x1="150" y1="45" x2="310" y2="45" stroke="#4a4" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <line x1="310" y1="45" x2="310" y2="75" stroke="#4a4" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <line x1="310" y1="75" x2="400" y2="75" stroke="#4a4" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="230" y="17" fill="#4a4" font-size="8" font-family="IBM Plex Mono" text-anchor="middle">BYPASS PATH (pedal OFF)</text>
+
+      <!-- Active path -->
+      <line x1="60" y1="75" x2="130" y2="75" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <line x1="130" y1="75" x2="130" y2="120" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <line x1="130" y1="120" x2="170" y2="120" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <line x1="290" y1="120" x2="330" y2="120" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <line x1="330" y1="120" x2="330" y2="75" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <line x1="330" y1="75" x2="400" y2="75" stroke="#e8803a" stroke-width="1" opacity="0.4"/>
+      <text x="230" y="165" fill="#e8803a" font-size="8" font-family="IBM Plex Mono" text-anchor="middle" opacity="0.5">ACTIVE PATH (pedal ON)</text>
+
+      <!-- LED + resistor (off to the side) -->
+      <circle cx="380" cy="130" r="6" fill="none" stroke="#86868b" stroke-width="1"/>
+      <text x="380" y="133" fill="#86868b" font-size="6" font-family="IBM Plex Mono" text-anchor="middle">LED</text>
+      <line x1="380" y1="136" x2="380" y2="148" stroke="#86868b" stroke-width="1"/>
+      <path d="M374,148 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#86868b" stroke-width="0.8"/>
+      <text x="398" y="155" fill="#6e6e73" font-size="7" font-family="IBM Plex Mono">R (limits current)</text>
+    </svg>
+  </div>
+  <div class="choices" data-q="q4" data-answer="a">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Signal goes straight from input jack to output jack through the switch, bypassing the circuit entirely</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>Signal still passes through the pedal circuit but the effect is muted</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>Signal is disconnected — no sound comes out</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q4"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q5: LED RESISTOR -->
+<!-- ============================================================ -->
+<div class="q" id="q5">
+  <div class="q-num">Question 5 — Protecting the LED</div>
+  <div class="q-text">
+    In the pedal wiring diagram above, what <strong>passive component</strong> protects the LED
+    indicator from burning out?
+  </div>
+  <div class="choices" data-q="q5" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>A capacitor in parallel with the LED</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>A resistor in series with the LED (limits current)</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>The footswitch — it only powers the LED briefly</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q5"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q6: MATCH FUNCTION TO FRAGMENT -->
+<!-- ============================================================ -->
+<div class="q" id="q6">
+  <div class="q-num">Question 6 — Match function to schematic fragment</div>
+  <div class="q-text">
+    Match each circuit fragment to its function. Look at where the component sits
+    relative to the audio signal path and ground.
+  </div>
+  <div class="q-diagram">
+    <svg viewBox="0 0 500 130" xmlns="http://www.w3.org/2000/svg">
+      <!-- Fragment 1: Cap in series -->
+      <text x="70" y="14" fill="#f5f5f7" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">Fragment 1</text>
+      <line x1="20" y1="40" x2="55" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="55" y1="25" x2="55" y2="55" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="63" y1="25" x2="63" y2="55" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="63" y1="40" x2="100" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="10" y="44" fill="#86868b" font-size="8" font-family="IBM Plex Mono">IN</text>
+      <text x="103" y="44" fill="#86868b" font-size="8" font-family="IBM Plex Mono">OUT</text>
+      <text x="59" y="68" fill="#e8803a" font-size="8" font-family="IBM Plex Mono" text-anchor="middle">C (series)</text>
+
+      <!-- Fragment 2: Cap to ground (with pot) -->
+      <text x="250" y="14" fill="#f5f5f7" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">Fragment 2</text>
+      <line x1="200" y1="40" x2="260" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <circle cx="260" cy="40" r="2.5" fill="#f5f5f7"/>
+      <line x1="260" y1="40" x2="300" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="260" y1="42" x2="260" y2="58" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="248" y1="60" x2="272" y2="60" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="248" y1="68" x2="272" y2="68" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="260" y1="70" x2="260" y2="80" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- pot symbol -->
+      <path d="M254,80 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#f5f5f7" stroke-width="1"/>
+      <line x1="260" y1="92" x2="260" y2="100" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="248" y1="100" x2="272" y2="100" stroke="#86868b" stroke-width="1.2"/>
+      <line x1="252" y1="104" x2="268" y2="104" stroke="#86868b" stroke-width="0.8"/>
+      <text x="285" y="76" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">C + pot</text>
+      <text x="285" y="86" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">to GND</text>
+
+      <!-- Fragment 3: Resistor to ground -->
+      <text x="420" y="14" fill="#f5f5f7" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">Fragment 3</text>
+      <line x1="380" y1="40" x2="420" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <circle cx="420" cy="40" r="2.5" fill="#f5f5f7"/>
+      <line x1="420" y1="40" x2="460" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="420" y1="42" x2="420" y2="55" stroke="#f5f5f7" stroke-width="1.5"/>
+      <path d="M414,55 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#f5f5f7" stroke-width="1"/>
+      <line x1="420" y1="67" x2="420" y2="80" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="408" y1="80" x2="432" y2="80" stroke="#86868b" stroke-width="1.2"/>
+      <line x1="412" y1="84" x2="428" y2="84" stroke="#86868b" stroke-width="0.8"/>
+      <text x="420" y="100" fill="#e8803a" font-size="8" font-family="IBM Plex Mono" text-anchor="middle">R to GND</text>
+    </svg>
+  </div>
+  <div class="match-grid">
+    <div class="match-item">
+      <div class="knob-label">FRAGMENT 1 — Cap in series with signal</div>
+      <select id="match1" onchange="checkMatch()">
+        <option value="">— select function —</option>
+        <option value="coupling">Coupling / DC blocking</option>
+        <option value="tone">Treble-cut tone control</option>
+        <option value="load">Level-set / load resistor</option>
+      </select>
+    </div>
+    <div class="match-item">
+      <div class="knob-label">FRAGMENT 2 — Cap + pot to ground</div>
+      <select id="match2" onchange="checkMatch()">
+        <option value="">— select function —</option>
+        <option value="coupling">Coupling / DC blocking</option>
+        <option value="tone">Treble-cut tone control</option>
+        <option value="load">Level-set / load resistor</option>
+      </select>
+    </div>
+    <div class="match-item">
+      <div class="knob-label">FRAGMENT 3 — Resistor to ground</div>
+      <select id="match3" onchange="checkMatch()">
+        <option value="">— select function —</option>
+        <option value="coupling">Coupling / DC blocking</option>
+        <option value="tone">Treble-cut tone control</option>
+        <option value="load">Level-set / load resistor</option>
+      </select>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q6"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q7: COUPLING CAP -->
+<!-- ============================================================ -->
+<div class="q" id="q7">
+  <div class="q-num">Question 7 — Coupling capacitor</div>
+  <div class="q-text">
+    In a guitar pedal schematic, you often see a capacitor placed <strong>in series</strong>
+    between two gain stages. What is its primary purpose?
+  </div>
+  <div class="choices" data-q="q7" data-answer="c">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>It amplifies the signal between stages</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>It stores energy to power the next stage</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>It blocks DC bias voltage while passing the AC audio signal through</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'd')">
+      <span class="choice-letter">D</span>
+      <span>It adds distortion by clipping the waveform</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q7"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q8: HIGH-PASS FILTER -->
+<!-- ============================================================ -->
+<div class="q" id="q8">
+  <div class="q-num">Question 8 — High-pass filter</div>
+  <div class="q-text">
+    If you swap the positions of R and C in the low-pass filter from Question 2 — putting
+    the <strong>capacitor in series</strong> and the <strong>resistor to ground</strong> —
+    what kind of filter do you get?
+  </div>
+  <div class="q-diagram">
+    <svg viewBox="0 0 400 130" xmlns="http://www.w3.org/2000/svg">
+      <text x="10" y="20" fill="#86868b" font-size="10" font-family="IBM Plex Mono">IN</text>
+      <line x1="30" y1="50" x2="65" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Capacitor in series -->
+      <line x1="65" y1="32" x2="65" y2="68" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="75" y1="32" x2="75" y2="68" stroke="#f5f5f7" stroke-width="2"/>
+      <text x="70" y="24" fill="#e8803a" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">C</text>
+      <line x1="75" y1="50" x2="160" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Junction dot -->
+      <circle cx="160" cy="50" r="3" fill="#f5f5f7"/>
+      <!-- Resistor to ground -->
+      <line x1="160" y1="50" x2="160" y2="60" stroke="#f5f5f7" stroke-width="1.5"/>
+      <path d="M154,60 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="178" y="74" fill="#e8803a" font-size="10" font-family="IBM Plex Mono">R</text>
+      <line x1="160" y1="72" x2="160" y2="95" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Ground -->
+      <line x1="148" y1="95" x2="172" y2="95" stroke="#86868b" stroke-width="1.5"/>
+      <line x1="152" y1="100" x2="168" y2="100" stroke="#86868b" stroke-width="1.2"/>
+      <line x1="156" y1="105" x2="164" y2="105" stroke="#86868b" stroke-width="0.8"/>
+      <!-- Output -->
+      <line x1="160" y1="50" x2="250" y2="50" stroke="#f5f5f7" stroke-width="1.5"/>
+      <text x="255" y="20" fill="#86868b" font-size="10" font-family="IBM Plex Mono">OUT</text>
+      <text x="120" y="120" fill="#6e6e73" font-size="9" font-family="IBM Plex Mono">C in series, R to ground = ???</text>
+    </svg>
+  </div>
+  <div class="choices" data-q="q8" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Band-pass — only lets a narrow range through</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>High-pass — passes highs, cuts lows (tightens the bass)</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>Still a low-pass — swapping R and C doesn't change the filter type</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q8"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q9: PEDAL STAGE MAPPING -->
+<!-- ============================================================ -->
+<div class="q" id="q9">
+  <div class="q-num">Question 9 — From blocks to schematic</div>
+  <div class="q-text">
+    In the Modular Pedalboard lab, a Tube Screamer-style pedal is built as:<br>
+    <span class="formula">HPF 720 Hz &rarr; Gain &rarr; Soft Clip &rarr; LPF 3.5 kHz &rarr; Level</span><br><br>
+    In a real TS-808 schematic, which <strong>passive components</strong> create the
+    input high-pass filter (the first stage)?
+  </div>
+  <div class="choices" data-q="q9" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>Two resistors in a voltage divider</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>A capacitor in series with the signal and a resistor to ground — the cap blocks low frequencies</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>An inductor in series — it blocks highs</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q9"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Q10: CUTOFF CALCULATION -->
+<!-- ============================================================ -->
+<div class="q" id="q10">
+  <div class="q-num">Question 10 — Cutoff frequency</div>
+  <div class="q-text">
+    A filter has R = 10k&Omega; and C = 22nF.
+    Using <span class="formula">fc = 1 / (2&pi;RC)</span>, what is the approximate cutoff frequency?
+  </div>
+  <div class="choices" data-q="q10" data-answer="b">
+    <div class="choice" onclick="selectChoice(this, 'a')">
+      <span class="choice-letter">A</span>
+      <span>72 Hz</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'b')">
+      <span class="choice-letter">B</span>
+      <span>723 Hz</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'c')">
+      <span class="choice-letter">C</span>
+      <span>7,230 Hz</span>
+    </div>
+    <div class="choice" onclick="selectChoice(this, 'd')">
+      <span class="choice-letter">D</span>
+      <span>72,300 Hz</span>
+    </div>
+  </div>
+  <div class="feedback" id="fb-q10"></div>
+</div>
+
+
+<script>
+// ============================================================
+// QUIZ ENGINE
+// ============================================================
+const EXPLANATIONS = {
+  q1: {
+    correct: 'Correct! The capacitor (B) stores charge on its two plates. Its impedance is 1/(2\u03c0fC) \u2014 at higher frequencies, impedance drops, so high frequencies pass more easily.',
+    wrong: 'Not quite. The capacitor (B) is the one that stores charge. Its impedance decreases with frequency (Z = 1/2\u03c0fC), which is why it passes high frequencies more easily. Resistors have constant impedance at all frequencies.'
+  },
+  q2: {
+    correct: 'Correct! A low-pass filter passes low frequencies and cuts (attenuates) high frequencies. The capacitor shunts highs to ground, so the output sounds darker / more muffled.',
+    wrong: 'The answer is "darkened." In a low-pass filter, the capacitor shunts high frequencies to ground. The output keeps the lows but loses the highs \u2014 it sounds darker.'
+  },
+  q3: {
+    correct: 'Correct! fc = 1/(2\u03c0RC). Smaller C means higher cutoff frequency \u2014 the filter lets more treble through before it starts rolling off. Less treble is cut.',
+    wrong: 'The answer is "less." From fc = 1/(2\u03c0RC): smaller C raises the cutoff frequency, meaning more high frequencies pass through before the filter kicks in.'
+  },
+  q3b: {
+    correct: 'Correct! In a low-pass filter (cap to ground), a bigger capacitor gives high frequencies a low-impedance path to ground at lower frequencies too. The cutoff drops, absorbing more treble and upper-mids \u2014 the sound gets darker. Going from 1nF to 10nF would move the cutoff down by a factor of 10.',
+    wrong: 'You want to increase the cap. In a low-pass (cap to ground), bigger C = lower cutoff = more treble absorbed. The capacitor shunts highs to ground \u2014 a bigger cap can shunt lower frequencies too, darkening the sound further.'
+  },
+  q3c: {
+    correct: 'Correct! A series coupling cap acts as a high-pass filter. Bigger C = lower cutoff = more bass gets through. The larger capacitor has lower impedance at bass frequencies, so those frequencies can pass instead of being blocked. This is why pedals like the Tube Screamer use a relatively small coupling cap (~0.047\u00b5F) to deliberately thin the bass before clipping.',
+    wrong: 'You want a larger cap. In a high-pass (cap in series), bigger C means lower impedance at bass frequencies, so more bass passes through and the cutoff moves downward. Smaller C would block even more bass, making the sound thinner.'
+  },
+  q4: {
+    correct: 'Correct! True bypass means the switch routes the signal directly from input to output, completely bypassing the pedal circuit. No coloring, no loading \u2014 as if the pedal weren\'t there.',
+    wrong: 'In true bypass, the footswitch routes signal directly from input jack to output jack, bypassing the circuit entirely. The pedal circuit is completely disconnected from the signal path.'
+  },
+  q5: {
+    correct: 'Correct! A resistor in series with the LED limits current flow. Without it, the full supply voltage would drive too much current through the LED and burn it out. Typical value: 1k\u03a9\u201310k\u03a9.',
+    wrong: 'The answer is the series resistor. It limits the current flowing through the LED. Without it, the LED would draw too much current from the power supply and burn out.'
+  },
+  q7: {
+    correct: 'Correct! A coupling capacitor blocks DC while passing AC. Each gain stage has its own DC bias point \u2014 the coupling cap prevents one stage\'s DC voltage from upsetting the next stage\'s bias. The audio signal (AC) passes right through.',
+    wrong: 'The coupling capacitor blocks DC bias voltage while passing the AC audio signal. Each gain stage operates at a different DC voltage \u2014 the cap isolates them while letting the audio through.'
+  },
+  q8: {
+    correct: 'Correct! C in series + R to ground = high-pass filter. The capacitor blocks low frequencies (high impedance at low f) and passes highs. The resistor provides a path to ground for the signal that does get through. This is the "bass cut" or "tighten lows" stage in pedals like the Tube Screamer.',
+    wrong: 'Swapping R and C gives you a high-pass filter. The series capacitor blocks low frequencies (its impedance is high at low f) and passes highs through to the output.'
+  },
+  q9: {
+    correct: 'Correct! The input HPF in a TS-808 is a coupling capacitor in series with a resistor to ground. The cap blocks the low frequencies below ~720 Hz, which is why the Tube Screamer "tightens" the lows before the signal hits the clipping stage.',
+    wrong: 'The input HPF is a capacitor in series + resistor to ground \u2014 the same RC high-pass from Questions 3 and 8. The cap blocks frequencies below ~720 Hz, tightening the bass before clipping.'
+  },
+  q10: {
+    correct: 'Correct! fc = 1/(2\u03c0 \u00d7 10,000 \u00d7 0.000000022) = 1/(0.001382) \u2248 723 Hz. This is right in the range of guitar pedal tone circuits \u2014 the TS-808 input HPF is around this value.',
+    wrong: 'fc = 1/(2\u03c0 \u00d7 10,000 \u00d7 22\u00d710\u207b\u2079) = 1/(2\u03c0 \u00d7 0.00022) = 1/0.001382 \u2248 723 Hz. Remember to convert 22nF to farads: 22 \u00d7 10\u207b\u2079.'
+  }
+};
+
+let answered = {};
+let score = 0;
+
+function selectChoice(el, value) {
+  const choicesDiv = el.closest('.choices');
+  const qId = choicesDiv.dataset.q;
+  const correctAnswer = choicesDiv.dataset.answer;
+
+  // Only allow one answer
+  if (answered[qId]) return;
+  answered[qId] = true;
+
+  // Mark selection
+  el.classList.add('selected');
+
+  const isCorrect = value === correctAnswer;
+  if (isCorrect) {
+    el.classList.add('correct');
+    score++;
+  } else {
+    el.classList.add('wrong');
+    // Highlight correct answer
+    const choices = choicesDiv.querySelectorAll('.choice');
+    choices.forEach(c => {
+      const letter = c.querySelector('.choice-letter').textContent.trim().toLowerCase();
+      if (letter === correctAnswer) c.classList.add('correct');
+    });
+  }
+
+  // Show feedback
+  const fb = document.getElementById('fb-' + qId);
+  const explanation = EXPLANATIONS[qId];
+  fb.textContent = isCorrect ? explanation.correct : explanation.wrong;
+  fb.className = 'feedback show ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+
+  updateScore();
+}
+
+// Q6 matching
+const MATCH_ANSWERS = { match1: 'coupling', match2: 'tone', match3: 'load' };
+let matchAnswered = false;
+
+function checkMatch() {
+  if (matchAnswered) return;
+  const v1 = document.getElementById('match1').value;
+  const v2 = document.getElementById('match2').value;
+  const v3 = document.getElementById('match3').value;
+
+  // Only check when all three are filled
+  if (!v1 || !v2 || !v3) return;
+  matchAnswered = true;
+  answered['q6'] = true;
+
+  const correct = v1 === 'coupling' && v2 === 'tone' && v3 === 'load';
+  if (correct) score++;
+
+  const fb = document.getElementById('fb-q6');
+  if (correct) {
+    fb.textContent = 'Correct! A series cap blocks DC (coupling). A cap + pot to ground makes a variable treble cut (tone control \u2014 the pot adjusts how much high frequency is shunted to ground). A resistor to ground sets the signal level or provides a load/bias path.';
+    fb.className = 'feedback show correct-fb';
+  } else {
+    fb.textContent = 'Not quite. Fragment 1 (cap in series) = coupling / DC blocking. Fragment 2 (cap + pot to ground) = treble-cut tone control (the pot varies how much treble is shunted to ground). Fragment 3 (resistor to ground) = level-set / load.';
+    fb.className = 'feedback show wrong-fb';
+  }
+
+  // Disable selects
+  ['match1','match2','match3'].forEach(id => {
+    document.getElementById(id).disabled = true;
+  });
+
+  updateScore();
+}
+
+function updateScore() {
+  const total = Object.keys(answered).length;
+  document.getElementById('score').textContent = score;
+  document.getElementById('total').textContent = total;
+}
+
+function resetQuiz() {
+  answered = {};
+  matchAnswered = false;
+  score = 0;
+  document.getElementById('score').textContent = '0';
+  document.getElementById('total').textContent = '0';
+
+  // Reset choices
+  document.querySelectorAll('.choice').forEach(c => {
+    c.classList.remove('selected', 'correct', 'wrong');
+  });
+
+  // Reset feedback
+  document.querySelectorAll('.feedback').forEach(fb => {
+    fb.className = 'feedback';
+    fb.textContent = '';
+  });
+
+  // Reset match selects
+  ['match1','match2','match3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.disabled = false;
+  });
+}
+</script>
+
+</body>
+</html>

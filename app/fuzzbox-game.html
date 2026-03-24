@@ -177,6 +177,7 @@
     .choices { flex-direction: column; align-items: center; }
   }
 </style>
+<script src="recorder.js"></script>
 </head>
 <body>
 
@@ -361,8 +362,10 @@ function applyDistortion(x) {
       return val / THRESHOLD;
     }
     case 'bitcrush': {
-      const steps = Math.pow(2, BITS - 1);
-      return Math.max(-1, Math.min(1, Math.round(x * steps) / steps));
+      const levels = Math.pow(2, BITS);
+      const step = 2 / levels;
+      const q = Math.floor((x + 1) / step) * step - 1 + step * 0.5;
+      return Math.max(-1, Math.min(1, q));
     }
     case 'tube': {
       const bias = 0.15;
