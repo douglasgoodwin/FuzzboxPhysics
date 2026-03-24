@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUZZBOX PHYSICS — Modular Pedalboard</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  .rack {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding: 16px 0;
+    min-height: 120px;
+  }
+
+  .pedal {
+    flex-shrink: 0;
+    width: 176px;
+    border: 1px solid var(--border);
+    background: var(--canvas-bg);
+    padding: 10px;
+    user-select: none;
+  }
+
+  .pedal.dragging { opacity: 0.4; }
+
+  .pedal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .pedal-name {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .pedal-remove {
+    font-size: 0.7rem;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    padding: 0 2px;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .pedal-remove:hover { color: var(--red); background: none; }
+
+  .pedal .knob-group { align-items: flex-start; min-width: unset; width: 100%; }
+  .pedal input[type=range] { max-width: 100%; width: 100%; }
+  .pedal .knob-label { font-size: 0.6rem; }
+  .pedal .knob-value { font-size: 0.75rem; }
+  .pedal .param-row { margin-top: 6px; }
+
+  .pedal select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    padding: 4px 6px;
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+  }
+
+  .chain-arrow {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    align-self: center;
+    line-height: 1;
+  }
+
+  .empty-chain {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    padding: 30px 20px;
+    text-align: center;
+    border: 1px dashed var(--border-light);
+    width: 100%;
+  }
+
+  .palette { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+
+  .palette button {
+    font-size: 0.68rem;
+    padding: 6px 12px;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .palette button:hover {
+    background: rgba(232,128,58,0.15);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .palette-group-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .palette-group-label:first-child { margin-top: 0; }
+
+  .bypass-btn {
+    font-size: 0.6rem !important;
+    padding: 3px 8px !important;
+    letter-spacing: 0.08em;
+  }
+
+  .bypass-btn.bypassed {
+    color: var(--red) !important;
+    border-color: var(--red) !important;
+  }
+
+  /* Noise floor meter inside pedals */
+  .noise-meter {
+    height: 3px;
+    background: var(--border-light);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .noise-meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--text-tertiary), var(--accent), var(--red));
+    transition: width 0.08s;
+  }
+
+  /* Schematics */
+  .pedal-schematic {
+    margin: 6px 0;
+    padding: 4px 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .pedal-schematic svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Signal flow overview */
+  .flow-overview {
+    overflow-x: auto;
+    padding: 8px 0;
+    margin-bottom: 16px;
+  }
+
+  .flow-overview svg {
+    display: block;
+    min-width: 100%;
+    height: auto;
+  }
+
+  canvas { height: 140px; cursor: crosshair; image-rendering: pixelated; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .warning {
+    color: var(--red);
+    font-size: 0.7rem;
+    margin-top: 6px;
+  }
+
+  .noise-indicator {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+
+  .noise-indicator span { color: var(--text); }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .three-col { grid-template-columns: 1fr; }
+    .rack { flex-direction: column; align-items: stretch; }
+    .pedal { width: 100%; }
+    .chain-arrow { transform: rotate(90deg); align-self: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+    <a href="fuzzbox-pedalboard-recipes.html" class="nav-link" style="margin-left:12px">Recipe Book</a>
+  </div>
+  <h1>Modular Pedalboard</h1>
+</header>
+
+<!-- SOURCE -->
+<div class="three-col">
+  <div class="panel">
+    <div class="section-label">Signal Source</div>
+    <div class="btn-group" style="margin-bottom:10px">
+      <button id="btn-osc" onclick="setSource('osc')" class="active">OSC TEST</button>
+      <button id="btn-mic" class="amber-btn" onclick="setSource('mic')">MIC IN</button>
+      <button id="btn-wav" class="amber-btn" onclick="document.getElementById('wav-input').click()">LOAD FILE</button>
+    </div>
+    <input type="file" id="wav-input" accept="audio/*" style="display:none" onchange="loadFile(this)">
+    <div class="btn-group" id="wav-btns" style="margin-bottom:6px"></div>
+    <div class="knob-group" style="align-items:flex-start; min-width:unset">
+      <div class="knob-label">OSC WAVEFORM</div>
+      <select id="osc-type" onchange="updateOsc()">
+        <option value="sine">SINE</option>
+        <option value="sawtooth" selected>SAWTOOTH</option>
+        <option value="square">SQUARE</option>
+        <option value="triangle">TRIANGLE</option>
+      </select>
+    </div>
+    <div class="controls-row" style="margin-top:8px">
+      <div class="knob-group">
+        <div class="knob-label">FREQ (Hz)</div>
+        <input type="range" id="osc-freq" min="50" max="2000" value="220" step="1" oninput="updateOsc(); ud('osc-freq-val', this.value+'Hz')">
+        <div class="knob-value" id="osc-freq-val">220Hz</div>
+      </div>
+      <div class="knob-group">
+        <div class="knob-label">INPUT GAIN</div>
+        <input type="range" id="input-gain" min="0" max="2" value="0.8" step="0.01" oninput="updateGains(); ud('input-gain-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="input-gain-val">80%</div>
+      </div>
+    </div>
+    <p class="warning" id="mic-warning" style="display:none">Use headphones to avoid feedback</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Output</div>
+    <div class="controls-row" style="margin-top:0">
+      <div class="knob-group">
+        <div class="knob-label">VOLUME</div>
+        <input type="range" id="out-vol" min="0" max="1" value="0.7" step="0.01" oninput="updateGains(); ud('out-vol-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="out-vol-val">70%</div>
+      </div>
+      <button onclick="togglePlay()" id="play-btn" style="font-size:0.85rem; padding:8px 16px">START</button>
+    </div>
+    <div class="stats" style="margin-top:10px">
+      <span class="status-dot" id="audio-dot"></span><span id="audio-status">AUDIO OFFLINE</span>
+    </div>
+    <div class="noise-indicator" style="margin-top:8px">
+      Noise floor: <span id="noise-floor-val">--</span> dB
+    </div>
+    <div class="controls-row" style="margin-top:8px">
+      <div class="knob-group">
+        <div class="knob-label">60 Hz NOISE</div>
+        <input type="range" id="power-noise" min="0" max="0.1" value="0" step="0.001" oninput="updatePowerNoise(); ud('pn-val', this.value > 0 ? Math.round(this.value*1000)/10+'%' : 'OFF')">
+        <div class="knob-value" id="pn-val">OFF</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Example</div>
+    <div class="btn-group" style="flex-direction:column; gap:4px">
+      <button class="amber-btn" onclick="loadPreset('ts')">LOAD TS-STYLE EXAMPLE</button>
+    </div>
+    <div id="preset-recipe" class="stats" style="margin-top:8px; line-height:1.7"></div>
+    <div style="margin-top:12px; font-size:0.75rem; color:var(--text-secondary); line-height:1.7">
+      <strong style="color:var(--text)">Try these experiments:</strong><br>
+      1. Load the TS example, then move the HPF after the clipper &mdash; what changes?<br>
+      2. Build a chain from scratch: start with Gain + Hard Clip + LPF<br>
+      3. Try adding a second clipping stage &mdash; how does it sound different from boosting the first?<br>
+      4. Turn on 60 Hz noise, then add an HPF to remove it<br>
+      5. Put a Noise Gate at the end of a high-gain chain
+    </div>
+    <a href="fuzzbox-pedalboard-recipes.html" style="display:inline-block; margin-top:10px; font-size:0.75rem; color:var(--accent); text-decoration:none">See all pedal recipes &rarr;</a>
+  </div>
+</div>
+
+<!-- PEDALBOARD -->
+<div class="section">
+  <div class="section-label">Pedal Chain — click to add, drag to reorder, signal flows left to right</div>
+  <div style="display:flex; gap:6px; margin-bottom:8px; align-items:center">
+    <button onclick="exportChain()" style="font-size:0.68rem; padding:5px 12px">SAVE CHAIN</button>
+    <button onclick="document.getElementById('import-input').click()" style="font-size:0.68rem; padding:5px 12px">LOAD CHAIN</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importChain(this)">
+    <button onclick="clearChain()" style="font-size:0.68rem; padding:5px 12px; border-color:var(--red); color:var(--red)">CLEAR</button>
+  </div>
+  <div class="palette" id="palette"></div>
+  <div class="flow-overview" id="flow-overview"></div>
+  <div class="rack" id="rack"></div>
+</div>
+
+<!-- VISUALIZERS -->
+<div class="grid">
+  <div class="panel">
+    <div class="section-label">Input Waveform</div>
+    <canvas id="scope-in"></canvas>
+  </div>
+  <div class="panel">
+    <div class="section-label">Output Waveform</div>
+    <canvas id="scope-out"></canvas>
+  </div>
+</div>
+<div class="grid">
+  <div class="panel">
+    <div class="section-label">Spectrum — Input</div>
+    <canvas id="fft-in" height="120"></canvas>
+  </div>
+  <div class="panel">
+    <div class="section-label">Spectrum — Output</div>
+    <canvas id="fft-out" height="120"></canvas>
+  </div>
+</div>
+
+<div class="explanation" style="margin-top:24px">
+  <strong>How it works:</strong> Each pedal is a Web Audio node wired in series.
+  Filters use BiquadFilterNode; distortion uses WaveShaperNode or ScriptProcessorNode;
+  delay uses DelayNode with feedback. Drag pedals to reorder — try "filter before gain"
+  vs "gain before filter" and hear how pre-emphasis changes what gets clipped.
+  The presets show how classic pedals are built from these same blocks.
+  Turn up 60 Hz noise to hear how filtering and gain staging interact with a dirty power supply.
+</div>
+
+<div class="explanation" style="margin-top:12px">
+  <strong>Circuit schematics:</strong> Each module card shows its analog circuit equivalent.
+  Gain stages use <strong>JFET transistors</strong> (common-source amplifiers — the building block of most guitar buffers and boosts).
+  Clipping stages use <strong>CMOS 4069UB unbuffered inverters</strong> biased into their linear region — the same
+  $0.50 chip from Craig Anderton's "Tube Sound Fuzz" that gives you six configurable gain/distortion stages.
+  Soft clip puts diodes in the feedback path (TS-style); hard clip puts them to the rails (RAT-style).
+  The noise gate uses a JFET as a voltage-controlled attenuator, with an envelope detector driving the gate pin.
+  Filters are passive RC networks; the tone stack chains three biquad filters (HPF + peaking mid + LPF) to
+  approximate classic Fender, Marshall, and Big Muff EQ curves.
+</div>
+
+
+<script>
+// Presets for this page (starter lab — just one example)
+const PRESETS = {
+  'ts': {
+    label: 'Tube Screamer-style overdrive',
+    recipe: 'HPF 720 Hz (tighten lows) \u2192 Soft Clip gain ~40 dB, asym diodes in feedback \u2192 LPF 3.5 kHz (remove fizz) \u2192 Level',
+    source: 'Ibanez TS808 / TS9 topology (ElectroSmash)',
+    chain: [
+      { type: 'highpass', params: { frequency: 720, Q: 0.707 } },
+      { type: 'gain', params: { gain: 4 } },
+      { type: 'softclip', params: { drive: 8, asym: 0.3 } },
+      { type: 'lowpass', params: { frequency: 3500, Q: 0.707 } },
+      { type: 'gain', params: { gain: 0.6 } }
+    ]
+  }
+};
+</script>
+<script src="pedalboard-engine.js"></script>
+
+</body>
+</html>

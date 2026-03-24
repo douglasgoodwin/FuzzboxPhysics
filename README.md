@@ -17,7 +17,7 @@ Requires [Node.js](https://nodejs.org) (any recent version). No dependencies to 
 
 ## Web Labs
 
-Browser-based tools built with the Web Audio API. All are single self-contained HTML files — no build step, no frameworks.
+Browser-based tools built with the Web Audio API. No build step, no frameworks. Most labs are single self-contained HTML files with inline JS. The two pedalboard pages share a common engine (`pedalboard-engine.js`) to avoid duplication.
 
 ### Distortion Lab (`fuzzbox-lab.html`)
 
@@ -50,6 +50,25 @@ What does an entire piece of music sound like all at once? Computes the average 
 ### Name That Distortion (`fuzzbox-game.html`)
 
 Ear training game. A mystery distortion is applied to a signal — students use the waveform, spectrum, and their ears to identify which algorithm is active. Three difficulty levels, streak scoring, and the option to hide the visualizations for ears-only mode.
+
+### Modular Pedalboard (`fuzzbox-pedalboard.html`)
+
+Build your own signal chain from scratch. Drag and reorder filter, gain, distortion, and utility modules to hear how topology changes the sound. Each module shows its analog circuit schematic — JFET common-source amplifiers for gain, CMOS 4069UB inverters for clipping, passive RC networks for filters. Bias point control on clipping stages demonstrates how shifting the DC operating point introduces even harmonics. One example preset (TS-style) plus guided experiments. Save/load chains as JSON files. Shared engine in `pedalboard-engine.js`.
+
+Available modules: Low-Pass, High-Pass, Band-Pass, Tone Stack (Flat/Treble Cut/Big Muff/Fender/Marshall), Peak EQ, Clean Boost, Soft Clip (with bias + asymmetry), Hard Clip (with bias + asymmetry), Foldback, Rectifier (full-wave/half-wave), Bit Crush, Noise Gate, Delay.
+
+### Pedalboard Recipe Book (`fuzzbox-pedalboard-recipes.html`)
+
+Thirteen classic pedal topologies deconstructed into building blocks. Each recipe shows the signal chain, component-level rationale, and source topology reference. Load any recipe, then rearrange blocks to hear what each stage contributes.
+
+- **Overdrive:** Tube Screamer, Klon Centaur, Blues Driver, Clean Boost, Rangemaster
+- **Distortion:** ProCo Rat, Boss DS-1, MXR Distortion+ / DOD 250
+- **Fuzz:** Big Muff Pi, Fuzz Face, Tonebender Mk II, Octavia
+- **Lo-fi:** AM Radio
+
+### Phase Drift (`fuzzbox-drift.html`)
+
+Generative phasing piece. Fourteen sine wave voices cycle at slightly different rates through D major, drifting in and out of alignment. The harmony is always consonant but never repeats. Uses the Strudel library.
 
 ### Exercises and Worksheets
 
@@ -130,6 +149,10 @@ _FUZZBOX/
     fuzzbox-lab.html
     fuzzbox-sculptor.html
     fuzzbox-octavia.html
+    fuzzbox-pedalboard.html       # modular pedalboard (starter)
+    fuzzbox-pedalboard-recipes.html # pedalboard recipe book (13 presets)
+    pedalboard-engine.js          # shared engine for both pedalboard pages
+    fuzzbox-drift.html
 
   wavs/                         # audio clips for the labs
     cmajdirect_2sec.wav
