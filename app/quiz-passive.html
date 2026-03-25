@@ -556,22 +556,24 @@
       <text x="103" y="44" fill="#86868b" font-size="8" font-family="IBM Plex Mono">OUT</text>
       <text x="59" y="68" fill="#e8803a" font-size="8" font-family="IBM Plex Mono" text-anchor="middle">C (series)</text>
 
-      <!-- Fragment 2: Cap to ground (with pot) -->
+      <!-- Fragment 2: Pot + cap to ground (shunt tone control) -->
       <text x="250" y="14" fill="#f5f5f7" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">Fragment 2</text>
       <line x1="200" y1="40" x2="260" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
       <circle cx="260" cy="40" r="2.5" fill="#f5f5f7"/>
       <line x1="260" y1="40" x2="300" y2="40" stroke="#f5f5f7" stroke-width="1.5"/>
-      <line x1="260" y1="42" x2="260" y2="58" stroke="#f5f5f7" stroke-width="1.5"/>
-      <line x1="248" y1="60" x2="272" y2="60" stroke="#f5f5f7" stroke-width="2"/>
-      <line x1="248" y1="68" x2="272" y2="68" stroke="#f5f5f7" stroke-width="2"/>
-      <line x1="260" y1="70" x2="260" y2="80" stroke="#f5f5f7" stroke-width="1.5"/>
-      <!-- pot symbol -->
-      <path d="M254,80 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#f5f5f7" stroke-width="1"/>
-      <line x1="260" y1="92" x2="260" y2="100" stroke="#f5f5f7" stroke-width="1.5"/>
+      <line x1="260" y1="42" x2="260" y2="55" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- pot symbol (first in shunt path) -->
+      <path d="M254,55 l3,-6 l6,12 l6,-12 l3,6" fill="none" stroke="#f5f5f7" stroke-width="1"/>
+      <line x1="260" y1="67" x2="260" y2="78" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- cap symbol (second in shunt path) -->
+      <line x1="248" y1="78" x2="272" y2="78" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="248" y1="86" x2="272" y2="86" stroke="#f5f5f7" stroke-width="2"/>
+      <line x1="260" y1="88" x2="260" y2="100" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- ground symbol -->
       <line x1="248" y1="100" x2="272" y2="100" stroke="#86868b" stroke-width="1.2"/>
       <line x1="252" y1="104" x2="268" y2="104" stroke="#86868b" stroke-width="0.8"/>
-      <text x="285" y="76" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">C + pot</text>
-      <text x="285" y="86" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">to GND</text>
+      <text x="285" y="70" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">pot + C</text>
+      <text x="285" y="80" fill="#e8803a" font-size="8" font-family="IBM Plex Mono">to GND</text>
 
       <!-- Fragment 3: Resistor to ground -->
       <text x="420" y="14" fill="#f5f5f7" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">Fragment 3</text>
@@ -597,7 +599,7 @@
       </select>
     </div>
     <div class="match-item">
-      <div class="knob-label">FRAGMENT 2 — Cap + pot to ground</div>
+      <div class="knob-label">FRAGMENT 2 — Pot + cap to ground</div>
       <select id="match2" onchange="checkMatch()">
         <option value="">— select function —</option>
         <option value="coupling">Coupling / DC blocking</option>
@@ -869,10 +871,10 @@ function checkMatch() {
 
   const fb = document.getElementById('fb-q6');
   if (correct) {
-    fb.textContent = 'Correct! A series cap blocks DC (coupling). A cap + pot to ground makes a variable treble cut (tone control \u2014 the pot adjusts how much high frequency is shunted to ground). A resistor to ground sets the signal level or provides a load/bias path.';
+    fb.textContent = 'Correct! A series cap blocks DC (coupling). A pot + cap to ground makes a variable treble cut (tone control \u2014 the pot adjusts how much high frequency is shunted to ground). A resistor to ground sets the signal level or provides a DC return path for the circuit.';
     fb.className = 'feedback show correct-fb';
   } else {
-    fb.textContent = 'Not quite. Fragment 1 (cap in series) = coupling / DC blocking. Fragment 2 (cap + pot to ground) = treble-cut tone control (the pot varies how much treble is shunted to ground). Fragment 3 (resistor to ground) = level-set / load.';
+    fb.textContent = 'Not quite. Fragment 1 (cap in series) = coupling / DC blocking. Fragment 2 (pot + cap to ground) = treble-cut tone control (the pot varies how much treble is shunted to ground). Fragment 3 (resistor to ground) = level-set / load.';
     fb.className = 'feedback show wrong-fb';
   }
 
