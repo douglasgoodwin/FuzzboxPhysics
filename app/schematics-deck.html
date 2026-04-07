@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schematics &amp; Passive Filters — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  /* ---- Slide deck overrides ---- */
+  body {
+    max-width: 100vw;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+  }
+
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 80px;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  .slide.active { display: flex; }
+
+  /* ---- Title slide ---- */
+  .slide.title-slide {
+    align-items: center;
+    text-align: center;
+  }
+  .slide.title-slide h1 {
+    font-size: 4.5rem;
+    line-height: 1.05;
+    margin-bottom: 16px;
+  }
+  .slide.title-slide .subtitle {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  /* ---- Content slides ---- */
+  .slide h2 {
+    font-size: 2.4rem;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 16px;
+  }
+
+  .slide-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .slide p, .slide li {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .slide li {
+    margin-bottom: 12px;
+    list-style: none;
+    padding-left: 24px;
+    position: relative;
+  }
+
+  .slide li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .slide strong, .slide .hl {
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .slide .accent { color: var(--accent); }
+
+  .slide p + p { margin-top: 16px; }
+
+  /* ---- Symbol grid ---- */
+  .symbol-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 16px;
+  }
+
+  .symbol-card {
+    border: 1px solid var(--border-light);
+    background: var(--canvas-bg);
+    padding: 24px;
+    text-align: center;
+  }
+
+  .symbol-card svg {
+    width: 100%;
+    max-width: 200px;
+    height: 80px;
+    display: block;
+    margin: 0 auto 16px;
+  }
+
+  .symbol-card .sym-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .symbol-card .sym-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ---- Two-column layout ---- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .two-col .col-text p,
+  .two-col .col-text li {
+    font-size: 1.15rem;
+  }
+
+  /* ---- Circuit diagrams ---- */
+  .circuit-box {
+    border: 1px solid var(--border-light);
+    background: var(--canvas-bg);
+    padding: 32px;
+    text-align: center;
+  }
+
+  .circuit-box svg {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .circuit-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  /* ---- Equation ---- */
+  .equation {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2rem;
+    color: var(--accent);
+    text-align: center;
+    padding: 32px 0;
+    letter-spacing: 0.02em;
+  }
+
+  .equation .eq-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 16px;
+    letter-spacing: 0;
+  }
+
+  /* ---- Comparison table ---- */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    margin-top: 16px;
+  }
+
+  .compare-table th {
+    text-align: left;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+  }
+
+  .compare-table td:first-child {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  /* ---- Navigation ---- */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid var(--border-light);
+    z-index: 100;
+  }
+
+  .nav-bar .slide-counter {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.1em;
+  }
+
+  .nav-bar button {
+    font-size: 0.7rem;
+    padding: 6px 16px;
+  }
+
+  .progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border-light);
+    z-index: 100;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+  }
+
+  /* ---- Analogy callout ---- */
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 16px 24px;
+    margin-top: 24px;
+    background: rgba(232,128,58,0.05);
+  }
+
+  .callout p {
+    font-size: 1.1rem !important;
+    color: var(--text-secondary);
+  }
+
+  /* ---- Key-value pairs ---- */
+  .kv-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .kv-list li {
+    padding-left: 0 !important;
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  .kv-list li::before { display: none; }
+
+  .kv-key {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    min-width: 120px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 900px) {
+    .slide { padding: 40px 32px; }
+    .slide.title-slide h1 { font-size: 2.8rem; }
+    .slide h2 { font-size: 1.6rem; }
+    .slide p, .slide li { font-size: 1rem; }
+    .symbol-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .two-col { grid-template-columns: 1fr; gap: 24px; }
+    .equation { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 1 — TITLE
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide title-slide active">
+  <div class="subtitle">CSCM 373-01 &mdash; Fuzzbox Physics &mdash; CalArts</div>
+  <h1>Reading<br>Schematics</h1>
+  <p style="margin-top: 24px; font-size: 1rem; color: var(--text-tertiary);">
+    Symbols, passive components &amp; RC filters
+  </p>
+  <p style="font-size: 0.85rem; color: var(--text-tertiary); margin-top: 48px;">
+    Arrow keys or click to navigate &nbsp;/&nbsp; <span class="accent">F</span> for fullscreen
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 2 — WHY SCHEMATICS
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Why Bother?</div>
+  <h2>Schematics Are the <span class="accent">Sheet Music</span> of Electronics</h2>
+  <ul>
+    <li>A schematic is a <strong>map of signal flow</strong> &mdash; not a physical layout</li>
+    <li>Every pedal you will build this term starts as a schematic</li>
+    <li>Once you can read them, you can <strong>debug, modify, and design</strong> your own circuits</li>
+    <li>Today: <strong>three passive components</strong> that shape audio signals without any power supply</li>
+  </ul>
+  <div class="callout">
+    <p><strong>Passive</strong> = no external power needed. The component shapes the signal using only the energy already in it.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 3 — THE BIG THREE
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Passive Components</div>
+  <h2>The Big Three</h2>
+
+  <div class="symbol-grid">
+    <!-- RESISTOR -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="10" y1="40" x2="50" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+        <polyline points="50,40 58,20 74,60 90,20 106,60 122,20 138,60 146,40"
+                  fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="146" y1="40" x2="190" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+      <div class="sym-name">Resistor</div>
+      <div class="sym-desc">Resists current flow. Measured in ohms (&Omega;). Converts electrical energy to heat.</div>
+    </div>
+
+    <!-- CAPACITOR -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="10" y1="40" x2="88" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="88" y1="15" x2="88" y2="65" stroke="#e8803a" stroke-width="3"/>
+        <line x1="108" y1="15" x2="108" y2="65" stroke="#e8803a" stroke-width="3"/>
+        <line x1="108" y1="40" x2="190" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+      <div class="sym-name">Capacitor</div>
+      <div class="sym-desc">Stores charge. Blocks DC, passes AC. Measured in farads (F). Key to every filter.</div>
+    </div>
+
+    <!-- INDUCTOR -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="10" y1="40" x2="50" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+        <path d="M50,40 Q60,15 70,40 Q80,15 90,40 Q100,15 110,40 Q120,15 130,40 Q140,15 150,40"
+              fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="150" y1="40" x2="190" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+      <div class="sym-name">Inductor</div>
+      <div class="sym-desc">Stores energy in a magnetic field. Passes DC, resists AC changes. Measured in henrys (H).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 4 — RESISTOR DETAIL
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Resistor</div>
+  <h2>The Resistor &mdash; <span class="accent">Opposition to Flow</span></h2>
+
+  <div class="two-col">
+    <div class="col-text">
+      <ul>
+        <li><strong>Unit:</strong> ohm (&Omega;). Common guitar-circuit values: 1 k&Omega; &ndash; 1 M&Omega;</li>
+        <li><strong>Analogy:</strong> a narrow section of pipe &mdash; restricts flow, creates a pressure drop</li>
+        <li><strong>In audio:</strong> sets gain, biases transistors, creates voltage dividers</li>
+        <li><strong>Schematic shorthand:</strong> 22k = 22,000 &Omega; &nbsp; 1M = 1,000,000 &Omega;</li>
+      </ul>
+      <div class="callout" style="margin-top:20px">
+        <p>The zigzag symbol is IEEE (US). The rectangle is IEC (international). You'll see both.</p>
+      </div>
+    </div>
+    <div class="circuit-box">
+      <svg viewBox="0 0 300 200">
+        <!-- US symbol -->
+        <text x="150" y="30" fill="#86868b" font-family="IBM Plex Mono" font-size="12" text-anchor="middle" letter-spacing="0.15em">IEEE (US)</text>
+        <line x1="40" y1="70" x2="90" y2="70" stroke="#f5f5f7" stroke-width="2"/>
+        <polyline points="90,70 100,50 116,90 132,50 148,90 164,50 180,90 190,70"
+                  fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="190" y1="70" x2="260" y2="70" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="140" y="105" fill="#86868b" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">R = 22 k&Omega;</text>
+
+        <!-- IEC symbol -->
+        <text x="150" y="140" fill="#86868b" font-family="IBM Plex Mono" font-size="12" text-anchor="middle" letter-spacing="0.15em">IEC (INTERNATIONAL)</text>
+        <line x1="40" y1="170" x2="100" y2="170" stroke="#f5f5f7" stroke-width="2"/>
+        <rect x="100" y="158" width="100" height="24" fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="200" y1="170" x2="260" y2="170" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 5 — CAPACITOR DETAIL
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Capacitor</div>
+  <h2>The Capacitor &mdash; <span class="accent">Frequency-Dependent</span></h2>
+
+  <div class="two-col">
+    <div class="col-text">
+      <ul>
+        <li><strong>Unit:</strong> farad (F). Audio circuits use nF and pF (tiny!)</li>
+        <li><strong>Key idea:</strong> a capacitor's impedance <em>decreases</em> as frequency goes up</li>
+        <li><strong>Low freq:</strong> high impedance &rarr; blocks the signal</li>
+        <li><strong>High freq:</strong> low impedance &rarr; passes the signal</li>
+        <li><strong>Analogy:</strong> a spring-loaded gate that opens wider the faster you push</li>
+      </ul>
+      <div class="callout" style="margin-top:20px">
+        <p><strong>103 = 10 nF.</strong> Ceramic cap codes: first two digits are significant, third is the multiplier (number of zeros), result in picofarads.</p>
+      </div>
+    </div>
+    <div class="circuit-box">
+      <svg viewBox="0 0 300 220">
+        <!-- Unpolarized -->
+        <text x="150" y="25" fill="#86868b" font-family="IBM Plex Mono" font-size="12" text-anchor="middle" letter-spacing="0.15em">UNPOLARIZED</text>
+        <line x1="40" y1="60" x2="130" y2="60" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="130" y1="35" x2="130" y2="85" stroke="#e8803a" stroke-width="3"/>
+        <line x1="155" y1="35" x2="155" y2="85" stroke="#e8803a" stroke-width="3"/>
+        <line x1="155" y1="60" x2="260" y2="60" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="142" y="102" fill="#86868b" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">C = 10 nF</text>
+
+        <!-- Polarized (electrolytic) -->
+        <text x="150" y="132" fill="#86868b" font-family="IBM Plex Mono" font-size="12" text-anchor="middle" letter-spacing="0.15em">POLARIZED (ELECTROLYTIC)</text>
+        <line x1="40" y1="170" x2="130" y2="170" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="130" y1="145" x2="130" y2="195" stroke="#e8803a" stroke-width="3"/>
+        <path d="M155,145 Q145,170 155,195" fill="none" stroke="#e8803a" stroke-width="3"/>
+        <line x1="155" y1="170" x2="260" y2="170" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="118" y="142" fill="#e8803a" font-family="IBM Plex Mono" font-size="14">+</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 6 — MORE SYMBOLS
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Reading Schematics</div>
+  <h2>Other Symbols You'll See</h2>
+
+  <div class="symbol-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <!-- Ground -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="100" y1="10" x2="100" y2="35" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="70" y1="35" x2="130" y2="35" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="80" y1="47" x2="120" y2="47" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="90" y1="59" x2="110" y2="59" stroke="#e8803a" stroke-width="2.5"/>
+      </svg>
+      <div class="sym-name">Ground</div>
+      <div class="sym-desc">0V reference point</div>
+    </div>
+
+    <!-- Wire junction -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="20" y1="40" x2="180" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="100" y1="10" x2="100" y2="70" stroke="#f5f5f7" stroke-width="2"/>
+        <circle cx="100" cy="40" r="5" fill="#e8803a"/>
+      </svg>
+      <div class="sym-name">Junction</div>
+      <div class="sym-desc">Wires are connected</div>
+    </div>
+
+    <!-- No junction (crossing) -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="20" y1="40" x2="180" y2="40" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="100" y1="10" x2="100" y2="30" stroke="#f5f5f7" stroke-width="2"/>
+        <path d="M100,30 Q112,40 100,50" fill="none" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="100" y1="50" x2="100" y2="70" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+      <div class="sym-name">Crossing</div>
+      <div class="sym-desc">Wires NOT connected</div>
+    </div>
+
+    <!-- Potentiometer -->
+    <div class="symbol-card">
+      <svg viewBox="0 0 200 80">
+        <line x1="20" y1="50" x2="55" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+        <polyline points="55,50 62,32 76,68 90,32 104,68 118,32 132,68 138,50"
+                  fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <line x1="138" y1="50" x2="180" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+        <!-- Arrow (wiper) -->
+        <line x1="97" y1="18" x2="97" y2="32" stroke="#f5f5f7" stroke-width="2"/>
+        <polygon points="90,32 97,42 104,32" fill="#f5f5f7"/>
+      </svg>
+      <div class="sym-name">Potentiometer</div>
+      <div class="sym-desc">Variable resistor (knob)</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:32px">
+    <p><strong>Tip:</strong> Schematics read left-to-right like a sentence. Signal enters on the left, exits on the right. Power rails run along the top, ground along the bottom.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 7 — IMPEDANCE & FREQUENCY
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Key Concept</div>
+  <h2>Capacitors Care About <span class="accent">Frequency</span></h2>
+
+  <p>A resistor has the same resistance at any frequency. A capacitor does not.</p>
+
+  <div class="equation">
+    Z<sub>C</sub> = 1 / (2&pi;fC)
+    <div class="eq-desc">
+      Z<sub>C</sub> = impedance (ohms) &nbsp;&bull;&nbsp; f = frequency (Hz) &nbsp;&bull;&nbsp; C = capacitance (farads)
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <tr>
+      <th>Frequency</th>
+      <th>Capacitor Impedance</th>
+      <th>Result</th>
+    </tr>
+    <tr>
+      <td>Low (bass)</td>
+      <td>HIGH &mdash; cap acts like an open circuit</td>
+      <td>Signal is blocked</td>
+    </tr>
+    <tr>
+      <td>High (treble)</td>
+      <td>LOW &mdash; cap acts like a short circuit</td>
+      <td>Signal passes through</td>
+    </tr>
+  </table>
+
+  <div class="callout" style="margin-top:24px">
+    <p>This is the whole secret of passive filters: <strong>put a capacitor in the right place and it will sort frequencies for you.</strong></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 8 — VOLTAGE DIVIDER
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Building Block</div>
+  <h2>The Voltage Divider</h2>
+
+  <div class="two-col">
+    <div class="col-text">
+      <p>Two components in series form a <strong>voltage divider</strong>. The output voltage depends on the <em>ratio</em> of their impedances.</p>
+      <div class="equation" style="font-size:1.5rem; text-align:left; padding:16px 0;">
+        V<sub>out</sub> = V<sub>in</sub> &times; Z<sub>2</sub> / (Z<sub>1</sub> + Z<sub>2</sub>)
+      </div>
+      <ul>
+        <li>If Z<sub>2</sub> is <strong>small</strong> compared to Z<sub>1</sub>, output is <strong>low</strong></li>
+        <li>If Z<sub>2</sub> is <strong>large</strong> compared to Z<sub>1</sub>, output is <strong>high</strong></li>
+      </ul>
+      <p style="margin-top:16px;">Now replace one of the resistors with a <strong>capacitor</strong> and the division becomes <em>frequency-dependent</em>.</p>
+    </div>
+    <div class="circuit-box">
+      <svg viewBox="0 0 280 250">
+        <!-- Input -->
+        <text x="20" y="50" fill="#86868b" font-family="IBM Plex Mono" font-size="12">V_in</text>
+        <line x1="50" y1="45" x2="140" y2="45" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Z1 (vertical) -->
+        <line x1="140" y1="45" x2="140" y2="65" stroke="#f5f5f7" stroke-width="2"/>
+        <rect x="128" y="65" width="24" height="50" fill="none" stroke="#e8803a" stroke-width="2.5" rx="2"/>
+        <text x="160" y="95" fill="#e8803a" font-family="IBM Plex Mono" font-size="13">Z₁</text>
+        <line x1="140" y1="115" x2="140" y2="140" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Output tap -->
+        <line x1="140" y1="140" x2="240" y2="140" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="245" y="145" fill="#86868b" font-family="IBM Plex Mono" font-size="12">V_out</text>
+        <circle cx="140" cy="140" r="4" fill="#e8803a"/>
+
+        <!-- Z2 (vertical) -->
+        <line x1="140" y1="140" x2="140" y2="160" stroke="#f5f5f7" stroke-width="2"/>
+        <rect x="128" y="160" width="24" height="50" fill="none" stroke="#e8803a" stroke-width="2.5" rx="2"/>
+        <text x="160" y="190" fill="#e8803a" font-family="IBM Plex Mono" font-size="13">Z₂</text>
+        <line x1="140" y1="210" x2="140" y2="230" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Ground -->
+        <line x1="120" y1="230" x2="160" y2="230" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="127" y1="238" x2="153" y2="238" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="134" y1="246" x2="146" y2="246" stroke="#f5f5f7" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 9 — LOW-PASS FILTER
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">RC Filter #1</div>
+  <h2>Low-Pass Filter &mdash; <span class="accent">Treble Cut</span></h2>
+
+  <div class="two-col">
+    <div class="col-text">
+      <p><strong>R on top, C on bottom.</strong></p>
+      <ul>
+        <li>At <strong>low frequencies</strong>: cap impedance is high &rarr; V<sub>out</sub> is high &rarr; <span class="accent">bass passes</span></li>
+        <li>At <strong>high frequencies</strong>: cap impedance drops &rarr; signal is shunted to ground &rarr; <span class="accent">treble is cut</span></li>
+      </ul>
+      <div class="equation" style="font-size:1.3rem; text-align:left; padding:16px 0;">
+        f<sub>c</sub> = 1 / (2&pi;RC)
+      </div>
+      <p>With R = 22 k&Omega; and C = 10 nF:</p>
+      <div class="equation" style="font-size:1.3rem; text-align:left; padding:8px 0; color: var(--text);">
+        f<sub>c</sub> = 1 / (2&pi; &times; 22000 &times; 0.00000001) &asymp; <span class="accent">723 Hz</span>
+      </div>
+      <p style="font-size:1rem;">This is your guitar's tone knob! Frequencies above ~723 Hz get progressively quieter.</p>
+    </div>
+    <div class="circuit-box">
+      <svg viewBox="0 0 320 260">
+        <!-- Input -->
+        <text x="15" y="55" fill="#86868b" font-family="IBM Plex Mono" font-size="12">IN</text>
+        <line x1="40" y1="50" x2="70" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Resistor (horizontal) -->
+        <polyline points="70,50 78,32 94,68 110,32 126,68 142,32 158,68 166,50"
+                  fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <text x="118" y="22" fill="#e8803a" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">R</text>
+        <text x="118" y="90" fill="#86868b" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">22 k&Omega;</text>
+
+        <line x1="166" y1="50" x2="280" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="285" y="55" fill="#86868b" font-family="IBM Plex Mono" font-size="12">OUT</text>
+
+        <!-- Junction -->
+        <circle cx="200" cy="50" r="4" fill="#e8803a"/>
+
+        <!-- Capacitor (vertical) -->
+        <line x1="200" y1="50" x2="200" y2="130" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="180" y1="130" x2="220" y2="130" stroke="#e8803a" stroke-width="3"/>
+        <line x1="180" y1="150" x2="220" y2="150" stroke="#e8803a" stroke-width="3"/>
+        <text x="230" y="145" fill="#e8803a" font-family="IBM Plex Mono" font-size="14">C</text>
+        <text x="230" y="165" fill="#86868b" font-family="IBM Plex Mono" font-size="11">10 nF</text>
+        <line x1="200" y1="150" x2="200" y2="200" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Ground -->
+        <line x1="180" y1="200" x2="220" y2="200" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="186" y1="208" x2="214" y2="208" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="192" y1="216" x2="208" y2="216" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Label -->
+        <text x="160" y="248" fill="#e8803a" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">LOW-PASS (TREBLE CUT)</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 10 — HIGH-PASS FILTER
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">RC Filter #2</div>
+  <h2>High-Pass Filter &mdash; <span class="accent">Bass Cut</span></h2>
+
+  <div class="two-col">
+    <div class="col-text">
+      <p><strong>C on top, R on bottom.</strong> Just swap the positions!</p>
+      <ul>
+        <li>At <strong>low frequencies</strong>: cap impedance is high &rarr; blocks the signal &rarr; <span class="accent">bass is cut</span></li>
+        <li>At <strong>high frequencies</strong>: cap impedance drops &rarr; signal passes through &rarr; <span class="accent">treble passes</span></li>
+      </ul>
+      <div class="equation" style="font-size:1.3rem; text-align:left; padding:16px 0;">
+        f<sub>c</sub> = 1 / (2&pi;RC) &nbsp; <span style="color:var(--text-secondary); font-size:0.9rem">(same formula!)</span>
+      </div>
+      <p>Same R and C &rarr; same cutoff frequency, but now everything <em>below</em> 723 Hz gets quieter.</p>
+    </div>
+    <div class="circuit-box">
+      <svg viewBox="0 0 320 260">
+        <!-- Input -->
+        <text x="15" y="55" fill="#86868b" font-family="IBM Plex Mono" font-size="12">IN</text>
+        <line x1="40" y1="50" x2="70" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Capacitor (horizontal) -->
+        <line x1="70" y1="50" x2="110" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="110" y1="25" x2="110" y2="75" stroke="#e8803a" stroke-width="3"/>
+        <line x1="130" y1="25" x2="130" y2="75" stroke="#e8803a" stroke-width="3"/>
+        <text x="120" y="18" fill="#e8803a" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">C</text>
+        <text x="120" y="92" fill="#86868b" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">10 nF</text>
+        <line x1="130" y1="50" x2="280" y2="50" stroke="#f5f5f7" stroke-width="2"/>
+        <text x="285" y="55" fill="#86868b" font-family="IBM Plex Mono" font-size="12">OUT</text>
+
+        <!-- Junction -->
+        <circle cx="200" cy="50" r="4" fill="#e8803a"/>
+
+        <!-- Resistor (vertical) -->
+        <line x1="200" y1="50" x2="200" y2="100" stroke="#f5f5f7" stroke-width="2"/>
+        <polyline points="200,100 182,108 218,124 182,140 218,156 182,172 218,188 200,196"
+                  fill="none" stroke="#e8803a" stroke-width="2.5"/>
+        <text x="228" y="150" fill="#e8803a" font-family="IBM Plex Mono" font-size="14">R</text>
+        <text x="228" y="168" fill="#86868b" font-family="IBM Plex Mono" font-size="11">22 k&Omega;</text>
+
+        <!-- Ground -->
+        <line x1="200" y1="196" x2="200" y2="220" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="180" y1="220" x2="220" y2="220" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="186" y1="228" x2="214" y2="228" stroke="#f5f5f7" stroke-width="2"/>
+        <line x1="192" y1="236" x2="208" y2="236" stroke="#f5f5f7" stroke-width="2"/>
+
+        <!-- Label -->
+        <text x="160" y="258" fill="#e8803a" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">HIGH-PASS (BASS CUT)</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 11 — SIDE BY SIDE
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Comparison</div>
+  <h2>Same Parts, <span class="accent">Different Arrangement</span></h2>
+
+  <table class="compare-table">
+    <tr>
+      <th style="width:20%">Filter</th>
+      <th style="width:25%">Series Element</th>
+      <th style="width:25%">Shunt Element</th>
+      <th>What Passes</th>
+    </tr>
+    <tr>
+      <td>Low-Pass</td>
+      <td>Resistor (R in series)</td>
+      <td>Capacitor (C to ground)</td>
+      <td>Frequencies <strong>below</strong> f<sub>c</sub></td>
+    </tr>
+    <tr>
+      <td>High-Pass</td>
+      <td>Capacitor (C in series)</td>
+      <td>Resistor (R to ground)</td>
+      <td>Frequencies <strong>above</strong> f<sub>c</sub></td>
+    </tr>
+  </table>
+
+  <div class="callout" style="margin-top:32px">
+    <p><strong>The tone knob on a guitar</strong> is literally a low-pass filter: a pot (variable R) in series with a cap to ground. Turn it down &rarr; lower R &rarr; lower cutoff &rarr; darker sound.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Coupling caps in pedals</strong> are high-pass filters: a cap in series blocks DC (0 Hz) and lets audio pass. The R is the input impedance of the next stage.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 12 — YOUR TOOLS
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Hands-On</div>
+  <h2>Today's Simulation Tools</h2>
+
+  <div class="symbol-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="symbol-card" style="text-align:left; padding: 24px;">
+      <div class="sym-name" style="font-size:1.1rem; margin-bottom:12px;">1. CircuitCanvas</div>
+      <div class="sym-desc">
+        Draw schematics from symbols. No simulation &mdash; just layout practice. Start here to learn to <em>read</em> and <em>draw</em> circuits.
+      </div>
+      <div style="margin-top:12px; font-family:'IBM Plex Mono'; font-size:0.75rem; color:var(--text-tertiary);">circuitcanvas.com</div>
+    </div>
+
+    <div class="symbol-card" style="text-align:left; padding: 24px;">
+      <div class="sym-name" style="font-size:1.1rem; margin-bottom:12px;">2. EveryCircuit</div>
+      <div class="sym-desc">
+        Animated simulation. Watch current flow and voltage levels change in real time. Great for intuition.
+      </div>
+      <div style="margin-top:12px; font-family:'IBM Plex Mono'; font-size:0.75rem; color:var(--text-tertiary);">everycircuit.com</div>
+    </div>
+
+    <div class="symbol-card" style="text-align:left; padding: 24px;">
+      <div class="sym-name" style="font-size:1.1rem; margin-bottom:12px;">3. Falstad</div>
+      <div class="sym-desc">
+        Full simulation with oscilloscope views. Closest to real lab instruments. Build and probe any circuit.
+      </div>
+      <div style="margin-top:12px; font-family:'IBM Plex Mono'; font-size:0.75rem; color:var(--text-tertiary);">falstad.com/circuit</div>
+    </div>
+
+  </div>
+
+  <p style="margin-top:32px; text-align:center; font-size:1.1rem;">
+    Progression: <strong>draw</strong> the schematic &rarr; <strong>simulate</strong> it &rarr; <strong>build</strong> it on a breadboard
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 13 — WHAT'S NEXT
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-label">Next Steps</div>
+  <h2>Worksheet Time</h2>
+
+  <ul>
+    <li>Open the <strong>Schematics &amp; Filters Worksheet</strong></li>
+    <li><strong>Part 1:</strong> Symbol identification &mdash; match symbols to components</li>
+    <li><strong>Part 2:</strong> Draw an RC low-pass and high-pass on CircuitCanvas</li>
+    <li><strong>Part 3:</strong> Open the EveryCircuit low-pass example, change values, observe</li>
+    <li><strong>Part 4:</strong> Build both filters in Falstad and capture oscilloscope screenshots</li>
+    <li><strong>Part 5:</strong> Calculate cutoff frequencies for different R and C values</li>
+  </ul>
+
+  <div class="callout" style="margin-top:32px">
+    <p><strong>Goal:</strong> By the end of today you should be able to look at any RC circuit and immediately say whether it's a low-pass or high-pass filter, and estimate its cutoff frequency.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════ -->
+<div class="nav-bar">
+  <button id="prevBtn" onclick="navigate(-1)">&#9664; Prev</button>
+  <span class="slide-counter" id="counter">1 / 13</span>
+  <button id="nextBtn" onclick="navigate(1)">Next &#9654;</button>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+
+  function show(idx) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(idx, slides.length - 1));
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+    progress.style.width = ((current + 1) / slides.length * 100) + '%';
+  }
+
+  window.navigate = function(dir) { show(current + dir); };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch/swipe
+  let touchX = 0;
+  document.addEventListener('touchstart', function(e) { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) navigate(dx < 0 ? 1 : -1);
+  });
+
+  show(0);
+})();
+</script>
+
+</body>
+</html>

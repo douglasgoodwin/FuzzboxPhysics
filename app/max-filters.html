@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RC Filters in Max/MSP — Fuzzbox Physics</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  body { max-width: 780px; }
+
+  h2 {
+    font-size: 1.6rem;
+    margin-top: 40px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  h3 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+
+  p, li {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.85;
+  }
+
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+
+  strong { color: var(--text); font-weight: 500; }
+
+  .math {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: block;
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: rgba(232,128,58,0.04);
+    border-left: 3px solid rgba(232,128,58,0.3);
+    line-height: 1.7;
+  }
+
+  .math-inline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--accent);
+  }
+
+  .callout {
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+
+  .callout-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  /* ---- Patch diagrams ---- */
+  .patch {
+    border: 1px solid var(--border-light);
+    background: var(--canvas-bg);
+    padding: 24px;
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .patch-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .patch svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ---- Max object styling in SVGs ---- */
+  .obj-fill { fill: #1a1a1a; }
+  .obj-stroke { stroke: #555; stroke-width: 1; }
+  .obj-text { fill: #f5f5f7; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .obj-comment { fill: #86868b; font-family: 'Roboto', sans-serif; font-size: 10px; font-style: italic; }
+  .wire { stroke: #888; stroke-width: 1.5; fill: none; }
+  .wire-signal { stroke: #e8803a; stroke-width: 2; fill: none; }
+  .inlet { fill: #555; }
+  .outlet { fill: #555; }
+
+  /* ---- Code blocks (for copy-paste Max text) ---- */
+  .max-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-light);
+    padding: 16px;
+    margin: 12px 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .max-code .copy-hint {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  /* ---- Comparison table ---- */
+  .scope-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 16px 0;
+  }
+  .scope-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scope-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.6;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+  }
+  .scope-table .label {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  /* ---- Signal chain ---- */
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .chain-stage {
+    flex: 1;
+    min-width: 120px;
+    border: 1px solid var(--border-light);
+    padding: 12px;
+  }
+  .chain-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 1.2rem;
+    min-width: 24px;
+    flex-shrink: 0;
+  }
+  .chain-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .chain-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .chain-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .footer {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 40px;
+    line-height: 1.8;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+
+  @media (max-width: 700px) {
+    .chain { flex-direction: column; }
+    .chain-arrow { transform: rotate(90deg); min-height: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="subtitle">Fuzzbox Physics</div>
+    <a href="/" class="nav-link">All Labs</a>
+  </div>
+  <h1>RC Filters in Max/MSP</h1>
+</header>
+
+<p>
+  Every RC filter you drew on paper and simulated in Falstad has an exact equivalent in
+  Max/MSP. This tutorial builds the same low-pass and high-pass circuits from the
+  <a href="schematics-deck.html">schematics lecture</a>, but as audio-rate patches you can
+  hear in real time. Plug in your guitar or use a test tone.
+</p>
+
+<div class="callout">
+  <div class="callout-label">Key Insight</div>
+  <p>
+    A first-order RC low-pass filter and Max's <strong>[onepole~]</strong> object are
+    mathematically identical. Both implement the same difference equation. The schematic
+    is the analog version; the Max patch is the digital version.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>1. From Schematic to Difference Equation</h2>
+
+<p>
+  The analog RC low-pass has a transfer function with one pole. When you discretize it
+  (sample it at 44.1 kHz), you get a one-line formula:
+</p>
+
+<div class="math">
+Analog:   f_c = 1 / (2&pi;RC)
+
+Digital:  y[n] = (1 - a) &middot; x[n] + a &middot; y[n-1]
+
+where     a = e^(-2&pi; &middot; f_c / sr)
+</div>
+
+<p>
+  That's it. The output sample <strong>y[n]</strong> is a weighted mix of the current input
+  and the previous output. The coefficient <strong>a</strong> controls how much "memory" the
+  filter has &mdash; higher <strong>a</strong> means more smoothing, lower cutoff.
+</p>
+
+<p>
+  In Max, <strong>[onepole~]</strong> does exactly this calculation, 44,100 times per second.
+  You just tell it the cutoff frequency.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>2. Patch 1: Low-Pass Filter (Treble Cut)</h2>
+
+<h3>The concept</h3>
+
+<p>
+  This is the same circuit as R in series, C to ground &mdash; your guitar's tone knob.
+  In Max, <strong>[onepole~]</strong> takes a signal in and a cutoff frequency, and outputs
+  the filtered signal.
+</p>
+
+<div class="chain">
+  <div class="chain-stage">
+    <div class="chain-num">Source</div>
+    <div class="chain-title">[adc~] or [cycle~]</div>
+    <div class="chain-desc">Guitar input or test oscillator</div>
+  </div>
+  <div class="chain-arrow">&rarr;</div>
+  <div class="chain-stage">
+    <div class="chain-num">Filter</div>
+    <div class="chain-title">[onepole~]</div>
+    <div class="chain-desc">One-pole low-pass, cutoff from slider</div>
+  </div>
+  <div class="chain-arrow">&rarr;</div>
+  <div class="chain-stage">
+    <div class="chain-num">Output</div>
+    <div class="chain-title">[dac~]</div>
+    <div class="chain-desc">Speakers / headphones</div>
+  </div>
+</div>
+
+<div class="patch">
+  <div class="patch-label">Patch: Low-Pass Filter</div>
+  <svg viewBox="0 0 500 420">
+    <!-- [cycle~ 440] - test oscillator -->
+    <rect x="40" y="20" width="90" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="48" y="35" class="obj-text">cycle~ 440</text>
+
+    <!-- [adc~ 1] - mic/guitar input -->
+    <rect x="180" y="20" width="60" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="190" y="35" class="obj-text">adc~ 1</text>
+
+    <!-- comment -->
+    <text x="260" y="35" class="obj-comment">choose one source</text>
+
+    <!-- [*~ 0.5] gain -->
+    <rect x="100" y="75" width="60" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="110" y="90" class="obj-text">*~ 0.5</text>
+    <line x1="85" y1="42" x2="120" y2="75" class="wire-signal"/>
+    <line x1="210" y1="42" x2="140" y2="75" class="wire-signal"/>
+    <text x="175" y="90" class="obj-comment">input gain</text>
+
+    <!-- comment: "R and C" -->
+    <text x="260" y="158" class="obj-comment">R (in ohms)</text>
+    <text x="360" y="158" class="obj-comment">C (in farads)</text>
+
+    <!-- [flonum] R = 22000 -->
+    <rect x="260" y="165" width="70" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="180" class="obj-text">22000.</text>
+
+    <!-- [flonum] C = 0.00000001 -->
+    <rect x="350" y="165" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="358" y="180" class="obj-text">0.00000001</text>
+    <text x="350" y="205" class="obj-comment">10 nF = 1e-8</text>
+
+    <!-- [expr 1./(6.283185*$f1*$f2)] -->
+    <rect x="260" y="225" width="200" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="240" class="obj-text">expr 1./(6.283185*$f1*$f2)</text>
+    <line x1="290" y1="187" x2="290" y2="225" class="wire"/>
+    <line x1="400" y1="187" x2="400" y2="225" class="wire"/>
+
+    <!-- result: 723 Hz -->
+    <rect x="260" y="270" width="80" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="285" class="obj-text">723.43</text>
+    <text x="350" y="285" class="obj-comment">f_c in Hz</text>
+    <line x1="310" y1="247" x2="310" y2="270" class="wire"/>
+
+    <!-- OR: direct slider approach -->
+    <text x="40" y="140" class="obj-comment">simpler: just set cutoff directly</text>
+
+    <!-- [slider / flonum] cutoff -->
+    <rect x="40" y="150" width="120" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="48" y="165" class="obj-text">slider 20. 5000.</text>
+    <text x="48" y="185" class="obj-comment">drag to sweep cutoff</text>
+
+    <!-- [sig~] -->
+    <rect x="40" y="200" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="48" y="215" class="obj-text">sig~</text>
+    <line x1="80" y1="172" x2="65" y2="200" class="wire"/>
+
+    <!-- [onepole~] -->
+    <rect x="60" y="260" width="80" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="68" y="275" class="obj-text">onepole~</text>
+    <line x1="130" y1="97" x2="80" y2="260" class="wire-signal"/>
+    <line x1="65" y1="222" x2="120" y2="260" class="wire-signal"/>
+
+    <!-- also connect from expr path -->
+    <line x1="310" y1="292" x2="200" y2="340" class="wire" stroke-dasharray="4,3"/>
+    <text x="220" y="330" class="obj-comment">or from formula</text>
+
+    <!-- [scope~] -->
+    <rect x="200" y="300" width="65" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="208" y="315" class="obj-text">scope~</text>
+    <line x1="100" y1="282" x2="220" y2="300" class="wire-signal"/>
+
+    <!-- [spectroscope~] -->
+    <rect x="300" y="300" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="308" y="315" class="obj-text">spectroscope~</text>
+    <line x1="100" y1="282" x2="340" y2="300" class="wire-signal"/>
+
+    <!-- [dac~] -->
+    <rect x="60" y="360" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="72" y="375" class="obj-text">dac~</text>
+    <line x1="90" y1="282" x2="78" y2="360" class="wire-signal"/>
+    <line x1="90" y1="282" x2="98" y2="360" class="wire-signal"/>
+
+    <!-- [ezdac~] hint -->
+    <text x="120" y="375" class="obj-comment">turn on audio (cmd+/)</text>
+  </svg>
+</div>
+
+<h3>Build it step by step</h3>
+
+<ol>
+  <li>Create <strong>[cycle~ 440]</strong> as a test source (or <strong>[adc~ 1]</strong> for guitar)</li>
+  <li>Add <strong>[*~ 0.5]</strong> to keep the level safe</li>
+  <li>Create <strong>[onepole~ 723]</strong> &mdash; that 723 is your cutoff in Hz</li>
+  <li>Connect the output to <strong>[dac~]</strong> and turn on audio</li>
+  <li>Add a <strong>[flonum]</strong> or <strong>[live.dial]</strong> connected to the right inlet of [onepole~] to sweep the cutoff</li>
+  <li>Add <strong>[scope~]</strong> and <strong>[spectroscope~]</strong> to see the filtering happen</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-label">Try This</div>
+  <p>
+    Use <strong>[noise~]</strong> instead of [cycle~]. White noise has equal energy at all
+    frequencies, so the spectrum display shows you the filter's frequency response directly.
+    Sweep the cutoff and watch the spectroscope &mdash; you're looking at the same rolloff curve
+    from the Falstad simulation.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>3. Patch 2: High-Pass Filter (Bass Cut)</h2>
+
+<h3>The trick</h3>
+
+<p>
+  Max doesn't have a built-in one-pole high-pass object, but you don't need one. A high-pass
+  filter is just the <strong>original signal minus the low-pass output</strong>:
+</p>
+
+<div class="math">
+highpass = input - lowpass(input)
+
+If [onepole~] removes the treble, subtracting it from the original removes the bass.
+</div>
+
+<p>
+  This is the same principle as the analog circuit: swapping R and C inverts which frequencies
+  pass. Here we're doing the subtraction explicitly.
+</p>
+
+<div class="patch">
+  <div class="patch-label">Patch: High-Pass Filter</div>
+  <svg viewBox="0 0 500 340">
+    <!-- [noise~] source -->
+    <rect x="120" y="20" width="65" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="128" y="35" class="obj-text">noise~</text>
+    <text x="200" y="35" class="obj-comment">white noise shows frequency response</text>
+
+    <!-- split to two paths -->
+    <line x1="152" y1="42" x2="80" y2="90" class="wire-signal"/>
+    <line x1="152" y1="42" x2="230" y2="90" class="wire-signal"/>
+    <circle cx="152" cy="42" r="3" fill="#e8803a"/>
+
+    <!-- Left path: original -->
+    <text x="30" y="80" class="obj-comment">dry (original)</text>
+
+    <!-- Right path: [onepole~] low-pass -->
+    <rect x="200" y="90" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="208" y="105" class="obj-text">onepole~ 723</text>
+    <text x="310" y="105" class="obj-comment">low-pass</text>
+
+    <!-- cutoff control -->
+    <rect x="340" y="55" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="348" y="70" class="obj-text">param cutoff</text>
+    <rect x="340" y="90" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="350" y="105" class="obj-text">sig~</text>
+    <line x1="365" y1="77" x2="365" y2="90" class="wire"/>
+    <line x1="365" y1="112" x2="280" y2="112" class="wire-signal"/>
+
+    <!-- [-~] subtract -->
+    <rect x="100" y="160" width="40" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="112" y="175" class="obj-text">-~</text>
+    <line x1="80" y1="90" x2="112" y2="160" class="wire-signal"/>
+    <line x1="240" y1="112" x2="130" y2="160" class="wire-signal"/>
+
+    <!-- label -->
+    <text x="155" y="175" class="obj-comment">original &minus; lowpass = highpass</text>
+
+    <!-- [scope~] -->
+    <rect x="200" y="220" width="65" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="208" y="235" class="obj-text">scope~</text>
+    <line x1="120" y1="182" x2="225" y2="220" class="wire-signal"/>
+
+    <!-- [spectroscope~] -->
+    <rect x="300" y="220" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="308" y="235" class="obj-text">spectroscope~</text>
+    <line x1="120" y1="182" x2="340" y2="220" class="wire-signal"/>
+
+    <!-- [dac~] -->
+    <rect x="80" y="280" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="92" y="295" class="obj-text">dac~</text>
+    <line x1="114" y1="182" x2="98" y2="280" class="wire-signal"/>
+    <line x1="114" y1="182" x2="118" y2="280" class="wire-signal"/>
+  </svg>
+</div>
+
+<h3>Alternative: [biquad~]</h3>
+
+<p>
+  For a proper high-pass (and second-order filters), use <strong>[biquad~]</strong> with
+  coefficients from <strong>[filterdesign]</strong>:
+</p>
+
+<div class="max-code"><span class="copy-hint">Max patch</span>[filterdesign @response highpass @order 1 @frequency 723]
+        |
+    [biquad~]</div>
+
+<p>
+  The <strong>[filterdesign]</strong> object calculates biquad coefficients for any filter
+  type. This gives you the same result as the subtraction method but in a single object,
+  and you can change it to <span class="math-inline">bandpass</span>,
+  <span class="math-inline">notch</span>, or higher orders.
+</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>4. Patch 3: Tone Knob (Variable Low-Pass)</h2>
+
+<h3>Simulating the guitar tone pot</h3>
+
+<p>
+  A guitar tone knob is a potentiometer (variable resistor) in series with a fixed capacitor
+  to ground. As you turn the knob, R changes, which sweeps the cutoff frequency. In Max, just
+  map a <strong>[live.dial]</strong> to the cutoff frequency of [onepole~].
+</p>
+
+<div class="patch">
+  <div class="patch-label">Patch: Tone Knob</div>
+  <svg viewBox="0 0 500 350">
+    <!-- [adc~ 1] -->
+    <rect x="60" y="20" width="60" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="68" y="35" class="obj-text">adc~ 1</text>
+    <text x="135" y="35" class="obj-comment">guitar in</text>
+
+    <!-- [live.dial] Tone -->
+    <rect x="260" y="20" width="130" height="40" rx="3" class="obj-fill" style="stroke:#e8803a; stroke-width:1"/>
+    <text x="290" y="45" class="obj-text" style="fill:#e8803a">live.dial</text>
+    <text x="275" y="78" class="obj-comment">range: 200 &ndash; 5000 Hz</text>
+    <text x="275" y="92" class="obj-comment">"TONE" label, exponential scale</text>
+
+    <!-- [scale] or direct -->
+    <rect x="260" y="105" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="270" y="120" class="obj-text">sig~</text>
+    <line x1="310" y1="60" x2="285" y2="105" class="wire"/>
+
+    <!-- [onepole~] -->
+    <rect x="100" y="160" width="80" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="108" y="175" class="obj-text">onepole~</text>
+    <line x1="90" y1="42" x2="120" y2="160" class="wire-signal"/>
+    <line x1="285" y1="127" x2="160" y2="160" class="wire-signal"/>
+
+    <!-- wet/dry mix -->
+    <text x="40" y="220" class="obj-comment">optional: wet/dry like a real tone pot</text>
+
+    <!-- [scope~] before -->
+    <rect x="260" y="160" width="65" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="175" class="obj-text">scope~</text>
+    <line x1="90" y1="42" x2="285" y2="160" class="wire-signal" stroke-dasharray="4,3"/>
+    <text x="338" y="175" class="obj-comment">input</text>
+
+    <!-- [scope~] after -->
+    <rect x="260" y="200" width="65" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="215" class="obj-text">scope~</text>
+    <line x1="140" y1="182" x2="280" y2="200" class="wire-signal" stroke-dasharray="4,3"/>
+    <text x="338" y="215" class="obj-comment">output</text>
+
+    <!-- [spectroscope~] -->
+    <rect x="260" y="250" width="100" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="268" y="265" class="obj-text">spectroscope~</text>
+    <line x1="140" y1="182" x2="300" y2="250" class="wire-signal"/>
+
+    <!-- [dac~] -->
+    <rect x="100" y="290" width="50" height="22" rx="1" class="obj-fill obj-stroke"/>
+    <text x="112" y="305" class="obj-text">dac~</text>
+    <line x1="130" y1="182" x2="118" y2="290" class="wire-signal"/>
+    <line x1="130" y1="182" x2="138" y2="290" class="wire-signal"/>
+  </svg>
+</div>
+
+<div class="callout">
+  <div class="callout-label">Connecting to the Schematic</div>
+  <p>
+    The <strong>[live.dial]</strong> is your potentiometer. Its range (200&ndash;5000 Hz)
+    corresponds to sweeping R from ~80 k&Omega; down to ~3.2 k&Omega; with a 10 nF cap.
+    Use <strong>exponential scaling</strong> on the dial &mdash; our ears perceive frequency
+    logarithmically, so a linear pot would feel like all the action is bunched at one end
+    (which is exactly what happens with a real linear-taper pot on a tone control).
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>5. Patch 4: Calculate f<sub>c</sub> from R and C</h2>
+
+<p>
+  If you want students to enter actual resistor and capacitor values and hear the result,
+  use <strong>[expr]</strong> to compute the cutoff:
+</p>
+
+<div class="max-code"><span class="copy-hint">Max patch</span>[flonum]  R (ohms)         [flonum]  C (farads)
+    |                          |
+    [expr 1./(6.283185*$f1*$f2)]
+    |
+    [flonum]  &larr; cutoff frequency in Hz
+    |
+    [sig~]
+    |
+    [onepole~]</div>
+
+<p>
+  Example values to try:
+</p>
+
+<table class="scope-table">
+  <tr>
+    <th>R</th>
+    <th>C</th>
+    <th>f<sub>c</sub></th>
+    <th>Sound</th>
+  </tr>
+  <tr>
+    <td class="label">22000</td>
+    <td class="label">0.00000001</td>
+    <td class="label">723 Hz</td>
+    <td>Classic tone-knob range. Audibly muffled.</td>
+  </tr>
+  <tr>
+    <td class="label">10000</td>
+    <td class="label">0.000000047</td>
+    <td class="label">339 Hz</td>
+    <td>Very dark. Like a guitar through a pillow.</td>
+  </tr>
+  <tr>
+    <td class="label">100000</td>
+    <td class="label">0.000000001</td>
+    <td class="label">1592 Hz</td>
+    <td>Gentle treble roll-off. Warm but clear.</td>
+  </tr>
+  <tr>
+    <td class="label">500000</td>
+    <td class="label">0.000000002</td>
+    <td class="label">159 Hz</td>
+    <td>Guitar cable effect. 20 ft cable &times; 100 pF/ft.</td>
+  </tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>6. Comparing Analog and Digital</h2>
+
+<table class="scope-table">
+  <tr>
+    <th>Concept</th>
+    <th>Analog (Schematic)</th>
+    <th>Digital (Max/MSP)</th>
+  </tr>
+  <tr>
+    <td class="label">Low-pass</td>
+    <td>R in series, C to ground</td>
+    <td><span class="math-inline">[onepole~]</span></td>
+  </tr>
+  <tr>
+    <td class="label">High-pass</td>
+    <td>C in series, R to ground</td>
+    <td><span class="math-inline">input - [onepole~]</span> or <span class="math-inline">[biquad~]</span></td>
+  </tr>
+  <tr>
+    <td class="label">Cutoff frequency</td>
+    <td>f<sub>c</sub> = 1/(2&pi;RC)</td>
+    <td>Right inlet of <span class="math-inline">[onepole~]</span>, in Hz</td>
+  </tr>
+  <tr>
+    <td class="label">Slope</td>
+    <td>&minus;6 dB/octave (first-order)</td>
+    <td>Same: &minus;6 dB/octave</td>
+  </tr>
+  <tr>
+    <td class="label">Tone knob</td>
+    <td>Pot + cap to ground</td>
+    <td><span class="math-inline">[live.dial] &rarr; [onepole~]</span></td>
+  </tr>
+  <tr>
+    <td class="label">See the response</td>
+    <td>Oscilloscope probe</td>
+    <td><span class="math-inline">[scope~]</span> and <span class="math-inline">[spectroscope~]</span></td>
+  </tr>
+  <tr>
+    <td class="label">Steeper filter</td>
+    <td>Cascade two RC stages</td>
+    <td>Chain two <span class="math-inline">[onepole~]</span> or use <span class="math-inline">[biquad~]</span> order 2</td>
+  </tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2>7. Going Further</h2>
+
+<h3>Cascading filters (&minus;12 dB/octave)</h3>
+
+<p>
+  Two [onepole~] in series gives a second-order filter (&minus;12 dB/octave) &mdash; the same
+  as cascading two RC stages on a breadboard. Three gives &minus;18 dB/octave. Each stage
+  makes the rolloff steeper. This is how the Big Muff's tone stack works: multiple passive
+  RC stages.
+</p>
+
+<div class="max-code"><span class="copy-hint">Max patch</span>[noise~]
+    |
+[onepole~ 1000]   &larr; first RC stage: &minus;6 dB/oct
+    |
+[onepole~ 1000]   &larr; second RC stage: &minus;12 dB/oct total
+    |
+[onepole~ 1000]   &larr; third RC stage: &minus;18 dB/oct total
+    |
+[dac~]</div>
+
+<h3>Bandpass filter</h3>
+
+<p>
+  A high-pass followed by a low-pass creates a bandpass &mdash; only frequencies between the
+  two cutoffs survive. This is the basic mid-boost topology used in the Tube Screamer.
+</p>
+
+<div class="max-code"><span class="copy-hint">Max patch</span>[adc~ 1]        guitar in
+    |
+[biquad~]         high-pass at 300 Hz (cuts bass)
+    |
+[onepole~ 3000]   low-pass at 3 kHz (cuts treble)
+    |
+[dac~]            only 300 Hz &ndash; 3 kHz passes through</div>
+
+<h3>Using [filtergraph~] to visualize</h3>
+
+<p>
+  The <strong>[filtergraph~]</strong> UI object draws the frequency response curve and lets
+  students drag the cutoff point interactively. Connect its output to <strong>[biquad~]</strong>
+  to hear the changes as they drag. This is the closest thing to turning a real knob.
+</p>
+
+<h3>Pre-built Max objects for common filter types</h3>
+
+<table class="scope-table">
+  <tr>
+    <th>Max Object</th>
+    <th>Filter Type</th>
+    <th>Analog Equivalent</th>
+  </tr>
+  <tr>
+    <td class="label">[onepole~]</td>
+    <td>1-pole low-pass</td>
+    <td>Single RC low-pass</td>
+  </tr>
+  <tr>
+    <td class="label">[biquad~]</td>
+    <td>2-pole, any type</td>
+    <td>Two-stage RC or active filter (op-amp)</td>
+  </tr>
+  <tr>
+    <td class="label">[svf~]</td>
+    <td>State-variable (LP/HP/BP/notch)</td>
+    <td>State-variable filter circuit</td>
+  </tr>
+  <tr>
+    <td class="label">[lores~]</td>
+    <td>Resonant low-pass</td>
+    <td>RLC circuit (inductor adds resonance)</td>
+  </tr>
+  <tr>
+    <td class="label">[reson~]</td>
+    <td>Resonant bandpass</td>
+    <td>Wah-wah pedal (inductor + cap)</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-label">Exercise</div>
+  <p>
+    Build a wah-wah pedal in Max: use <strong>[reson~]</strong> or <strong>[svf~]</strong> with
+    a narrow bandpass. Map a <strong>[live.dial]</strong> to sweep the center frequency from
+    400 Hz to 2 kHz. Feed your guitar through it. Compare the spectroscope view to the
+    EveryCircuit simulation of an RLC bandpass. Same shape, same sweep, same wah sound.
+  </p>
+</div>
+
+<div class="footer">
+  Doug Goodwin &mdash; CalArts 2026 &mdash; CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>

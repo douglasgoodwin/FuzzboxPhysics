@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schematics &amp; Passive Filters Worksheet — Fuzzbox Physics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #111;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in 0;
+  }
+
+  @media print {
+    body { padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .part { break-inside: avoid; }
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #111;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .header-left h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header-left .course {
+    font-size: 8pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 2px;
+  }
+  .header-right { text-align: right; }
+  .name-line {
+    font-size: 9pt;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .name-blank {
+    display: inline-block;
+    width: 2in;
+    border-bottom: 1px solid #999;
+  }
+
+  /* ---- Sections ---- */
+  .part { margin-bottom: 20px; }
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  .part-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8pt;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    white-space: nowrap;
+  }
+  .part-title { font-size: 13pt; font-weight: 500; }
+  .part-tool {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    color: #999;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  p { margin-bottom: 8px; color: #333; }
+
+  .step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 10pt;
+    min-width: 18px;
+    text-align: right;
+    color: #111;
+  }
+  .step-text { color: #333; }
+
+  .keyword { font-weight: 500; color: #111; }
+
+  .hint {
+    font-size: 9.5pt;
+    color: #666;
+    background: #f5f5f5;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-left: 3px solid #ccc;
+  }
+
+  .url-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8pt;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  /* ---- Links box ---- */
+  .links-box {
+    border: 1px solid #ccc;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: #fafafa;
+  }
+  .links-box .links-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .links-box ul {
+    list-style: none;
+    padding: 0;
+  }
+  .links-box li {
+    font-size: 9pt;
+    color: #333;
+    margin-bottom: 3px;
+    padding-left: 12px;
+    position: relative;
+  }
+  .links-box li::before {
+    content: '\25B8';
+    position: absolute;
+    left: 0;
+    color: #999;
+  }
+  .links-box li .link-url {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    color: #999;
+  }
+
+  /* ---- Answer blanks ---- */
+  .answer-box {
+    border: 1px solid #bbb;
+    min-height: 1in;
+    margin: 8px 0 12px;
+    padding: 6px;
+    position: relative;
+  }
+  .answer-box.tall { min-height: 1.4in; }
+  .answer-box.short { min-height: 0.7in; }
+  .answer-box.drawing { min-height: 2in; }
+  .answer-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #999;
+    position: absolute;
+    top: 4px;
+    right: 6px;
+  }
+
+  /* ---- Tables ---- */
+  .fill-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .fill-table th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    padding: 4px 8px;
+    border-bottom: 1px solid #aaa;
+  }
+  .fill-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    height: 28px;
+    vertical-align: top;
+  }
+  .fill-table td.given { color: #333; }
+  .fill-table td.blank { color: #ccc; }
+
+  /* ---- Symbol matching ---- */
+  .symbol-match {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 0;
+    border: 1px solid #ccc;
+    margin: 8px 0;
+  }
+  .symbol-match .sym-cell {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+  }
+  .symbol-match .ans-cell {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .symbol-match .ans-cell .ans-line {
+    font-size: 9pt;
+    color: #999;
+  }
+  .symbol-match svg {
+    width: 100px;
+    height: 40px;
+  }
+
+  /* ---- Schematic drawing area ---- */
+  .draw-area {
+    border: 1px solid #bbb;
+    min-height: 2.5in;
+    margin: 8px 0 12px;
+    position: relative;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 19px, #f0f0f0 19px, #f0f0f0 20px),
+      repeating-linear-gradient(90deg, transparent, transparent 19px, #f0f0f0 19px, #f0f0f0 20px);
+  }
+  .draw-area .answer-label {
+    background: rgba(255,255,255,0.8);
+    padding: 1px 4px;
+  }
+
+  .footer {
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+  }
+
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+  .print-btn:hover { background: #333; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">PRINT / PDF</button>
+
+<!-- ════════ PAGE 1 ════════ -->
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics &mdash; CalArts</div>
+    <h1>Schematics &amp; Passive Filters</h1>
+  </div>
+  <div class="header-right">
+    <div class="name-line">Name: <span class="name-blank"></span></div>
+    <div class="name-line">Date: <span class="name-blank"></span></div>
+  </div>
+</div>
+
+<p>Before we build pedals on breadboards, we need to read the language they're written in: <span class="keyword">schematics</span>.
+Today you'll learn to identify passive component symbols, then use three online tools to draw and simulate simple RC filters.</p>
+
+<div class="links-box">
+  <div class="links-title">Resources &amp; Tools</div>
+  <ul>
+    <li><strong>Symbol reference:</strong> AllAboutCircuits passive component symbols <span class="link-url">allaboutcircuits.com/technical-articles/schematic-symbols-electronic-components-passives...</span></li>
+    <li><strong>Filter theory:</strong> Electronics-Tutorials &mdash; Passive Low Pass Filter / Passive High Pass Filter <span class="link-url">electronics-tutorials.ws/filter/filter_2.html</span></li>
+    <li><strong>Draw schematics:</strong> CircuitCanvas <span class="link-url">circuitcanvas.com</span></li>
+    <li><strong>Animated sim:</strong> EveryCircuit &mdash; Passive low pass filter example <span class="link-url">everycircuit.com/circuit/5172963213836288</span></li>
+    <li><strong>Full sim:</strong> Falstad Circuit Simulator <span class="link-url">falstad.com/circuit</span></li>
+  </ul>
+</div>
+
+<!-- ═══════ PART 1 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 1</div>
+    <div class="part-title">Symbol Identification</div>
+    <div class="part-tool">Reference</div>
+  </div>
+
+  <p>For each schematic symbol, write the <span class="keyword">component name</span>, its <span class="keyword">unit of measurement</span>, and <span class="keyword">one sentence</span> about what it does in an audio circuit.</p>
+
+  <div class="symbol-match">
+    <!-- Resistor -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="5" y1="20" x2="25" y2="20" stroke="#111" stroke-width="1.5"/>
+        <polyline points="25,20 31,8 43,32 55,8 67,32 79,8 91,32 95,20"
+                  fill="none" stroke="#111" stroke-width="1.5"/>
+        <line x1="95" y1="20" x2="115" y2="20" stroke="#111" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________&nbsp;&nbsp; Unit: _______________</div>
+      <div class="ans-line">What it does: _____________________________________________________________</div>
+    </div>
+
+    <!-- Capacitor (unpolarized) -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="5" y1="20" x2="50" y2="20" stroke="#111" stroke-width="1.5"/>
+        <line x1="50" y1="6" x2="50" y2="34" stroke="#111" stroke-width="2"/>
+        <line x1="65" y1="6" x2="65" y2="34" stroke="#111" stroke-width="2"/>
+        <line x1="65" y1="20" x2="115" y2="20" stroke="#111" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________&nbsp;&nbsp; Unit: _______________</div>
+      <div class="ans-line">What it does: _____________________________________________________________</div>
+    </div>
+
+    <!-- Inductor -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="5" y1="22" x2="22" y2="22" stroke="#111" stroke-width="1.5"/>
+        <path d="M22,22 Q30,6 38,22 Q46,6 54,22 Q62,6 70,22 Q78,6 86,22 Q94,6 100,22"
+              fill="none" stroke="#111" stroke-width="1.5"/>
+        <line x1="100" y1="22" x2="115" y2="22" stroke="#111" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________&nbsp;&nbsp; Unit: _______________</div>
+      <div class="ans-line">What it does: _____________________________________________________________</div>
+    </div>
+
+    <!-- Potentiometer -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="5" y1="24" x2="22" y2="24" stroke="#111" stroke-width="1.5"/>
+        <polyline points="22,24 28,12 40,36 52,12 64,36 76,12 88,36 92,24"
+                  fill="none" stroke="#111" stroke-width="1.5"/>
+        <line x1="92" y1="24" x2="115" y2="24" stroke="#111" stroke-width="1.5"/>
+        <line x1="57" y1="4" x2="57" y2="14" stroke="#111" stroke-width="1.5"/>
+        <polygon points="52,14 57,22 62,14" fill="#111"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________&nbsp;&nbsp; Unit: _______________</div>
+      <div class="ans-line">What it does: _____________________________________________________________</div>
+    </div>
+
+    <!-- Ground -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="60" y1="4" x2="60" y2="14" stroke="#111" stroke-width="1.5"/>
+        <line x1="42" y1="14" x2="78" y2="14" stroke="#111" stroke-width="1.5"/>
+        <line x1="48" y1="22" x2="72" y2="22" stroke="#111" stroke-width="1.5"/>
+        <line x1="54" y1="30" x2="66" y2="30" stroke="#111" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________</div>
+      <div class="ans-line">What it means: ____________________________________________________________</div>
+    </div>
+
+    <!-- Wire junction -->
+    <div class="sym-cell">
+      <svg viewBox="0 0 120 40">
+        <line x1="10" y1="20" x2="110" y2="20" stroke="#111" stroke-width="1.5"/>
+        <line x1="60" y1="4" x2="60" y2="36" stroke="#111" stroke-width="1.5"/>
+        <circle cx="60" cy="20" r="4" fill="#111"/>
+      </svg>
+    </div>
+    <div class="ans-cell">
+      <div class="ans-line">Name: ___________________________</div>
+      <div class="ans-line">What it means: ____________________________________________________________</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PART 2 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 2</div>
+    <div class="part-title">Draw RC Filters</div>
+    <div class="part-tool">CircuitCanvas</div>
+  </div>
+
+  <p>Using <span class="keyword">circuitcanvas.com</span>, draw each filter circuit described below. Then sketch it here by hand. Use proper schematic symbols. Label each component with its value.</p>
+
+  <div class="step">
+    <div class="step-num">A.</div>
+    <div class="step-text">
+      <strong>Low-pass filter (treble cut):</strong> R = 22 k&Omega; in series, C = 10 nF (103) to ground. Output taken between R and C.
+    </div>
+  </div>
+
+  <div class="draw-area">
+    <div class="answer-label">Low-pass schematic</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">B.</div>
+    <div class="step-text">
+      <strong>High-pass filter (bass cut):</strong> C = 10 nF (103) in series, R = 22 k&Omega; to ground. Output taken between C and R.
+    </div>
+  </div>
+
+  <div class="draw-area">
+    <div class="answer-label">High-pass schematic</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">C.</div>
+    <div class="step-text">
+      Look at the two drawings. What is the <em>only</em> difference between a low-pass and a high-pass RC filter?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- PAGE BREAK -->
+<div class="page-break"></div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics</div>
+    <h1>Schematics &amp; Passive Filters <span style="font-weight:300">(continued)</span></h1>
+  </div>
+</div>
+
+<!-- ═══════ PART 3 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 3</div>
+    <div class="part-title">Simulate &amp; Observe</div>
+    <div class="part-tool">EveryCircuit</div>
+  </div>
+
+  <p>Open the EveryCircuit passive low-pass filter example. Watch the animation, then experiment.</p>
+
+  <div class="url-note" style="margin-bottom:10px">everycircuit.com/circuit/5172963213836288/passive-low-pass-filter</div>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      Set the frequency source to a low frequency (e.g. 100 Hz). Observe the output amplitude relative to the input. Now increase the frequency to 2000 Hz. What happens?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      Try to find the <span class="keyword">cutoff frequency</span> &mdash; the frequency where the output drops to about 70% of the input. Record it here:
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th>R value</th>
+      <th>C value</th>
+      <th>Measured f<sub>c</sub> (from sim)</th>
+      <th>Calculated f<sub>c</sub> = 1/(2&pi;RC)</th>
+      <th>Match? (Y/N)</th>
+    </tr>
+    <tr>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">Default values</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">Default values</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      Now modify the circuit: swap the positions of R and C (capacitor in series, resistor to ground). What kind of filter is it now? Verify by sweeping the frequency.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 4 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 4</div>
+    <div class="part-title">Build &amp; Measure in Falstad</div>
+    <div class="part-tool">Falstad Circuit Simulator</div>
+  </div>
+
+  <p>Open <span class="keyword">falstad.com/circuit</span>. Build an RC low-pass filter using R = 22 k&Omega; and C = 10 nF (0.01 &mu;F).
+  Add a voltage source set to sine wave. Right-click the output node and select "View in New Scope" to see the oscilloscope.</p>
+
+  <div class="hint">
+    <strong>Falstad tips:</strong> Right-click a component to change its value. Use Draw &rarr; Inputs and Sources &rarr; Add Voltage Source. Use Draw &rarr; Passive Components for R and C. Use "t" key to slow/speed up the simulation.
+  </div>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      Sweep the source frequency from 100 Hz to 5000 Hz. Fill in the output level at each frequency (estimate from the scope &mdash; full = 1.0, half = 0.5, etc.):
+    </div>
+  </div>
+
+  <table class="fill-table">
+    <tr>
+      <th>Frequency</th>
+      <th>100 Hz</th>
+      <th>300 Hz</th>
+      <th>500 Hz</th>
+      <th>723 Hz</th>
+      <th>1 kHz</th>
+      <th>2 kHz</th>
+      <th>5 kHz</th>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">Output level</td>
+      <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      At 723 Hz (the calculated cutoff), the output should be approximately <strong>0.707</strong> (&minus;3 dB) of the input. Is yours close? Why or why not?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      Now rewire the circuit as a <strong>high-pass filter</strong> (swap R and C). Sweep the same frequencies. What changed?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 5 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 5</div>
+    <div class="part-title">Calculate Cutoff Frequencies</div>
+    <div class="part-tool">Pencil &amp; Paper</div>
+  </div>
+
+  <p>Use the formula <span class="keyword">f<sub>c</sub> = 1 / (2&pi;RC)</span> to calculate the cutoff frequency for each combination. Show your work.</p>
+
+  <table class="fill-table">
+    <tr>
+      <th>R</th>
+      <th>C</th>
+      <th>Calculation</th>
+      <th>f<sub>c</sub> (Hz)</th>
+      <th>Guitar context</th>
+    </tr>
+    <tr>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">22 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">10 nF (103)</td>
+      <td style="min-width:1.8in"></td>
+      <td></td>
+      <td class="given" style="font-size:8.5pt">Tone knob (typical)</td>
+    </tr>
+    <tr>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">10 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">47 nF (473)</td>
+      <td></td>
+      <td></td>
+      <td class="given" style="font-size:8.5pt">Bass-heavy tone</td>
+    </tr>
+    <tr>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">100 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">1 nF (102)</td>
+      <td></td>
+      <td></td>
+      <td class="given" style="font-size:8.5pt">Bright treble</td>
+    </tr>
+    <tr>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">1 M&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">100 pF</td>
+      <td></td>
+      <td></td>
+      <td class="given" style="font-size:8.5pt">Guitar cable capacitance</td>
+    </tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">Q.</div>
+    <div class="step-text">
+      A long guitar cable has about 100 pF of capacitance per foot. With a 20-foot cable (2 nF total) and a guitar pickup impedance of ~500 k&Omega;, what is the cutoff frequency? What does this mean for your tone?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ BIG QUESTION ═══════ -->
+<div class="part" style="border: 2px solid #111; padding: 16px;">
+  <div class="part-header" style="border-bottom:none; margin-bottom:2px">
+    <div class="part-title">Big Question</div>
+  </div>
+
+  <p>Every pedal circuit you will build contains at least one RC filter &mdash; whether it's a coupling cap (high-pass), a tone control (low-pass), or a feedback filter. In your own words, explain:
+  <strong>Why does swapping the positions of R and C change a low-pass filter into a high-pass filter?</strong>
+  Use the concept of the voltage divider and the capacitor's frequency-dependent impedance in your answer.</p>
+
+  <div class="answer-box tall">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<div class="footer">
+  Doug Goodwin &mdash; CalArts 2026 &mdash; CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>
