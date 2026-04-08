@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUZZBOX PHYSICS — Waveform Distortion Lab</title>
+<title>FUZZBOX PHYSICS — State Variable Filter Lab</title>
 <link rel="stylesheet" href="lab.css">
 <style>
-  /* Page-specific styles */
   canvas { height: 160px; cursor: crosshair; image-rendering: pixelated; }
 
   .grid {
@@ -118,7 +117,7 @@
     <div class="subtitle">Fuzzbox Physics</div>
     <a href="/" class="nav-link">All Labs</a>
   </div>
-  <h1>Waveform Distortion Lab</h1>
+  <h1>State Variable Filter Lab</h1>
 </header>
 
 <!-- SOURCE CONTROLS -->
@@ -157,39 +156,45 @@
   </div>
 
   <div class="panel">
-    <div class="section-label">Clipping Algorithm</div>
-    <div class="btn-group" id="clip-btns">
-      <button onclick="setClip('hard')" class="active" id="clip-hard">HARD</button>
-      <button onclick="setClip('soft')" id="clip-soft">SOFT (tanh)</button>
-      <button onclick="setClip('asymmetric')" id="clip-asym">ASYMMETRIC</button>
-      <button onclick="setClip('foldback')" id="clip-fold">FOLDBACK</button>
-      <button onclick="setClip('bitcrush')" id="clip-bit">BIT CRUSH</button>
-      <button onclick="setClip('tube')" id="clip-tube">TUBE (even harm)</button>
-      <button onclick="setClip('rectify')" id="clip-rect">HALF RECTIFY</button>
-      <button onclick="setClip('tubesoft')" id="clip-tubesoft">TUBE SOFT</button>
+    <div class="section-label">Filter Type</div>
+    <div class="btn-group" id="filter-btns">
+      <button onclick="setFilterType('lp')" class="active" id="filter-lp">LOWPASS</button>
+      <button onclick="setFilterType('hp')" id="filter-hp">HIGHPASS</button>
+      <button onclick="setFilterType('bp')" id="filter-bp">BANDPASS</button>
+      <button onclick="setFilterType('br')" id="filter-br">BAND REJECT</button>
     </div>
-    <div class="algo-info" id="algo-info">
-      Hard clip: f(x) = clamp(x, -T, +T) -- abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.
+    <div class="algo-info" id="filter-info">
+      Lowpass: LP = F * BP + LP_prev -- passes frequencies below cutoff. The fundamental filter of subtractive synthesis.
+    </div>
+    <hr class="section-divider">
+    <div class="section-label">Noise Burst</div>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:6px">
+      <button id="btn-noise-burst" class="amber-btn" onclick="toggleNoiseBurst()">BURST OFF</button>
+      <div class="knob-group" style="flex:1">
+        <div class="knob-label">RATE (ms)</div>
+        <input type="range" id="burst-rate" min="100" max="1000" value="400" step="10" oninput="updateDisplay('burst-rate-val', this.value+'ms')">
+        <div class="knob-value" id="burst-rate-val">400ms</div>
+      </div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="section-label">Drive &amp; Mix</div>
+    <div class="section-label">Filter Parameters</div>
     <div class="controls-row" style="flex-direction:column; gap:10px; margin-top:0">
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-        <div class="knob-label">DRIVE / THRESHOLD</div>
-        <input type="range" id="drive" min="0.01" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" oninput="updateDrive(); updateDisplay('drive-val', Math.round((1-this.value)*100)+'%')">
-        <div class="knob-value" id="drive-val">50%</div>
+        <div class="knob-label">CUTOFF FREQUENCY</div>
+        <input type="range" id="filter-freq" min="0" max="1" value="0.5" step="0.001" style="max-width:100%; width:100%" oninput="updateFreqDisplay()">
+        <div class="knob-value" id="freq-val">1000 Hz</div>
       </div>
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-        <div class="knob-label">BIT DEPTH (crush)</div>
-        <input type="range" id="bit-depth" min="1" max="16" value="8" step="1" style="max-width:100%; width:100%" oninput="updateDisplay('bit-val', this.value+' bit')">
-        <div class="knob-value" id="bit-val">8 bit</div>
+        <div class="knob-label">Q / RESONANCE</div>
+        <input type="range" id="filter-q" min="0.01" max="0.99" value="0.1" step="0.01" style="max-width:100%; width:100%" oninput="updateDisplay('q-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="q-val">10%</div>
       </div>
       <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-        <div class="knob-label">WET / DRY MIX</div>
-        <input type="range" id="wet-dry" min="0" max="1" value="1" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="updateGains(); updateDisplay('wetdry-val', Math.round(this.value*100)+'% W')">
-        <div class="knob-value" id="wetdry-val">100% W</div>
+        <div class="knob-label">FILTER GAIN</div>
+        <input type="range" id="filter-gain" min="0" max="3" value="1" step="0.01" style="max-width:100%; width:100%" oninput="updateDisplay('gain-val', Math.round(this.value*100)+'%')">
+        <div class="knob-value" id="gain-val">100%</div>
       </div>
     </div>
   </div>
@@ -204,26 +209,22 @@
 <!-- OSCILLOSCOPE DISPLAYS -->
 <div class="grid">
   <div class="panel">
-    <div class="section-label">Input Waveform (Dry)</div>
+    <div class="section-label">Input Waveform (Pre-Filter)</div>
     <canvas id="scope-in" class="scope-large"></canvas>
     <div class="vu-row" id="vu-in"></div>
   </div>
   <div class="panel">
-    <div class="section-label">Output Waveform (Post-Distortion)</div>
+    <div class="section-label">Output Waveform (Post-Filter)</div>
     <canvas id="scope-out" class="scope-large"></canvas>
     <div class="vu-row" id="vu-out"></div>
     <div class="legend">
       <div class="legend-item">
         <div class="legend-line" style="background:#ffffff"></div>
-        <span style="color:var(--text); font-size:0.65rem">WET OUT</span>
+        <span style="color:var(--text); font-size:0.65rem">FILTERED</span>
       </div>
       <div class="legend-item">
         <div class="legend-line" style="background:rgba(255,255,255,0.25); border-top: 1px dashed rgba(255,255,255,0.4)"></div>
-        <span style="color:var(--text-secondary); font-size:0.65rem">DRY REF (overlay)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-line" style="background:var(--red)"></div>
-        <span style="color:var(--red); font-size:0.65rem">CLIP THRESHOLD</span>
+        <span style="color:var(--text-secondary); font-size:0.65rem">DRY REF</span>
       </div>
     </div>
   </div>
@@ -236,7 +237,7 @@
     <canvas id="fft-in" height="120"></canvas>
   </div>
   <div class="panel">
-    <div class="section-label">Frequency Spectrum -- Output (distortion creates harmonics)</div>
+    <div class="section-label">Frequency Spectrum -- Output (observe filter response)</div>
     <canvas id="fft-out" height="120"></canvas>
   </div>
 </div>
@@ -244,51 +245,12 @@
 <!-- SPECTROGRAM -->
 <div class="grid" style="margin-bottom:12px">
   <div class="panel">
-    <div class="section-label">Spectrogram -- Input (time / frequency / amplitude)</div>
+    <div class="section-label">Spectrogram -- Input</div>
     <canvas id="sgram-in" class="scope-large"></canvas>
   </div>
   <div class="panel">
-    <div class="section-label">Spectrogram -- Output (watch harmonics appear)</div>
+    <div class="section-label">Spectrogram -- Output (watch filter shape over time)</div>
     <canvas id="sgram-out" class="scope-large"></canvas>
-  </div>
-</div>
-
-<!-- REVERB CHAMBER -->
-<div class="panel full-width" style="margin-bottom:12px">
-  <div class="section-label">Reverb Chamber -- Acoustic Space Simulation</div>
-  <div style="display:grid; grid-template-columns: auto 1fr 1fr 1fr 1fr; gap:16px; align-items:start">
-    <div>
-      <div style="margin-bottom:8px">
-        <button id="btn-reverb" class="amber-btn" onclick="toggleReverb()">REVERB OFF</button>
-      </div>
-      <div class="btn-group" id="ir-btns" style="flex-direction:column; gap:4px">
-        <button class="amber-btn active" id="ir-room" onclick="setIR('room')">ROOM</button>
-        <button class="amber-btn" id="ir-hall" onclick="setIR('hall')">CONCERT HALL</button>
-        <button class="amber-btn" id="ir-plate" onclick="setIR('plate')">PLATE</button>
-        <button class="amber-btn" id="ir-cave" onclick="setIR('cave')">CAVE / TUNNEL</button>
-        <button class="amber-btn" id="ir-spring" onclick="setIR('spring')">SPRING</button>
-      </div>
-    </div>
-    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-      <div class="knob-label">DECAY TIME (s)</div>
-      <input type="range" id="rev-decay" min="0.1" max="8" value="1.5" step="0.1" style="max-width:100%; width:100%" class="amber" oninput="buildIR(); updateDisplay('rev-decay-val', this.value+'s')">
-      <div class="knob-value" id="rev-decay-val">1.5s</div>
-    </div>
-    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-      <div class="knob-label">ROOM CHARACTER</div>
-      <input type="range" id="rev-density" min="0" max="1" value="0.5" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="buildIR(); updateDisplay('rev-density-val', Math.round(this.value*100)+'%')">
-      <div class="knob-value" id="rev-density-val">50%</div>
-    </div>
-    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-      <div class="knob-label">REV WET/DRY</div>
-      <input type="range" id="rev-wet" min="0" max="1" value="0.4" step="0.01" style="max-width:100%; width:100%" class="amber" oninput="updateReverbMix(); updateDisplay('rev-wet-val', Math.round(this.value*100)+'% W')">
-      <div class="knob-value" id="rev-wet-val">40% W</div>
-    </div>
-    <div class="knob-group" style="align-items:flex-start; min-width:unset; width:100%">
-      <div class="knob-label">PRE-DELAY (ms)</div>
-      <input type="range" id="rev-predelay" min="0" max="100" value="10" step="1" style="max-width:100%; width:100%" class="amber" oninput="updatePreDelay(); updateDisplay('rev-predelay-val', this.value+'ms')">
-      <div class="knob-value" id="rev-predelay-val">10ms</div>
-    </div>
   </div>
 </div>
 
@@ -314,42 +276,51 @@
 // AUDIO ENGINE
 // ============================================================
 let ctx, sourceNode, oscNode, micStream, wavSourceNode;
-let inputGain, dryGain, wetGain, outputGain;
-let distortionNode, reverbNode, preDelayNode, revWetGain, revDryGain;
+let inputGain, outputGain;
+let filterNode; // ScriptProcessorNode for SVF
 let analyserIn, analyserOut;
 let playing = false;
 let sourceType = 'osc';
-let reverbEnabled = false;
-let currentIR = 'room';
-let clipMode = 'hard';
+let filterType = 'lp';
 let animFrame;
 
-// tubeSoft state (persistent across ScriptProcessor callbacks)
-const ts = {
-  lvl1: 0, lvl2: 1, lvl3: 1, lvl4: 1, lvl5: 1,
-  prevSign: -1,     // for zero-crossing detection
-  counter: 0,       // sample counter for lclk
-  period: 0         // lclk period in samples (set after ctx init)
-};
+// SVF state (persistent across ScriptProcessor callbacks)
+const svf = { bp: 0, lp: 0 };
 
-const BUFFER_SIZE = 4096;
+// Noise burst state
+let noiseBurstEnabled = false;
+let noiseBurstCounter = 0;
+let noiseBurstActive = false;
+let noiseBurstSamplesLeft = 0;
+
+const BUFFER_SIZE = 2048;
+
+// Log-scale frequency mapping: slider 0-1 → 20-20000 Hz
+function sliderToFreq(val) {
+  return 20 * Math.pow(1000, val);
+}
+
+function updateFreqDisplay() {
+  const val = parseFloat(document.getElementById('filter-freq').value);
+  const freq = sliderToFreq(val);
+  let label;
+  if (freq >= 1000) label = (freq / 1000).toFixed(1) + ' kHz';
+  else label = Math.round(freq) + ' Hz';
+  document.getElementById('freq-val').textContent = label;
+}
 
 async function initAudio() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   document.getElementById('sr-display').textContent = ctx.sampleRate;
   document.getElementById('buf-display').textContent = BUFFER_SIZE;
-  ts.period = Math.floor(ctx.sampleRate * 0.025); // 25ms lclk period
 
-  // Gainz
   inputGain = ctx.createGain();
-  dryGain = ctx.createGain();
-  wetGain = ctx.createGain();
   outputGain = ctx.createGain();
 
-  // Distortion via ScriptProcessor
-  distortionNode = ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
-  distortionNode.onaudioprocess = processDistortion;
+  // SVF via ScriptProcessor
+  filterNode = ctx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+  filterNode.onaudioprocess = processFilter;
 
   // Analysers
   analyserIn = ctx.createAnalyser();
@@ -357,233 +328,82 @@ async function initAudio() {
   analyserOut = ctx.createAnalyser();
   analyserOut.fftSize = 2048;
 
-  // Reverb
-  preDelayNode = ctx.createDelay(0.5);
-  preDelayNode.delayTime.value = 0.01;
-  reverbNode = ctx.createConvolver();
-  revWetGain = ctx.createGain();
-  revDryGain = ctx.createGain();
-  revWetGain.gain.value = 0.4;
-  revDryGain.gain.value = 0.6;
-
-  buildIR();
-
-  // Signal flow:
-  // src -> inputGain -> analyserIn
-  //   -> distortionNode -> analyserOut
-  //     -> dryGain + wetGain -> outputGain -> speakers
-  // (reverb is inserted in wet path when enabled)
-
+  outputGain.connect(ctx.destination);
   updateGains();
-  updateReverbRouting();
   await startOsc();
 }
 
-function updateReverbRouting() {
-  try { analyserOut.disconnect(); } catch(e) {}
-  try { preDelayNode.disconnect(); } catch(e) {}
-  try { reverbNode.disconnect(); } catch(e) {}
-  try { revWetGain.disconnect(); } catch(e) {}
-  try { revDryGain.disconnect(); } catch(e) {}
-  try { outputGain.disconnect(); } catch(e) {}
-
-  outputGain.connect(ctx.destination);
-
-  if (reverbEnabled) {
-    // analyserOut -> revDryGain -> outputGain
-    analyserOut.connect(revDryGain);
-    revDryGain.connect(outputGain);
-    // analyserOut -> preDelay -> reverb -> revWetGain -> outputGain
-    analyserOut.connect(preDelayNode);
-    preDelayNode.connect(reverbNode);
-    reverbNode.connect(revWetGain);
-    revWetGain.connect(outputGain);
-  } else {
-    analyserOut.connect(outputGain);
-  }
-}
-
-function buildIR() {
-  if (!ctx) return;
-  const decay = parseFloat(document.getElementById('rev-decay').value);
-  const density = parseFloat(document.getElementById('rev-density').value);
-  const sampleRate = ctx.sampleRate;
-  const ir = generateIR(sampleRate, decay, density, currentIR);
-  reverbNode.buffer = ir;
-}
-
-function generateIR(sampleRate, decay, density, type) {
-  const length = Math.floor(sampleRate * decay);
-  const buf = ctx.createBuffer(2, length, sampleRate);
-
-  for (let ch = 0; ch < 2; ch++) {
-    const data = buf.getChannelData(ch);
-    for (let i = 0; i < length; i++) {
-      const t = i / length;
-      let env;
-
-      switch(type) {
-        case 'hall':
-          // Slower attack, long smooth tail
-          env = (t < 0.02 ? t / 0.02 : 1) * Math.exp(-t * (3 / decay));
-          break;
-        case 'plate':
-          // Dense, metallic -- lots of early reflections
-          env = Math.exp(-t * (5 / decay));
-          break;
-        case 'cave':
-          // Very long, low density
-          env = Math.exp(-t * (1.5 / decay));
-          break;
-        case 'spring':
-          // Spring character: oscillating envelope
-          env = Math.exp(-t * (4 / decay)) * (0.5 + 0.5 * Math.cos(t * 60 * Math.PI));
-          break;
-        default: // room
-          env = Math.exp(-t * (4 / decay));
-      }
-
-      // Base noise
-      let sample = (Math.random() * 2 - 1) * env;
-
-      // Density adds early reflections
-      if (density > 0 && Math.random() < density * 0.3) {
-        sample += (Math.random() * 2 - 1) * env * 0.4;
-      }
-
-      // Spring gets chirp
-      if (type === 'spring') {
-        sample *= 1 + 0.3 * Math.sin(t * sampleRate * 0.001);
-      }
-
-      data[i] = sample * 0.5;
-    }
-  }
-  return buf;
-}
-
 // ============================================================
-// DISTORTION ALGORITHMS
+// CHAMBERLIN STATE VARIABLE FILTER
 // ============================================================
-function processDistortion(e) {
+function processFilter(e) {
   const input = e.inputBuffer.getChannelData(0);
   const output = e.outputBuffer.getChannelData(0);
-  const threshold = parseFloat(document.getElementById('drive').value);
-  const bits = parseInt(document.getElementById('bit-depth').value);
-  const wetDry = parseFloat(document.getElementById('wet-dry').value);
-  const drive = (1 - threshold) * 10 + 1; // map so higher = more distortion
+
+  const freqSlider = parseFloat(document.getElementById('filter-freq').value);
+  const freq = sliderToFreq(freqSlider);
+  const q = parseFloat(document.getElementById('filter-q').value);
+  const gain = parseFloat(document.getElementById('filter-gain').value);
+
+  // Chamberlin SVF coefficients
+  // Clamp F to prevent instability near Nyquist
+  const F = 2 * Math.sin(Math.PI * Math.min(freq, ctx.sampleRate / 6) / ctx.sampleRate);
+  const Q_coeff = Math.min(2, Math.max(0.0001, 1 / (q * 100)));
+
+  // Noise burst parameters
+  const burstRate = parseFloat(document.getElementById('burst-rate').value);
+  const burstRateSamples = Math.floor(burstRate / 1000 * ctx.sampleRate);
+  const burstLenSamples = Math.floor(0.003 * ctx.sampleRate); // 3ms burst
 
   for (let i = 0; i < input.length; i++) {
     let x = input[i];
-    let wet;
 
-    switch(clipMode) {
-      case 'hard':
-        wet = Math.max(-threshold, Math.min(threshold, x)) / threshold;
-        break;
-
-      case 'soft':
-        // tanh saturation -- smooth, musical
-        wet = Math.tanh(drive * x) / Math.tanh(drive);
-        break;
-
-      case 'asymmetric':
-        // Different clipping on positive vs negative -> even harmonics
-        if (x >= 0) {
-          wet = Math.min(x, threshold) / threshold;
-        } else {
-          wet = Math.max(x, -threshold * 0.6) / (threshold * 0.6);
-          // scale back
-          wet *= 0.8;
+    // Noise burst: replace input with short noise pulses
+    if (noiseBurstEnabled) {
+      noiseBurstCounter++;
+      if (noiseBurstActive) {
+        x = (Math.random() * 2 - 1);
+        noiseBurstSamplesLeft--;
+        if (noiseBurstSamplesLeft <= 0) noiseBurstActive = false;
+      } else {
+        x = 0;
+        if (noiseBurstCounter >= burstRateSamples) {
+          noiseBurstCounter = 0;
+          noiseBurstActive = true;
+          noiseBurstSamplesLeft = burstLenSamples;
         }
-        break;
-
-      case 'foldback':
-        // Mirror signal back when it exceeds threshold -- extreme harmonic density
-        let val = x;
-        while (Math.abs(val) > threshold) {
-          if (val > threshold) val = 2 * threshold - val;
-          else if (val < -threshold) val = -2 * threshold - val;
-        }
-        wet = val / threshold;
-        break;
-
-      case 'bitcrush':
-        // Quantize to N bits (2^bits total levels spanning [-1, 1])
-        const levels = Math.pow(2, bits);
-        const step = 2 / levels;
-        wet = Math.floor((x + 1) / step) * step - 1 + step * 0.5;
-        wet = Math.max(-1, Math.min(1, wet));
-        break;
-
-      case 'tube':
-        // Tube-like: asymmetric tanh -- emphasizes even harmonics like a triode
-        const bias = 0.15;
-        wet = Math.tanh(drive * (x + bias)) - Math.tanh(drive * bias);
-        // normalize approx
-        wet = wet / (1 + Math.tanh(drive * bias));
-        break;
-
-      case 'rectify':
-        // Half-wave rectifier: negative half removed -> strong even harmonics
-        wet = x > 0 ? x : 0;
-        // AC restore
-        wet = wet * 2 - 0.5;
-        wet = Math.max(-1, Math.min(1, wet));
-        break;
-
-      case 'tubesoft': {
-        // Auto-normalizing tube saturation (ported from gen~ tubeSoft)
-        // lclk: periodic level reset
-        ts.counter++;
-        if (ts.counter >= ts.period) {
-          ts.counter = 0;
-          if (ts.lvl1 > 0) {
-            ts.lvl2 = 1 / ts.lvl1;
-            ts.lvl3 = ts.lvl1;
-          } else {
-            ts.lvl2 = 1;
-            ts.lvl3 = 1;
-          }
-          ts.lvl1 = 0;
-        } else {
-          const ax = Math.abs(x);
-          if (ax > ts.lvl1) ts.lvl1 = ax;
-        }
-
-        // Zero-crossing detection: update per-half-cycle gain
-        const curSign = x >= 0 ? 1 : -1;
-        if (curSign !== ts.prevSign) {
-          ts.lvl4 = ts.lvl2;
-          ts.lvl5 = ts.lvl3;
-          ts.prevSign = curSign;
-        }
-
-        // Normalize, saturate, denormalize
-        const w = Math.abs(x) * ts.lvl4;
-        const warmth = 1 - threshold; // drive slider: low threshold = high warmth
-        const d = 1 - warmth * 0.99;
-        if (w > d) {
-          const d2 = w - d;
-          const y = d2 / (1 - d);
-          wet = ts.lvl5 * (Math.sign(x) * (d + d2 / (1 + y * y)));
-        } else {
-          wet = x;
-        }
-        break;
       }
-
-      default:
-        wet = x;
     }
 
-    output[i] = wet * wetDry + x * (1 - wetDry);
+    // Chamberlin SVF
+    const hp = x - Q_coeff * svf.bp - svf.lp;
+    svf.bp = F * hp + svf.bp;
+    svf.lp = F * svf.bp + svf.lp;
+    const br = hp + svf.lp;
+
+    // Select output
+    let out;
+    switch (filterType) {
+      case 'hp': out = hp; break;
+      case 'bp': out = svf.bp; break;
+      case 'br': out = br; break;
+      default:   out = svf.lp; break;
+    }
+
+    output[i] = out * gain;
   }
 }
 
 // ============================================================
 // SOURCE MANAGEMENT
 // ============================================================
+function connectChain() {
+  inputGain.connect(analyserIn);
+  inputGain.connect(filterNode);
+  filterNode.connect(analyserOut);
+  analyserOut.connect(outputGain);
+}
+
 async function startOsc() {
   if (!ctx) return;
   stopSource();
@@ -591,9 +411,7 @@ async function startOsc() {
   oscNode.type = document.getElementById('osc-type').value;
   oscNode.frequency.value = parseFloat(document.getElementById('osc-freq').value);
   oscNode.connect(inputGain);
-  inputGain.connect(analyserIn);
-  inputGain.connect(distortionNode);
-  distortionNode.connect(analyserOut);
+  connectChain();
   oscNode.start();
   playing = true;
   document.getElementById('play-btn').textContent = 'PLAYING';
@@ -607,9 +425,7 @@ async function startMic() {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
     sourceNode = ctx.createMediaStreamSource(micStream);
     sourceNode.connect(inputGain);
-    inputGain.connect(analyserIn);
-    inputGain.connect(distortionNode);
-    distortionNode.connect(analyserOut);
+    connectChain();
     updateMicStatus(true);
     document.getElementById('mic-warning').style.display = 'block';
   } catch(err) {
@@ -624,7 +440,8 @@ function stopSource() {
   try { if (wavSourceNode) { wavSourceNode.stop(); wavSourceNode.disconnect(); } } catch(e) {}
   try { if (micStream) { micStream.getTracks().forEach(t => t.stop()); } } catch(e) {}
   try { inputGain.disconnect(); } catch(e) {}
-  try { distortionNode.disconnect(); } catch(e) {}
+  try { filterNode.disconnect(); } catch(e) {}
+  try { analyserOut.disconnect(); } catch(e) {}
   wavSourceNode = null;
   document.getElementById('mic-warning').style.display = 'none';
 }
@@ -653,55 +470,32 @@ function updateGains() {
   inputGain.gain.value = parseFloat(document.getElementById('input-gain').value);
 }
 
-function updateDrive() { /* handled in processDistortion live */ }
-
-function updateReverbMix() {
-  if (!ctx) return;
-  const w = parseFloat(document.getElementById('rev-wet').value);
-  revWetGain.gain.value = w;
-  revDryGain.gain.value = 1 - w * 0.5;
-}
-
-function updatePreDelay() {
-  if (!ctx) return;
-  preDelayNode.delayTime.value = parseFloat(document.getElementById('rev-predelay').value) / 1000;
-}
-
-function toggleReverb() {
-  reverbEnabled = !reverbEnabled;
-  const btn = document.getElementById('btn-reverb');
-  btn.textContent = reverbEnabled ? 'REVERB ON' : 'REVERB OFF';
-  btn.classList.toggle('active', reverbEnabled);
-  updateReverbRouting();
-}
-
-function setIR(type) {
-  currentIR = type;
-  ['room','hall','plate','cave','spring'].forEach(t => {
-    document.getElementById('ir-' + t).classList.toggle('active', t === type);
-  });
-  buildIR();
-}
-
-const algoInfo = {
-  hard: 'Hard clip: f(x) = clamp(x, -T, +T) -- abrupt ceiling creates rich odd harmonics. Classic solid-state crunch.',
-  soft: 'Soft clip: f(x) = tanh(D*x) / tanh(D) -- smooth saturation, musical warmth. Vintage tube-amp character.',
-  asymmetric: 'Asymmetric: different thresholds on +/- halves -> even-order harmonics (2nd, 4th). Transistor bias distortion.',
-  foldback: 'Foldback / wavefold: signal mirrors back past threshold. Extreme density, metallic texture. Buchla-style.',
-  bitcrush: 'Bit Crush: quantize to N bits = reduce amplitude resolution -> harsh quantization noise / aliasing.',
-  tube: 'Tube (triode bias): tanh with DC offset -> even harmonics dominate. Warm, complex saturation.',
-  rectify: 'Half-Wave Rectify: strips negative half -> strong even harmonics. Like a simple diode clipper.',
-  tubesoft: 'Tube Soft: auto-normalizing saturation with 1/(1+x\u00B2) curve. Tracks input level so warmth is consistent at any volume. Ported from gen~ tubeSoft.'
+const filterInfo = {
+  lp: 'Lowpass: LP = F * BP + LP_prev -- passes frequencies below cutoff. The fundamental filter of subtractive synthesis.',
+  hp: 'Highpass: HP = input - Q * BP - LP -- passes frequencies above cutoff. Removes bass and DC.',
+  bp: 'Bandpass: BP = F * HP + BP_prev -- passes a band around the cutoff. Width controlled by Q. Classic wah-wah sound.',
+  br: 'Band Reject (Notch): BR = HP + LP -- removes a band around the cutoff. Opposite of bandpass.'
 };
 
-const clipIdMap = { hard:'clip-hard', soft:'clip-soft', asymmetric:'clip-asym', foldback:'clip-fold', bitcrush:'clip-bit', tube:'clip-tube', rectify:'clip-rect', tubesoft:'clip-tubesoft' };
-function setClip(mode) {
-  clipMode = mode;
-  Object.keys(clipIdMap).forEach(k => {
-    const el = document.getElementById(clipIdMap[k]);
-    if (el) el.classList.toggle('active', k === mode);
+const filterIdMap = { lp:'filter-lp', hp:'filter-hp', bp:'filter-bp', br:'filter-br' };
+
+function setFilterType(type) {
+  filterType = type;
+  // Reset filter state to avoid transients
+  svf.bp = 0; svf.lp = 0;
+  Object.keys(filterIdMap).forEach(k => {
+    document.getElementById(filterIdMap[k]).classList.toggle('active', k === type);
   });
-  document.getElementById('algo-info').textContent = algoInfo[mode] || '';
+  document.getElementById('filter-info').textContent = filterInfo[type] || '';
+}
+
+function toggleNoiseBurst() {
+  noiseBurstEnabled = !noiseBurstEnabled;
+  const btn = document.getElementById('btn-noise-burst');
+  btn.textContent = noiseBurstEnabled ? 'BURST ON' : 'BURST OFF';
+  btn.classList.toggle('active', noiseBurstEnabled);
+  noiseBurstCounter = 0;
+  noiseBurstActive = false;
 }
 
 async function togglePlay() {
@@ -732,7 +526,6 @@ function updateDisplay(id, val) {
 // ============================================================
 const SCOPE_COLOR_DRY = 'rgba(255,255,255,0.3)';
 const SCOPE_COLOR_WET = '#ffffff';
-const SCOPE_COLOR_CLIP = '#cc3333';
 const SPEC_COLOR_IN = 'rgba(68,68,204,0.9)';
 const SPEC_COLOR_OUT = '#ffffff';
 
@@ -742,8 +535,6 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
   const H = canvas.height;
 
   ctx2.clearRect(0, 0, W, H);
-
-  // Background
   ctx2.fillStyle = '#111111';
   ctx2.fillRect(0, 0, W, H);
 
@@ -776,7 +567,7 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
     if (buffer[i - 1] < 0 && buffer[i] >= 0) { start = i; break; }
   }
 
-  // Draw dry reference if this is output scope
+  // Draw dry reference
   if (showDryRef && analyserDry) {
     const dryBuf = new Float32Array(analyserDry.fftSize);
     analyserDry.getFloatTimeDomainData(dryBuf);
@@ -792,24 +583,10 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
     ctx2.stroke();
   }
 
-  // Draw clip threshold lines
-  const drive = parseFloat(document.getElementById('drive').value);
-  if (clipMode !== 'bitcrush') {
-    const clampY = ((1 - drive) / 2) * H;
-    const clampYN = ((1 + drive) / 2) * H;
-    ctx2.strokeStyle = 'rgba(204,51,51,0.5)';
-    ctx2.lineWidth = 1;
-    ctx2.setLineDash([6, 3]);
-    ctx2.beginPath(); ctx2.moveTo(0, clampY); ctx2.lineTo(W, clampY); ctx2.stroke();
-    ctx2.beginPath(); ctx2.moveTo(0, clampYN); ctx2.lineTo(W, clampYN); ctx2.stroke();
-    ctx2.setLineDash([]);
-  }
-
   // Draw main waveform
   const drawLen = Math.min(W * 2, buffer.length - start);
   ctx2.strokeStyle = SCOPE_COLOR_WET;
   ctx2.lineWidth = 2;
-  ctx2.shadowBlur = 0;
   ctx2.beginPath();
   for (let i = 0; i < W; i++) {
     const idx = Math.floor(i / W * drawLen);
@@ -818,7 +595,6 @@ function drawScope(canvas, analyser, showDryRef, analyserDry) {
     i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
   }
   ctx2.stroke();
-  ctx2.shadowBlur = 0;
 }
 
 function drawSpectrum(canvas, analyser, color) {
@@ -830,7 +606,6 @@ function drawSpectrum(canvas, analyser, color) {
   ctx2.fillStyle = '#111111';
   ctx2.fillRect(0, 0, W, H);
 
-  // Grid lines
   ctx2.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx2.lineWidth = 1;
   for (let i = 0; i <= 8; i++) {
@@ -844,9 +619,7 @@ function drawSpectrum(canvas, analyser, color) {
   const freqData = new Uint8Array(bufLen);
   analyser.getByteFrequencyData(freqData);
 
-  // Log-scale spectrum
   const gradient = ctx2.createLinearGradient(0, H, 0, 0);
-  // Use 60% opacity version for gradient base
   const fadeColor = color.startsWith('rgba') ? color.replace(/[\d.]+\)$/, '0.6)') : color + '99';
   gradient.addColorStop(0, fadeColor);
   gradient.addColorStop(1, color);
@@ -854,7 +627,6 @@ function drawSpectrum(canvas, analyser, color) {
 
   ctx2.beginPath();
   ctx2.moveTo(0, H);
-
   for (let i = 0; i < W; i++) {
     const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
     const v = freqData[Math.min(logIdx, bufLen - 1)];
@@ -865,10 +637,8 @@ function drawSpectrum(canvas, analyser, color) {
   ctx2.closePath();
   ctx2.fill();
 
-  // Bright top line
   ctx2.strokeStyle = color;
   ctx2.lineWidth = 1.5;
-  ctx2.shadowBlur = 0;
   ctx2.beginPath();
   for (let i = 0; i < W; i++) {
     const logIdx = Math.floor(Math.pow(i / W, 2) * bufLen);
@@ -877,7 +647,6 @@ function drawSpectrum(canvas, analyser, color) {
     i === 0 ? ctx2.moveTo(i, y) : ctx2.lineTo(i, y);
   }
   ctx2.stroke();
-  ctx2.shadowBlur = 0;
 }
 
 // VU Meters
@@ -926,7 +695,6 @@ function getRMS(analyser) {
 // ============================================================
 // SPECTROGRAM
 // ============================================================
-// We keep an offscreen ImageData for each spectrogram and scroll it left each frame
 const sgramState = {};
 
 function initSgram(canvasId) {
@@ -935,7 +703,6 @@ function initSgram(canvasId) {
   const H = c.height;
   const ctx2 = c.getContext('2d');
   const imageData = ctx2.createImageData(W, H);
-  // Fill with dark background
   for (let i = 0; i < imageData.data.length; i += 4) {
     imageData.data[i] = 17;
     imageData.data[i+1] = 17;
@@ -951,7 +718,6 @@ function drawSpectrogram(canvasId, analyser) {
   const W = c.width;
   const H = c.height;
 
-  // Re-init if canvas resized
   if (!sgramState[canvasId] || sgramState[canvasId].width !== W || sgramState[canvasId].height !== H) {
     initSgram(canvasId);
   }
@@ -959,7 +725,7 @@ function drawSpectrogram(canvasId, analyser) {
   const state = sgramState[canvasId];
   const img = state.imageData;
 
-  // Scroll everything left by 1 pixel
+  // Scroll left
   for (let y = 0; y < H; y++) {
     const rowStart = y * W * 4;
     for (let x = 0; x < (W - 1); x++) {
@@ -971,44 +737,37 @@ function drawSpectrogram(canvasId, analyser) {
     }
   }
 
-  // Paint new column on the right edge from frequency data
   if (analyser) {
     const bufLen = analyser.frequencyBinCount;
     const freqData = new Uint8Array(bufLen);
     analyser.getByteFrequencyData(freqData);
 
     for (let y = 0; y < H; y++) {
-      // Map y (top = high freq, bottom = low freq) to frequency bin with log scale
-      const t = 1 - (y / H); // 0 at bottom, 1 at top
+      const t = 1 - (y / H);
       const logIdx = Math.floor(Math.pow(t, 2) * bufLen);
       const v = freqData[Math.min(logIdx, bufLen - 1)];
       const norm = v / 255;
 
-      // Color: dark -> deep blue -> blue-purple -> white for hot
       let r, g, b;
       if (norm < 0.25) {
-        // dark to deep blue
         const s = norm / 0.25;
         r = Math.floor(17 + s * 10);
         g = Math.floor(17 + s * 10);
         b = Math.floor(17 + s * 80);
       } else if (norm < 0.55) {
-        // deep blue to blue-purple
         const s = (norm - 0.25) / 0.3;
-        r = Math.floor(27 + s * 41);  // -> 68
-        g = Math.floor(27 + s * 41);  // -> 68
-        b = Math.floor(97 + s * 107); // -> 204
+        r = Math.floor(27 + s * 41);
+        g = Math.floor(27 + s * 41);
+        b = Math.floor(97 + s * 107);
       } else if (norm < 0.8) {
-        // blue-purple to warm white
         const s = (norm - 0.55) / 0.25;
-        r = Math.floor(68 + s * 187);  // -> 255
-        g = Math.floor(68 + s * 147);  // -> 215
-        b = Math.floor(204 + s * 51);  // -> 255
+        r = Math.floor(68 + s * 187);
+        g = Math.floor(68 + s * 147);
+        b = Math.floor(204 + s * 51);
       } else {
-        // warm white to bright white
         const s = (norm - 0.8) / 0.2;
         r = 255;
-        g = Math.floor(215 + s * 40); // -> 255
+        g = Math.floor(215 + s * 40);
         b = 255;
       }
 
@@ -1018,7 +777,6 @@ function drawSpectrogram(canvasId, analyser) {
       img.data[idx + 2] = b;
     }
   } else {
-    // No analyser -- paint dark column
     for (let y = 0; y < H; y++) {
       const idx = (y * W + (W - 1)) * 4;
       img.data[idx]     = 17;
@@ -1029,7 +787,7 @@ function drawSpectrogram(canvasId, analyser) {
 
   ctx2.putImageData(img, 0, 0);
 
-  // Frequency axis labels (sparse, redrawn each frame over the image)
+  // Frequency axis labels
   ctx2.fillStyle = 'rgba(255,255,255,0.4)';
   ctx2.font = '9px "IBM Plex Mono", monospace';
   const sr = ctx ? ctx.sampleRate : 44100;
@@ -1037,7 +795,6 @@ function drawSpectrogram(canvasId, analyser) {
   const freqMarks = [100, 500, 1000, 2000, 5000, 10000];
   for (const f of freqMarks) {
     if (f > nyquist) continue;
-    // Reverse the log mapping: t = sqrt(f / nyquist), y = (1-t)*H
     const t = Math.sqrt(f / nyquist);
     const y = (1 - t) * H;
     if (y > 10 && y < H - 5) {
@@ -1047,7 +804,7 @@ function drawSpectrogram(canvasId, analyser) {
   }
 }
 
-// Resize canvases to match CSS
+// Resize canvases
 function resizeCanvases() {
   ['scope-in','scope-out','fft-in','fft-out','sgram-in','sgram-out'].forEach(id => {
     const c = document.getElementById(id);
@@ -1064,13 +821,13 @@ function render() {
   animFrame = requestAnimationFrame(render);
   if (!ctx) return;
 
-  try { drawScope(document.getElementById('scope-in'), analyserIn, false, null); } catch(e) { console.error('scope-in', e); }
-  try { drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn); } catch(e) { console.error('scope-out', e); }
-  try { drawSpectrum(document.getElementById('fft-in'), analyserIn, 'rgba(68,68,204,0.9)'); } catch(e) { console.error('fft-in', e); }
-  try { drawSpectrum(document.getElementById('fft-out'), analyserOut, '#ffffff'); } catch(e) { console.error('fft-out', e); }
+  try { drawScope(document.getElementById('scope-in'), analyserIn, false, null); } catch(e) {}
+  try { drawScope(document.getElementById('scope-out'), analyserOut, true, analyserIn); } catch(e) {}
+  try { drawSpectrum(document.getElementById('fft-in'), analyserIn, 'rgba(68,68,204,0.9)'); } catch(e) {}
+  try { drawSpectrum(document.getElementById('fft-out'), analyserOut, '#ffffff'); } catch(e) {}
 
-  try { drawSpectrogram('sgram-in', analyserIn); } catch(e) { console.error('sgram-in', e); }
-  try { drawSpectrogram('sgram-out', analyserOut); } catch(e) { console.error('sgram-out', e); }
+  try { drawSpectrogram('sgram-in', analyserIn); } catch(e) {}
+  try { drawSpectrogram('sgram-out', analyserOut); } catch(e) {}
 
   updateVU('vu-in', getRMS(analyserIn));
   updateVU('vu-out', getRMS(analyserOut));
@@ -1089,9 +846,7 @@ async function startWavSource(audioBuffer) {
   wavSourceNode.buffer = audioBuffer;
   wavSourceNode.loop = true;
   wavSourceNode.connect(inputGain);
-  inputGain.connect(analyserIn);
-  inputGain.connect(distortionNode);
-  distortionNode.connect(analyserOut);
+  connectChain();
   wavSourceNode.start();
   playing = true;
   document.getElementById('play-btn').textContent = 'PLAYING';
@@ -1126,7 +881,6 @@ async function loadWavFile(input) {
   }
 }
 
-// Discover WAV files from the server API
 async function loadWavListLab() {
   const container = document.getElementById('wav-btns-lab');
   try {
@@ -1144,20 +898,15 @@ async function loadWavListLab() {
       btn.onclick = () => loadWavFromFetch(f);
       container.appendChild(btn);
     });
-  } catch(e) {
-    // Not running via server -- that's fine, file picker still works
-  }
+  } catch(e) {}
 }
 loadWavListLab();
 
-// Auto-init on first interaction
+// Auto-init
 document.addEventListener('click', async () => {
-  if (!ctx) {
-    await initAudio();
-  }
+  if (!ctx) await initAudio();
 }, { once: true });
 
-// Also init on page load attempt
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(resizeCanvases, 200);
 });
