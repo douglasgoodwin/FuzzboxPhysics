@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breadboard Filters Worksheet &mdash; Fuzzbox Physics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #111;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in 0;
+  }
+
+  @media print {
+    body { padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .part { break-inside: avoid; }
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #111;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .header-left h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header-left .course {
+    font-size: 8pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 2px;
+  }
+  .header-right { text-align: right; }
+  .name-line {
+    font-size: 9pt;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .name-blank {
+    display: inline-block;
+    width: 2in;
+    border-bottom: 1px solid #999;
+  }
+
+  /* ---- Sections ---- */
+  .part { margin-bottom: 20px; }
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  .part-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8pt;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    white-space: nowrap;
+  }
+  .part-title { font-size: 13pt; font-weight: 500; }
+  .part-tool {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    color: #999;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  p { margin-bottom: 8px; color: #333; }
+
+  .step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 10pt;
+    min-width: 18px;
+    text-align: right;
+    color: #111;
+  }
+  .step-text { color: #333; }
+
+  .keyword { font-weight: 500; color: #111; }
+
+  .hint {
+    font-size: 9.5pt;
+    color: #666;
+    background: #f5f5f5;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-left: 3px solid #ccc;
+  }
+
+  /* ---- Parts list ---- */
+  .parts-box {
+    border: 1px solid #ccc;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: #fafafa;
+  }
+  .parts-box .parts-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .parts-box ul {
+    list-style: none;
+    padding: 0;
+    columns: 2;
+    column-gap: 24px;
+  }
+  .parts-box li {
+    font-size: 9pt;
+    color: #333;
+    margin-bottom: 3px;
+    padding-left: 12px;
+    position: relative;
+    break-inside: avoid;
+  }
+  .parts-box li::before {
+    content: '\25A0';
+    position: absolute;
+    left: 0;
+    color: #999;
+    font-size: 6pt;
+    top: 2px;
+  }
+
+  /* ---- Answer blanks ---- */
+  .answer-box {
+    border: 1px solid #bbb;
+    min-height: 1in;
+    margin: 8px 0 12px;
+    padding: 6px;
+    position: relative;
+  }
+  .answer-box.tall { min-height: 1.4in; }
+  .answer-box.short { min-height: 0.7in; }
+  .answer-box.drawing { min-height: 2in; }
+  .answer-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #999;
+    position: absolute;
+    top: 4px;
+    right: 6px;
+  }
+
+  /* ---- Tables ---- */
+  .fill-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .fill-table th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    padding: 4px 8px;
+    border-bottom: 1px solid #aaa;
+  }
+  .fill-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    height: 28px;
+    vertical-align: top;
+  }
+  .fill-table td.given { color: #333; }
+  .fill-table td.blank { color: #ccc; }
+
+  /* ---- Schematic drawing area ---- */
+  .draw-area {
+    border: 1px solid #bbb;
+    min-height: 2.5in;
+    margin: 8px 0 12px;
+    position: relative;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 19px, #f0f0f0 19px, #f0f0f0 20px),
+      repeating-linear-gradient(90deg, transparent, transparent 19px, #f0f0f0 19px, #f0f0f0 20px);
+  }
+  .draw-area .answer-label {
+    background: rgba(255,255,255,0.8);
+    padding: 1px 4px;
+  }
+
+  /* ---- Diagrams ---- */
+  .diagram {
+    margin: 12px 0;
+    text-align: center;
+  }
+  .diagram svg {
+    max-width: 100%;
+  }
+  .diagram-caption {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7.5pt;
+    color: #999;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  .footer {
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+  }
+
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+  .print-btn:hover { background: #333; }
+
+  ol.wiring { padding-left: 20px; margin: 6px 0 10px; }
+  ol.wiring li {
+    font-size: 10pt;
+    color: #333;
+    margin-bottom: 4px;
+    padding-left: 4px;
+  }
+  ol.wiring li strong {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9pt;
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">PRINT / PDF</button>
+
+<!-- ════════ PAGE 1 ════════ -->
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics &mdash; CalArts</div>
+    <h1>Breadboard Filters</h1>
+  </div>
+  <div class="header-right">
+    <div class="name-line">Name: <span class="name-blank"></span></div>
+    <div class="name-line">Date: <span class="name-blank"></span></div>
+  </div>
+</div>
+
+<p>Last week you drew RC filters in simulators. Today you'll build them with real components on a breadboard, drive them from a headphone output, and listen through a piezo speaker amplified by an LM386.</p>
+
+<div class="parts-box">
+  <div class="parts-title">Reference</div>
+  <ul style="columns:1">
+    <li><strong>Passive RC low-pass:</strong> <a href="https://www.electronics-tutorials.ws/filter/filter_2.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace; font-size:7.5pt; color:#999">electronics-tutorials.ws/filter/filter_2.html</a></li>
+    <li><strong>Passive filter intro:</strong> <a href="https://www.electronics-tutorials.ws/filter/filter_1.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace; font-size:7.5pt; color:#999">electronics-tutorials.ws/filter/filter_1.html</a></li>
+    <li><strong>Sweep tone generator:</strong> <a href="https://onlinetonegenerator.com/frequency-sweep-generator.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace; font-size:7.5pt; color:#999">onlinetonegenerator.com/frequency-sweep-generator.html</a></li>
+    <li><strong>20 Hz&ndash;20 kHz sine sweep (pre-made):</strong> <a href="https://www.audiocheck.net/testtones_sinesweep20-20k.php" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace; font-size:7.5pt; color:#999">audiocheck.net/testtones_sinesweep20-20k.php</a></li>
+  </ul>
+</div>
+
+<div class="parts-box">
+  <div class="parts-title">Parts List</div>
+  <ul>
+    <li>Solderless breadboard</li>
+    <li>3.5 mm headphone plug with wires (L, R, GND)</li>
+    <li>LM386 amplifier module (VCC, IN, GND, speaker lugs)</li>
+    <li>9V battery + snap connector</li>
+    <li>Piezo speaker</li>
+    <li>22 k&Omega; resistor (red-red-orange)</li>
+    <li>10 k&Omega; resistor &times;3 (brown-black-orange)</li>
+    <li>100 nF capacitor (104)</li>
+    <li>10 nF capacitor (103)</li>
+    <li>47 nF capacitor (473)</li>
+    <li>Jumper wires (assorted)</li>
+  </ul>
+</div>
+
+<!-- ═══════ PART 1 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 1</div>
+    <div class="part-title">Know Your Signal Chain</div>
+    <div class="part-tool">Pencil</div>
+  </div>
+
+  <p>Before you touch the breadboard, draw the full signal path from source to speaker. This is the chain you'll build today:</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 700 80" style="width:100%; max-width:700px">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#111" stroke-width="1"/>
+        </marker>
+      </defs>
+
+      <!-- Headphone (stereo) -->
+      <rect x="5" y="22" width="90" height="36" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+      <text x="50" y="35" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#111">Headphone</text>
+      <text x="50" y="48" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7" fill="#999">L + R + GND</text>
+
+      <!-- L and R lines converging -->
+      <line x1="95" y1="32" x2="120" y2="24" stroke="#111" stroke-width="1"/>
+      <line x1="95" y1="48" x2="120" y2="56" stroke="#111" stroke-width="1"/>
+      <text x="108" y="20" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6" fill="#999">L</text>
+      <text x="108" y="66" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6" fill="#999">R</text>
+
+      <!-- Summing resistors -->
+      <rect x="120" y="18" width="50" height="12" rx="2" fill="none" stroke="#111" stroke-width="1"/>
+      <text x="145" y="27" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6" fill="#666">10k</text>
+      <rect x="120" y="50" width="50" height="12" rx="2" fill="none" stroke="#111" stroke-width="1"/>
+      <text x="145" y="59" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6" fill="#666">10k</text>
+
+      <!-- Junction -->
+      <line x1="170" y1="24" x2="190" y2="40" stroke="#111" stroke-width="1"/>
+      <line x1="170" y1="56" x2="190" y2="40" stroke="#111" stroke-width="1"/>
+      <circle cx="190" cy="40" r="3" fill="#111"/>
+
+      <line x1="193" y1="40" x2="220" y2="40" stroke="#111" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- Mono Sum label -->
+      <text x="190" y="14" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6" fill="#999">MONO SUM</text>
+
+      <!-- RC Filter -->
+      <rect x="220" y="22" width="90" height="36" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+      <text x="265" y="45" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#111">RC Filter</text>
+
+      <line x1="310" y1="40" x2="350" y2="40" stroke="#111" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- LM386 -->
+      <rect x="350" y="22" width="100" height="36" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+      <text x="400" y="45" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#111">LM386 Amp</text>
+
+      <line x1="450" y1="40" x2="490" y2="40" stroke="#111" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- Piezo -->
+      <rect x="490" y="22" width="105" height="36" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+      <text x="542" y="45" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#111">Piezo Speaker</text>
+    </svg>
+    <div class="diagram-caption">Signal chain: stereo headphone &rarr; resistor summing &rarr; filter &rarr; amplifier &rarr; output</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      The headphone plug has three wires: <span class="keyword">Left</span>, <span class="keyword">Right</span>, and <span class="keyword">Ground</span>. A 3.5 mm TRS (Tip-Ring-Sleeve) jack assigns: Tip = Left, Ring = Right, Sleeve = Ground. Identify which wire on your plug is which.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      We need a <span class="keyword">mono signal</span>, but the headphone output is stereo. We can't just short L and R together &mdash; the two output amplifiers in your phone would fight each other. Instead, we <span class="keyword">sum</span> them through resistors: put a 10 k&Omega; in series with each channel, then join the far ends. Why do the resistors prevent the channels from fighting?
+    </div>
+  </div>
+
+  <div class="hint">
+    Think of it as two people pushing on the same door. The resistors are like springs between each person and the door &mdash; they absorb the difference.
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      The LM386 module has three inputs: <strong>VCC</strong>, <strong>IN</strong>, and <strong>GND</strong>. In one sentence each, what does each connection do?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4.</div>
+    <div class="step-text">
+      Why do we need the LM386 at all? A headphone output is already an amplified signal. Why can't we connect the filter directly to the piezo speaker?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 2 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 2</div>
+    <div class="part-title">Build: Direct Connection (No Filter)</div>
+    <div class="part-tool">Breadboard</div>
+  </div>
+
+  <p>First, verify your signal chain works <em>without</em> any filter. This is your baseline.</p>
+
+  <div class="hint">
+    <strong>Breadboard reminder:</strong> The two long rails at the top and bottom are connected horizontally (power buses). The short columns in the middle are connected vertically within each half, split by the center channel.
+  </div>
+
+  <ol class="wiring">
+    <li>Connect the <strong>9V battery +</strong> to the red power rail, <strong>battery &minus;</strong> to the blue ground rail.</li>
+    <li>Connect the headphone plug <strong>ground wire</strong> to the blue ground rail.</li>
+    <li><strong>Mono summing:</strong> Insert a <strong>10 k&Omega; resistor</strong> from the <strong>L wire</strong> to an empty column. Insert another <strong>10 k&Omega; resistor</strong> from the <strong>R wire</strong> to the <em>same</em> column. This column is now your <strong>signal column</strong> &mdash; a safe mono sum of both channels.</li>
+    <li>Wire the LM386 module: <strong>VCC</strong> &rarr; red rail, <strong>GND</strong> &rarr; blue rail, <strong>IN</strong> &rarr; signal column.</li>
+    <li>Connect the piezo speaker to the <strong>speaker lugs</strong> on the LM386 module.</li>
+    <li>Play music from your phone. You should hear it through the piezo.</li>
+  </ol>
+
+  <div class="hint">
+    <strong>Safety note:</strong> The LM386 module already has its own output coupling capacitor built in. Always connect or disconnect the speaker wires <em>before</em> connecting the 9V battery &mdash; hot-swapping while powered can cause loud pops that are unpleasant and could damage the piezo.
+  </div>
+
+  <div class="step">
+    <div class="step-num">Q1.</div>
+    <div class="step-text">
+      Describe what the piezo sounds like compared to your phone speaker. Is anything missing? What frequencies seem emphasized?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Q2.</div>
+    <div class="step-text">
+      Open the sweep tone generator (<span class="keyword">onlinetonegenerator.com/frequency-sweep-generator.html</span>) or play the AudioCheck sine sweep. <strong>Start with your laptop volume very low</strong>, then bring it up until the piezo is just audible. Play a 20 Hz&ndash;5 kHz sweep. At roughly what frequency does the piezo start producing sound? Where is it loudest?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation</div>
+  </div>
+</div>
+
+<!-- PAGE BREAK -->
+<div class="page-break"></div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics</div>
+    <h1>Breadboard Filters <span style="font-weight:300">(continued)</span></h1>
+  </div>
+</div>
+
+<!-- ═══════ PART 3 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 3</div>
+    <div class="part-title">Build: Low-Pass Filter (Treble Cut)</div>
+    <div class="part-tool">Breadboard</div>
+  </div>
+
+  <p>Now insert an RC low-pass filter between the headphone signal and the LM386 input. Use R = 22 k&Omega; and C = 10 nF.</p>
+
+  <div class="step">
+    <div class="step-num">A.</div>
+    <div class="step-text">
+      Before wiring, sketch the schematic. The signal enters on the left, the output goes to the LM386 on the right. Draw R in series and C to ground.
+    </div>
+  </div>
+
+  <div class="draw-area" style="min-height:1.8in">
+    <div class="answer-label">Low-pass schematic</div>
+  </div>
+
+  <div class="hint">
+    <strong>Wiring steps:</strong> Disconnect the headphone signal wire from the LM386 IN. Insert the <strong>22 k&Omega; resistor</strong> between the signal column and a new column (call it the <strong>output column</strong>). Insert the <strong>10 nF capacitor</strong> between the output column and the ground rail. Reconnect the LM386 <strong>IN</strong> to the output column.
+  </div>
+
+  <div class="step">
+    <div class="step-num">B.</div>
+    <div class="step-text">
+      Play the same music. Describe what changed compared to the unfiltered sound.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">C.</div>
+    <div class="step-text">
+      Now play the sine sweep through the filter. Compare to your unfiltered sweep from Part 2. At roughly what frequency does the sound start getting quieter? This is your measured cutoff.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Measured cutoff</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">D.</div>
+    <div class="step-text">
+      Calculate the cutoff frequency using f<sub>c</sub> = 1 / (2&pi;RC). Show your work. Does it match what you heard?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Calculation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">E.</div>
+    <div class="step-text">
+      Now swap the capacitor for the <strong>47 nF (473)</strong>. What happens to the sound? Calculate the new cutoff frequency.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation + calculation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">F.</div>
+    <div class="step-text">
+      Swap the resistor to <strong>10 k&Omega;</strong> (keep 47 nF). What is the new cutoff? Does the sound change in the direction you predicted?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Prediction, calculation, observation</div>
+  </div>
+</div>
+
+<!-- ═══════ PART 4 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 4</div>
+    <div class="part-title">Build: High-Pass Filter (Bass Cut)</div>
+    <div class="part-tool">Breadboard</div>
+  </div>
+
+  <p>Swap the positions of R and C. Use C = 100 nF and R = 22 k&Omega;.</p>
+
+  <div class="step">
+    <div class="step-num">A.</div>
+    <div class="step-text">
+      Sketch the schematic. The capacitor is now in series and the resistor shunts to ground.
+    </div>
+  </div>
+
+  <div class="draw-area" style="min-height:1.8in">
+    <div class="answer-label">High-pass schematic</div>
+  </div>
+
+  <div class="hint">
+    <strong>Wiring steps:</strong> Remove the old R and C. Insert the <strong>100 nF capacitor</strong> between the signal column and the output column. Insert the <strong>22 k&Omega; resistor</strong> between the output column and the ground rail. LM386 IN stays on the output column.
+  </div>
+
+  <div class="step">
+    <div class="step-num">B.</div>
+    <div class="step-text">
+      Play music again. Describe what you hear. What is missing compared to the unfiltered sound?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">C.</div>
+    <div class="step-text">
+      Calculate the cutoff frequency for this high-pass filter (100 nF, 22 k&Omega;).
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Calculation</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">D.</div>
+    <div class="step-text">
+      Replace the 100 nF with a <strong>10 nF (103)</strong> capacitor. What happens? Calculate the new cutoff and explain why.
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Observation + calculation</div>
+  </div>
+</div>
+
+<!-- PAGE BREAK -->
+<div class="page-break"></div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="course">CSCM 373-01 &mdash; Fuzzbox Physics</div>
+    <h1>Breadboard Filters <span style="font-weight:300">(continued)</span></h1>
+  </div>
+</div>
+
+<!-- ═══════ PART 5 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 5</div>
+    <div class="part-title">Component Swap Table</div>
+    <div class="part-tool">Breadboard + Pencil</div>
+  </div>
+
+  <p>Fill in the table as you swap components. For each combination, calculate f<sub>c</sub>, predict the sound, then build and listen.</p>
+
+  <table class="fill-table">
+    <tr>
+      <th>Filter type</th>
+      <th>R</th>
+      <th>C</th>
+      <th>Calculated f<sub>c</sub></th>
+      <th>Prediction</th>
+      <th>What you heard</th>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">Low-pass</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">22 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">10 nF</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">Low-pass</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">22 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">47 nF</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">Low-pass</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">10 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">47 nF</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">High-pass</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">22 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">100 nF</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="given" style="font-size:9pt">High-pass</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">22 k&Omega;</td>
+      <td class="given" style="font-family:'IBM Plex Mono',monospace; font-size:9pt">10 nF</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ═══════ PART 6 ═══════ -->
+<div class="part">
+  <div class="part-header">
+    <div class="part-num">Part 6</div>
+    <div class="part-title">Thinking It Through</div>
+    <div class="part-tool">Pencil</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1.</div>
+    <div class="step-text">
+      In the low-pass filter, explain what the capacitor is physically doing to the high-frequency parts of the signal. Where does that energy go?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2.</div>
+    <div class="step-text">
+      You used the same formula f<sub>c</sub> = 1/(2&pi;RC) for both low-pass and high-pass. How can the same R and C values give different behavior just by swapping positions?
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3.</div>
+    <div class="step-text">
+      A guitar's tone knob is a low-pass filter: a potentiometer (variable R) in series with a capacitor to ground. When you roll the tone knob down, R decreases. What happens to f<sub>c</sub>? Does that match what you hear (darker sound)?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4.</div>
+    <div class="step-text">
+      The piezo speaker itself is not flat &mdash; it naturally emphasizes upper-mids and treble, acting as a kind of built-in bandpass filter. Did this make it harder or easier to hear the filter's effect? Which filter type (low-pass or high-pass) had the more obvious result on the piezo, and why?
+    </div>
+  </div>
+
+  <div class="answer-box short">
+    <div class="answer-label">Answer</div>
+  </div>
+</div>
+
+<!-- ═══════ CHALLENGE ═══════ -->
+<div class="part" style="border: 2px solid #111; padding: 16px;">
+  <div class="part-header" style="border-bottom:none; margin-bottom:2px">
+    <div class="part-title">Challenge: Bandpass Filter</div>
+  </div>
+
+  <p>If you finish early, try cascading both filters: a high-pass followed by a low-pass. Use C = 100 nF / R = 10 k&Omega; for the high-pass, then R = 22 k&Omega; / C = 10 nF for the low-pass. Calculate both cutoff frequencies, sketch the combined circuit, build it, and describe the resulting sound. What range of frequencies survives both filters? Does it sound like a telephone?</p>
+
+  <div class="draw-area" style="min-height:2in">
+    <div class="answer-label">Bandpass schematic + notes</div>
+  </div>
+</div>
+
+<div class="footer">
+  Doug Goodwin &mdash; CalArts 2026 &mdash; CSCM 373-01 Fuzzbox Physics
+</div>
+
+</body>
+</html>
